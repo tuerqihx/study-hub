@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃的数学闯关 📐</title>
+<style>
+  * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#fff3e9 0%,#ffe9ec 100%); color:#3a3a4a; min-height:100vh; padding:18px 16px 50px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .back { background:#fff; border:2px solid #ffcf9e; color:#ff7a33; font-weight:bold; font-size:16px; padding:8px 16px; border-radius:14px; cursor:pointer; font-family:inherit; }
+  .star-now { font-size:18px; font-weight:bold; color:#ff8c42; }
+  h1 { text-align:center; font-size:30px; margin:4px 0 16px; }
+  .menu { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:13px; }
+  .lv { border:none; color:#fff; border-radius:20px; padding:18px 10px; cursor:pointer; font-family:inherit; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; }
+  .lv:hover { transform:translateY(-4px) scale(1.02); } .lv:active { transform:scale(.97); }
+  .lv .i { font-size:38px; display:block; } .lv .n { font-size:19px; font-weight:bold; margin-top:5px; } .lv .d { font-size:12px; opacity:.9; margin-top:3px; }
+  .l1{background:linear-gradient(140deg,#ff9a56,#ff6b6b);} .l2{background:linear-gradient(140deg,#5ac8fa,#3b82f6);}
+  .l3{background:linear-gradient(140deg,#9b8cff,#7c5cff);} .l4{background:linear-gradient(140deg,#56d6a0,#1fae8c);}
+  .l5{background:linear-gradient(140deg,#ffcf5c,#ff9f43);} .l6{background:linear-gradient(140deg,#ff8fb3,#ff5c8a);}
+  .l7{background:linear-gradient(140deg,#3a3a4a,#7c5cff);}
+  .card { background:#fff; border-radius:24px; padding:22px 20px; box-shadow:0 6px 20px rgba(255,150,110,.18); border:3px solid #ffe2b8; display:none; }
+  .progress { font-size:14px; color:#aaa; text-align:center; margin-bottom:6px; }
+  .tip { background:#fff7e6; border-radius:14px; padding:10px 14px; font-size:15px; color:#a6772f; margin-bottom:14px; line-height:1.5; }
+  .q { font-size:25px; line-height:1.5; text-align:center; margin:6px 0 18px; min-height:60px; } .q b { color:#ff6b6b; }
+  .opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .opt { background:#f4f7ff; border:2px solid #d9e4ff; border-radius:16px; padding:16px; font-size:22px; font-weight:bold; cursor:pointer; font-family:inherit; color:#3a3a4a; transition:.1s; }
+  .opt:hover { background:#e8efff; } .opt:active { transform:scale(.97); }
+  .opt.right { background:#d7f7e3; border-color:#56d6a0; } .opt.wrong { background:#ffe1e1; border-color:#ff8585; }
+  .answbox { text-align:center; margin-bottom:12px; }
+  .answ { display:inline-block; min-width:140px; font-size:34px; font-weight:bold; color:#3b82f6; border-bottom:4px solid #cdd; padding:4px 18px; letter-spacing:2px; }
+  .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:320px; margin:0 auto; }
+  .key { background:#f4f7ff; border:2px solid #d9e4ff; border-radius:14px; padding:16px; font-size:24px; font-weight:bold; cursor:pointer; font-family:inherit; color:#3a3a4a; }
+  .key:active { transform:scale(.95); background:#e8efff; } .key.go { background:#56d6a0; color:#fff; border-color:#56d6a0; } .key.del { background:#ffd9b0; border-color:#ffd9b0; }
+  .feedback { text-align:center; font-size:22px; font-weight:bold; min-height:34px; margin:14px 0 6px; } .feedback.ok { color:#1fae8c; } .feedback.no { color:#ff8c42; }
+  .next { display:none; background:#ff8c42; color:#fff; border:none; border-radius:16px; font-size:20px; font-weight:bold; padding:14px 30px; cursor:pointer; font-family:inherit; margin:6px auto 0; }
+  .done { display:none; text-align:center; background:#fff; border-radius:24px; padding:30px 20px; box-shadow:0 6px 20px rgba(255,150,110,.2); border:3px solid #ffe2b8; }
+  .done .big { font-size:64px; } .done .msg { font-size:24px; font-weight:bold; margin:10px 0; } .done .got { font-size:20px; color:#ff8c42; margin-bottom:18px; }
+  .done button { background:#ff8c42; color:#fff; border:none; border-radius:16px; font-size:19px; font-weight:bold; padding:13px 26px; cursor:pointer; font-family:inherit; margin:6px; }
+  .done .ghost { background:#fff; color:#ff7a33; border:2px solid #ffcf9e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <button class="back" onclick="goHome()">🏡 回学习台</button>
+    <span class="star-now" id="starNow">今天 ⭐ 0</span>
+  </div>
+  <h1>📐 桃桃的数学闯关</h1>
+  <div class="menu" id="menu"></div>
+  <div class="card" id="card">
+    <div class="progress" id="prog"></div>
+    <div class="tip" id="tip"></div>
+    <div class="q" id="q"></div>
+    <div id="answerArea"></div>
+    <div class="feedback" id="fb"></div>
+    <button class="next" id="nextBtn" onclick="nextQ()">下一题 →</button>
+  </div>
+  <div class="done" id="done">
+    <div class="big">🎉</div>
+    <div class="msg" id="doneMsg"></div>
+    <div class="got" id="doneGot"></div>
+    <button onclick="restart()">再来一关（新题）</button>
+    <button class="ghost" onclick="goHome()">回学习台</button>
+  </div>
+</div>
+<script>
+/* ===== 配置（存储/游戏逻辑由 ../_engine/quiz.js 提供） ===== */
+const STORE_KEY="taotao_math_v1";
+const TIME_LIMIT_MIN=12; // 每天这一科的时间额度（分钟），用完锁到明天
+
+/* ===== 工具（供 gen 出题用） ===== */
+function rnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); } // 含两端
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// 给数字题配 3~4 个迷惑选项（其实数字题用键盘，这里仅备用）
+function nearOptions(ans){ const set=new Set([ans]); while(set.size<3){ set.add(ans+rnd(-3,3)); } return shuffle([...set].filter(x=>x>=0)); }
+
+const PER_ROUND=5; // 每关出几题（短，护眼；题库远大于此，所以每次抽到的都不同）
+
+/* ===== 题库 =====
+   每个模块要么有 gen()（每次自动随机出新题，永远不重复），要么有 bank（固定题库，随机抽几道）。
+   gen 返回 {q, type:'number'|'choice', options?, answer, hint} */
+const MODULES = {
+  /* —— 二年级：乘法口诀 —— */
+  mult: { name:"乘法口诀", icon:"✖️", cls:"l5", grade:"二年级",
+    tip:"💡 背口诀：二三得六、三四十二… 想不起来就在纸上画几行几列数一数。",
+    teach:"乘法是什么？就是'好几个一样的数加起来'的快捷写法。3×4 就是 3 个 4：4+4+4。<br>🍬 生活里：一包糖 4 颗，买 3 包，一共就是 3×4 颗。口诀是古人把答案先数好、编成儿歌背下来，方便直接用。<br>想不起口诀就画格子：画几行几列的圆圈，一个一个数，数出来的就是答案。",
+    gen(){ const a=rnd(2,9), b=rnd(2,9); return {q:`<b>${a}</b> × <b>${b}</b> = ?`, type:"number", answer:a*b,
+      hint:`想口诀：${a} 和 ${b}…，或者画 ${a} 行每行 ${b} 个数一数。`,
+      exp:`${a}×${b} 就是 ${a} 个 ${b} 加起来：${Array(a).fill(b).join("+")}。<br>在纸上画 ${a} 行圆圈、每行 ${b} 个，一个一个数。<br>🍬 就像 ${a} 包糖，每包 ${b} 颗，一共几颗？数出来填进去！`}; } },
+
+  /* —— 二年级：表内除法 —— */
+  divide: { name:"除法平分", icon:"➗", cls:"l4", grade:"二年级",
+    tip:"💡 除法就是'平均分'：把总数平均分成几份，每份是多少。乘法口诀倒着想就行。",
+    teach:"除法就是'平均分'。12÷3 问的是：12 个东西平均分给 3 个人，每人分到几个？<br>🍎 生活里：12 个苹果分给 3 个小朋友，你一个我一个轮着发，发完数数每人手里有几个。<br>快的办法是把口诀倒着用：3 乘几等于 12？想到'三四十二'，答案就是 4。",
+    gen(){ const b=rnd(2,9), ans=rnd(2,9), total=b*ans; return {q:`<b>${total}</b> ÷ <b>${b}</b> = ?`, type:"number", answer:ans,
+      hint:`想：${b} 乘几等于 ${total}？（口诀倒着用）`,
+      exp:`${total}÷${b} 的意思：把 ${total} 个东西平均分成 ${b} 份，每份几个？<br>🍎 想象 ${total} 个苹果分给 ${b} 个小朋友，一人一个轮着发。<br>快的办法：口诀倒着想——${b} 乘几等于 ${total}？想到哪句口诀，答案就是那个'几'。`}; } },
+
+  /* —— 二/三年级：加减竖式（含进位退位） —— */
+  addsub: { name:"加减闯关", icon:"➕", cls:"l1", grade:"二·三年级",
+    tip:"💡 在纸上列竖式，从个位开始算；满十要进一，不够减要向前一位借十。",
+    teach:"加减法的秘密是'数位'：个位跟个位算、十位跟十位算，就像苹果跟苹果放一起、盒子跟盒子放一起，不能混。<br>💰 用钱想最清楚：38 元就是 3 张 10 元 + 8 个 1 元硬币。<br>加法：硬币凑满 10 个，就换成 1 张 10 元——这就是'进位'。<br>减法：硬币不够扣，就把 1 张 10 元换成 10 个硬币再扣——这就是'借位'。",
+    gen(){ if(Math.random()<0.5){ const a=rnd(15,79), b=rnd(13,99-a); const carry=(a%10+b%10)>=10;
+             return {q:`<b>${a}</b> + <b>${b}</b> = ?`, type:"number", answer:a+b,
+               hint:`个位先加，满十向十位进 1。`,
+               exp:`在纸上列竖式，${a} 和 ${b} 个位对个位。<br>第一步算个位：${a%10}+${b%10}=${a%10+b%10}${carry?"，满十啦！写下"+((a%10+b%10)%10)+"、向十位进 1":"，直接写下来"}。<br>第二步算十位：${Math.floor(a/10)}+${Math.floor(b/10)}${carry?"，再加上进来的 1":""}。<br>💰 就像数钱：1 元硬币凑满 10 个换 1 张 10 元。`}; }
+           else { const a=rnd(35,99), b=rnd(12,a-1); const borrow=(a%10)<(b%10);
+             return {q:`<b>${a}</b> − <b>${b}</b> = ?`, type:"number", answer:a-b,
+               hint:`个位不够减，就向十位借一个十。`,
+               exp:`列竖式，个位对个位。<br>第一步算个位：${a%10} 减 ${b%10}${borrow?"——不够减！向十位借 1 个十，个位变成 "+(a%10+10)+"，再减 "+(b%10):"，够减，直接减"}。<br>第二步算十位：${Math.floor(a/10)}${borrow?" 借走了 1，先变成 "+(Math.floor(a/10)-1):""} 再减 ${Math.floor(b/10)}。<br>💰 就像 10 元纸币换成 10 个硬币再付钱。`}; } } },
+
+  /* —— 三上：倍的认识 —— */
+  times: { name:"倍的认识", icon:"✌️", cls:"l2", grade:"三上",
+    tip:"💡 '几倍'就是几个几。A 的 N 倍 = A×N；A 是 B 的几倍 = A÷B。",
+    teach:"'倍'就是'几个它那么多'。<br>🎈 生活里：你有 2 个气球，姐姐的气球是你的 3 倍，意思就是姐姐有 3 个'2 个'：2+2+2=6 个。<br>两个方向要分清：<br>① 求'A 的 N 倍'→ 把 A 摆 N 次，用乘法 A×N；<br>② 问'A 是 B 的几倍'→ 看 A 里面装得下几个 B，用除法 A÷B。",
+    gen(){ if(Math.random()<0.6){ const a=rnd(2,9), n=rnd(2,6); return {q:`<b>${a}</b> 的 <b>${n}</b> 倍是多少？`, type:"number", answer:a*n,
+             hint:`${n} 个 ${a} 加起来，就是 ${a}×${n}。`,
+             exp:`'${a} 的 ${n} 倍'就是 ${n} 个 ${a}：${Array(n).fill(a).join("+")}，也就是 ${a}×${n}。<br>🎈 你有 ${a} 个气球，姐姐是你的 ${n} 倍——把'你的一小堆'画 ${n} 堆，数数一共几个。`}; }
+           else { const b=rnd(2,6), k=rnd(2,5), a=b*k; return {q:`<b>${a}</b> 是 <b>${b}</b> 的几倍？`, type:"number", answer:k,
+             hint:`用除法：${a} ÷ ${b}。`,
+             exp:`问'${a} 是 ${b} 的几倍'，就是问 ${a} 里面装得下几个 ${b}。<br>画一画：${a} 个圆圈，每 ${b} 个圈成一组，能圈几组？<br>用算式就是除法：${a}÷${b}。`}; } } },
+
+  /* —— 三上：分数初步 —— */
+  frac: { name:"分数初步", icon:"🍰", cls:"l6", grade:"三上",
+    tip:"💡 平均分成几份，分母就是几；取了几份，分子就是几。",
+    teach:"分数是用来表示'一部分'的，关键词是<b>平均分</b>！<br>🍕 生活里：一张披萨平均切成 8 块，你吃了 3 块，就是吃了 8 份里的 3 份，写成 3/8。<br>下面的数（分母）＝一共平均分成几份；上面的数（分子）＝拿走了几份。<br>先看'切成几份'定下面，再看'拿了几份'定上面。",
+    gen(){ const n=rnd(3,8), m=rnd(1,n-1); const right=`${m}/${n}`;
+      const opts=shuffle([right, `${n}/${m}`, `${m}/${m+n}`]);
+      return {q:`一个饼平均分成 <b>${n}</b> 份，吃了 <b>${m}</b> 份，<br>吃了这个饼的几分之几？`, type:"choice", options:opts, answer:right,
+        hint:`分成 ${n} 份，分母就是 ${n}；吃了 ${m} 份，分子就是 ${m}。`,
+        exp:`🍕 画个圆当饼，平均切成 ${n} 块——分母（下面的数）就是 ${n}。<br>把吃掉的 ${m} 块涂上颜色——分子（上面的数）就是 ${m}。<br>连起来读：${n} 分之 ${m}。注意写的时候'先下后上'。`}; } },
+
+  /* —— 三下：单位量感（固定题库，随机抽） —— */
+  unit: { name:"单位量感", icon:"📏", cls:"l3", grade:"三下",
+    tip:"💡 找身边的东西比一比：手指甲宽约 1 厘米，一袋盐约 1 千克，门高约 2 米。",
+    teach:"选单位的窍门：拿身边最熟的东西当'尺子'来比！<br>📏 长度：手指甲宽≈1 厘米，教室门高≈2 米，硬币厚≈2 毫米，城市之间才用千米。<br>⚖️ 重量：一片药≈几百毫克，一个鸡蛋≈50 克，一袋盐≈1 千克，大象、卡车才用吨。<br>做题时问自己：这个东西跟哪把'尺子'差不多大/重？选那个单位准没错。",
+    bank:[
+      {q:"一支铅笔大约长 18 ( )", type:"choice", options:["厘米","米","千米"], answer:"厘米", hint:"铅笔很短，用最小的单位。"},
+      {q:"教室的门大约高 2 ( )", type:"choice", options:["厘米","米","千米"], answer:"米", hint:"门比你高，用米。"},
+      {q:"一个苹果大约重 200 ( )", type:"choice", options:["克","千克","吨"], answer:"克", hint:"一个苹果不太重，用克。"},
+      {q:"一袋大米大约重 10 ( )", type:"choice", options:["克","千克"], answer:"千克", hint:"一袋米很重，用千克。"},
+      {q:"一枚 1 元硬币大约厚 2 ( )", type:"choice", options:["毫米","厘米","米"], answer:"毫米", hint:"硬币很薄，用毫米。"},
+      {q:"从郑州到北京大约 700 ( )", type:"choice", options:["米","千米"], answer:"千米", hint:"很远的路，用千米。"},
+      {q:"一个鸡蛋大约重 50 ( )", type:"choice", options:["克","千克"], answer:"克", hint:"一个鸡蛋很轻，用克。"},
+      {q:"数学书大约厚 1 ( )", type:"choice", options:["毫米","厘米","米"], answer:"厘米", hint:"书的厚度，用厘米。"},
+      {q:"你的体重大约 30 ( )", type:"choice", options:["克","千克"], answer:"千克", hint:"人的体重用千克。"},
+      {q:"一辆大卡车大约重 5 ( )", type:"choice", options:["千克","吨"], answer:"吨", hint:"很重很重，用吨。"},
+      {q:"一根跳绳大约长 2 ( )", type:"choice", options:["厘米","米","千米"], answer:"米", hint:"跳绳要够小朋友甩起来，用米。"},
+      {q:"一张课桌大约高 70 ( )", type:"choice", options:["厘米","米","千米"], answer:"厘米", hint:"课桌没有你高，比米小，用厘米。"},
+      {q:"一辆自行车大约重 15 ( )", type:"choice", options:["克","千克"], answer:"千克", hint:"自行车挺重的，用千克。"},
+      {q:"一片感冒药大约重 300 ( )", type:"choice", options:["毫克","克","千克"], answer:"毫克", hint:"一片小药片很轻很轻，用最小的重量单位。"},
+      {q:"操场跑道一圈大约长 200 ( )", type:"choice", options:["米","千米"], answer:"米", hint:"跑一圈没有那么远，用米。"},
+      {q:"郑州到上海大约有 800 ( )", type:"choice", options:["米","千米"], answer:"千米", hint:"城市之间很远，用千米。"},
+      {q:"一枚曲别针大约长 3 ( )", type:"choice", options:["厘米","米"], answer:"厘米", hint:"曲别针很小，用厘米。"},
+      {q:"一头大象大约重 4 ( )", type:"choice", options:["千克","吨"], answer:"吨", hint:"大象非常非常重，用吨。"},
+      {q:"数学课本的厚度大约是 5 ( )", type:"choice", options:["毫米","厘米","米"], answer:"毫米", hint:"一本书的薄厚，用毫米更合适。"},
+    ]},
+
+  /* —— 归一·正反（每次随机出新题） —— */
+  guiyi: { name:"正反都会", icon:"🔄", cls:"l2", grade:"归一",
+    tip:"💡 先看：题目给的是【几份】还是【一份】？求一份用除法，求总数用乘法。可在纸上算。",
+    teach:"这种题的钥匙是找到'<b>一份</b>'。先问自己：题目告诉我的，是【一个的价钱】还是【好几个一共的钱】？<br>🛒 就像去超市：<br>· 知道一共的钱，想求一个多少钱 → 平均分回去，用<b>除法</b>；<br>· 知道一个的钱，要买好几个 → 一份一份加起来，用<b>乘法</b>。<br>口诀：求一份用除法，求总数用乘法。",
+    gen(){ const c=rnd(2,9), n=rnd(2,6), total=c*n;
+      if(Math.random()<0.5) return {q:`${n} 个一共 <b>${total}</b> 元，<b>1 个</b>多少元？`, type:"number", answer:c,
+        hint:`求一份，用除法：${total} ÷ ${n}。`,
+        exp:`题目给的 ${total} 元是 ${n} 个东西<b>一共</b>的钱，要求的是 1 个（一份）。<br>🛒 就像 ${n} 支雪糕一共 ${total} 元，把钱平均摊到每支上——平均分，用除法：${total}÷${n}。<br>算完检查：答案 × ${n} 应该变回 ${total}。`};
+      else return {q:`1 个 <b>${c}</b> 元，买 <b>${n} 个</b>多少元？`, type:"number", answer:total,
+        hint:`求总数，用乘法：${c} × ${n}。`,
+        exp:`题目给的 ${c} 元是<b>一个</b>的价钱（一份），要买 ${n} 个，就是 ${n} 个 ${c} 元加起来：${Array(n).fill(c).join("+")}。<br>加起来太慢，用乘法一步到位：${c}×${n}。`}; } },
+
+  /* —— 跨夜时间（每次随机出新题） —— */
+  time: { name:"跨夜时间", icon:"🕐", cls:"l3", grade:"时间",
+    tip:"💡 跨过半夜的窍门：先算【睡到夜里12点】几小时，再加【12点到起床】几小时。",
+    teach:"跨过半夜 12 点的时间，直接减会出错，要<b>分两段</b>算！<br>🌙 半夜 12 点就像旅途的中转站：先算'睡觉到半夜 12 点'一段，再算'半夜 12 点到起床'一段，两段加起来。<br>例：晚 9 点睡、早 6 点起——9 点到 12 点是 3 小时，12 点到 6 点是 6 小时，3+6=9 小时。<br>可以画一条时间线，把 12 点标在中间，两边分开数。",
+    gen(){ let bed,wake,h; do{ bed=rnd(20,22); h=rnd(8,11); wake=bed+h-24; }while(wake<5||wake>8);
+      return {q:`晚上 <b>${bed-12}:00</b> 睡觉，早上 <b>${wake}:00</b> 起床，<br>一共睡了几小时？`, type:"number", answer:h,
+        hint:`${bed-12}点到12点是 ${24-bed} 小时，12点到 ${wake} 点是 ${wake} 小时，加起来。`,
+        exp:`画一条时间线，把<b>半夜 12 点</b>标在中间当中转站。<br>第一段：晚上 ${bed-12} 点 → 半夜 12 点，扳着手指从 ${bed-12} 点数到 12 点，一共 ${24-bed} 小时。<br>第二段：半夜 12 点 → 早上 ${wake} 点，是 ${wake} 小时。<br>两段加起来：${24-bed}+${wake}=？`}; } },
+
+  /* —— 读题高手（固定题库，随机抽） —— */
+  read: { name:"读题高手", icon:"🔍", cls:"l4", grade:"应用题",
+    tip:"💡 读题三步：①先看问题在问什么 ②把没用的话划掉（陷阱！）③再选算式。",
+    teach:"应用题里常藏着'捣乱的数字'——不是题里的数都要用！读题三步走：<br>① 先看<b>最后一句</b>：问的到底是什么？在心里圈出来。<br>② 回头一句一句查：这个数字跟问题有关系吗？没关系的当场划掉！<br>🍐 比如问'苹果有几个'，那梨的数字就是来捣乱的，坚决不要它。<br>③ 只用剩下的数字列算式。",
+    bank:[
+      {q:"妈妈买了 3 袋苹果，每袋 5 个，又买了 2 个梨。<br>问：一共有多少个<b>苹果</b>？", type:"choice", options:["3×5=15","3×5+2=17","5+2=7"], answer:"3×5=15", hint:"问的是苹果！2个梨是来捣乱的。"},
+      {q:"停车场有 8 辆红车、6 辆蓝车，开走了 3 辆红车。<br>问：还剩几辆<b>红车</b>？", type:"choice", options:["8-3=5","8+6=14","8-3-6"], answer:"8-3=5", hint:"问红车，蓝车6辆是陷阱。"},
+      {q:"一本书 90 页，桃桃看了 30 页，每页 200 个字。<br>问：还剩多少页<b>没看</b>？", type:"choice", options:["90-30=60","90-30×200","30×200"], answer:"90-30=60", hint:"问剩几页，'200个字'来捣乱。"},
+      {q:"果园有 4 行苹果树，每行 6 棵，还有 5 棵梨树。<br>问：一共多少棵<b>苹果树</b>？", type:"choice", options:["4×6=24","4×6+5=29","6+5=11"], answer:"4×6=24", hint:"问苹果树，5棵梨树不加。"},
+      {q:"小明有 20 元，买了 1 支 8 元的笔，妈妈又给了 5 元。<br>问：买完笔后他<b>还剩</b>多少元？", type:"choice", options:["20-8=12","20-8+5=17","20+5=25"], answer:"20-8=12", hint:"'买完笔后'，妈妈后给的5元先别算。"},
+      {q:"教室有 5 排桌子，每排 4 张，讲台 1 张。<br>问：学生桌子一共多少<b>张</b>？", type:"choice", options:["5×4=20","5×4+1=21","5+4=9"], answer:"5×4=20", hint:"问学生桌子，讲台那张不算。"},
+      {q:"篮子里有 10 个鸡蛋，先拿走 3 个，又放进 2 个苹果。<br>问：现在有几个<b>鸡蛋</b>？", type:"choice", options:["10-3=7","10-3+2=9","10+2=12"], answer:"10-3=7", hint:"问鸡蛋，放进的2个是苹果，别加。"},
+      {q:"一支铅笔 2 元，一块橡皮 1 元。买 <b>4 支铅笔</b>。<br>问：买铅笔花多少钱？", type:"choice", options:["2×4=8","2×4+1=9","4+1=5"], answer:"2×4=8", hint:"只买铅笔，橡皮的1元是陷阱。"},
+      {q:"操场上 6 个男生、4 个女生在跑步，老师 1 人在旁边看。<br>问：<b>跑步</b>的一共多少人？", type:"choice", options:["6+4=10","6+4+1=11","6-4=2"], answer:"6+4=10", hint:"老师没跑，不算进去。"},
+      {q:"妈妈 35 岁，爸爸比妈妈大 3 岁，我 9 岁。<br>问：<b>爸爸</b>多少岁？", type:"choice", options:["35+3=38","35+9=44","35-3=32"], answer:"35+3=38", hint:"问爸爸，'我9岁'是来捣乱的。"},
+      {q:"书架上层放了 8 本故事书，下层放了 5 本，桃桃借走了 2 本故事书。<br>问：书架上还剩多少本<b>故事书</b>？", type:"choice", options:["8+5-2=11","8+5=13","8-2=6"], answer:"8+5-2=11", hint:"问剩下的故事书总数，要先加再减，别漏了'借走2本'。"},
+      {q:"文具店，一支钢笔 6 元，一块橡皮 2 元，桃桃有 20 元。<br>问：买 <b>3 支钢笔</b>要花多少钱？", type:"choice", options:["6×3=18","6×3+2=20","20-6=14"], answer:"6×3=18", hint:"只问买钢笔的钱，橡皮的2元和她有的20元都是干扰。"},
+      {q:"果园里种了 5 行桃树，每行 8 棵；后来又种了 10 棵梨树。<br>问：<b>桃树</b>一共多少棵？", type:"choice", options:["5×8=40","5×8+10=50","5+8=13"], answer:"5×8=40", hint:"问桃树，10棵梨树不算进去。"},
+      {q:"图书馆周一到周五每天借出 30 本书，周六借出 45 本书。<br>问：周一到周五<b>一共</b>借出多少本？", type:"choice", options:["30×5=150","30×5+45=195","30+45=75"], answer:"30×5=150", hint:"只问'周一到周五'，周六的45本不算在内。"},
+      {q:"小林有 24 元，用了 15 元买了一本书，妈妈又给了他 10 元。<br>问：买书<b>之前</b>他一共有多少钱？", type:"choice", options:["24","24-15","24+10"], answer:"24", hint:"问买书之前，后来给的10元还没发生，不用算进去。"},
+      {q:"班级有男生 18 人，女生 20 人，其中 5 个女生今天请假没来。<br>问：全班<b>一共</b>有多少人（不管来没来）？", type:"choice", options:["18+20=38","18+20-5=33","18-5=13"], answer:"18+20=38", hint:"问全班一共多少人，是问总人数，不是问'今天来的人数'。"},
+      {q:"农场有鸡 40 只，鸭比鸡少 12 只，鹅有 15 只。<br>问：<b>鸭</b>有多少只？", type:"choice", options:["40-12=28","40-12+15=43","40+15=55"], answer:"40-12=28", hint:"问鸭，鹅的15只是来捣乱的，别混进去算。"},
+    ]},
+
+  /* —— 万以内加减法（三上）：三位数、四位数加减，列竖式对齐数位 —— */
+  wanyi: { name:"万以内加减", icon:"🔢", cls:"l1", grade:"三上",
+    tip:"💡 三位数、四位数加减法，在纸上列竖式：数位对齐，从个位算起，满十进一、不够就向前一位借。",
+    teach:"大数加减和两位数是<b>同一套本事</b>，只是位数多了，别被大数字吓到！<br>💰 生活里：1200 元加 300 元，百元跟百元加就行。<br>竖式要点：右边对齐（个位对个位），从个位开始一位一位算，满十进一、不够借一。<br>✅ 算完用估算查一查：把两个数看成整百整千估个大概，要是差得太远，说明哪一位算错了，回头检查。",
+    gen(){ const t=rnd(1,4);
+      const mkexp=(a,b,op)=>{ const ra=Math.round(a/100)*100, rb=Math.round(b/100)*100;
+        return `别被大数吓到，还是竖式那一套：右边对齐（个位对个位），从个位开始一位一位${op==="+"?"加，满十进一":"减，不够就向前一位借"}。<br>✅ 先估一估：${a} 接近 ${ra}，${b} 接近 ${rb}，答案应该在 ${op==="+"?ra+rb:ra-rb} 附近。算完对一对，差太远就回头检查。`; };
+      if(t===1){ const a=rnd(120,600), b=rnd(120,999-a); return {q:`<b>${a}</b> + <b>${b}</b> = ?`, type:"number", answer:a+b, hint:"数位对齐，从个位加起，满十进一。", exp:mkexp(a,b,"+")}; }
+      if(t===2){ const a=rnd(1200,5000), b=rnd(300,999); return {q:`<b>${a}</b> + <b>${b}</b> = ?`, type:"number", answer:a+b, hint:"数位对齐，从个位加起，满十进一。", exp:mkexp(a,b,"+")}; }
+      if(t===3){ const a=rnd(1500,9000), b=rnd(300,999); return {q:`<b>${a}</b> − <b>${b}</b> = ?`, type:"number", answer:a-b, hint:"数位对齐，从个位减起，不够就向前一位借。", exp:mkexp(a,b,"−")}; }
+      const a=rnd(3000,9000), b=rnd(1000,a-500); return {q:`<b>${a}</b> − <b>${b}</b> = ?`, type:"number", answer:a-b, hint:"数位对齐，从个位减起，不够就向前一位借。", exp:mkexp(a,b,"−")};
+    } },
+
+  /* —— 多位数乘法（三上多位数乘一位数 / 三下两位数乘两位数） —— */
+  bigmult: { name:"多位数乘法", icon:"✖️", cls:"l5", grade:"三年级",
+    tip:"💡 多位数乘法用竖式：一位数乘的话，从个位开始一位一位乘，满几十向前进几；两位数乘两位数，分两步乘再把结果加起来。",
+    teach:"多位数乘法的秘密：<b>拆开来乘，再加起来</b>。<br>🪑 23×4 想成 (20+3)×4：20×4=80，3×4=12，80+12=92。<br>生活里：一排 23 个座位、共 4 排——先算整整齐齐的 20 个一排的 4 排，再算多出来的 3 个一排的 4 排，加起来。<br>竖式就是帮你把'拆开算'写整齐的工具，从个位开始，满几十向前进几。",
+    gen(){ const t=rnd(1,3);
+      if(t===1){ const a=rnd(11,49), b=rnd(2,9); const tens=Math.floor(a/10)*10, ones=a%10;
+        return {q:`<b>${a}</b> × <b>${b}</b> = ?`, type:"number", answer:a*b, hint:"两位数乘一位数：先算个位，再算十位，满十进一。",
+          exp:`把 ${a} 拆成 ${tens}+${ones}，分别乘 ${b}：<br>① ${tens}×${b}=${tens*b}（整十的部分）<br>② ${ones}×${b}=${ones*b}（零头的部分）<br>③ 两个结果加起来：${tens*b}+${ones*b}=？<br>🪑 就像 ${b} 排座位、每排 ${a} 个：先算整十的，再算零头的。`}; }
+      if(t===2){ const a=rnd(100,299), b=rnd(2,4); const h=Math.floor(a/100)*100, rest=a-Math.floor(a/100)*100;
+        return {q:`<b>${a}</b> × <b>${b}</b> = ?`, type:"number", answer:a*b, hint:"三位数乘一位数，从个位开始，一位一位算。",
+          exp:`把 ${a} 拆成 ${h}+${rest}：<br>① ${h}×${b}=${h*b}<br>② ${rest}×${b}=？（不确定就再拆小）<br>③ 两个加起来。<br>也可以直接列竖式：从个位开始一位一位乘 ${b}，满几十向前进几。`}; }
+      const a=rnd(11,29), b=rnd(11,29); const bt=Math.floor(b/10)*10, bo=b%10;
+      return {q:`<b>${a}</b> × <b>${b}</b> = ?`, type:"number", answer:a*b, hint:"两位数乘两位数：先用个位乘，再用十位乘，两次结果加起来。",
+        exp:`把 ${b} 拆成 ${bt}+${bo}，分两步乘：<br>① ${a}×${bo}=${a*bo}（个位那一步）<br>② ${a}×${bt}=${a*bt}（十位那一步，别忘了它是整十）<br>③ 加起来：${a*bo}+${a*bt}=？<br>竖式里第二行往左挪一位，就是在提醒你它是'几个十'。`};
+    } },
+
+  /* —— 周长与面积（三上认识周长 / 三下面积单元）：专治两者记混 —— */
+  perimeter_area: { name:"周长与面积", icon:"📐", cls:"l6", grade:"三上·三下",
+    tip:"💡 周长是绕图形一圈的长度（单位用厘米），面积是图形里面有多大（单位用平方厘米）。做题先想清楚问的是'一圈'还是'里面'，别搞混！",
+    teach:"周长和面积是两兄弟，最容易认错，先分清：<br>🏃 <b>周长</b>＝绕着操场<b>跑一圈</b>有多长（单位：厘米、米）；<br>🌱 <b>面积</b>＝操场<b>里面</b>铺满草皮要多大（单位：平方厘米、平方米）。<br>长方形：周长=(长+宽)×2，因为一圈是两条长加两条宽；面积=长×宽，因为里面一行摆'长'个小方块、摆'宽'行。<br>正方形四条边一样：周长=边长×4，面积=边长×边长。<br>做题先圈出题目问的是'一圈'还是'里面'！",
+    gen(){ const isRect=Math.random()<0.6; const isPerimeter=Math.random()<0.5;
+      if(isRect){ const l=rnd(4,20), w=rnd(2,Math.min(l-1,15));
+        if(isPerimeter) return {q:`一个长方形，长 <b>${l}</b> 厘米，宽 <b>${w}</b> 厘米，<br>周长是多少厘米？`, type:"number", answer:(l+w)*2, hint:`长方形周长 = (长+宽)×2 = (${l}+${w})×2。`,
+          exp:`问周长，就是<b>绕一圈</b>。🏃 画个长方形，沿着边走一圈：走一条长 ${l}、一条宽 ${w}、又一条长 ${l}、又一条宽 ${w}。<br>就是 ${l}+${w}+${l}+${w}，也可以先算 ${l}+${w}=${l+w}，再 ×2。`};
+        return {q:`一个长方形，长 <b>${l}</b> 厘米，宽 <b>${w}</b> 厘米，<br>面积是多少平方厘米？`, type:"number", answer:l*w, hint:`长方形面积 = 长×宽 = ${l}×${w}。`,
+          exp:`问面积，就是<b>里面有多大</b>。🌱 想象往里面铺 1 平方厘米的小方块：一行铺 ${l} 个，一共铺 ${w} 行。<br>数方块就是 ${l}×${w}。答案的单位别忘了带'平方'！`};
+      }
+      const s=rnd(3,15);
+      if(isPerimeter) return {q:`一个正方形，边长 <b>${s}</b> 厘米，<br>周长是多少厘米？`, type:"number", answer:s*4, hint:`正方形周长 = 边长×4 = ${s}×4。`,
+        exp:`问周长＝绕一圈。正方形 4 条边一样长，走一圈就是 4 个 ${s}：${s}+${s}+${s}+${s}，用乘法 ${s}×4。`};
+      return {q:`一个正方形，边长 <b>${s}</b> 厘米，<br>面积是多少平方厘米？`, type:"number", answer:s*s, hint:`正方形面积 = 边长×边长 = ${s}×${s}。`,
+        exp:`问面积＝里面铺方块。一行铺 ${s} 个小方块，铺 ${s} 行，就是 ${s}×${s}。<br>注意：正方形面积是'边长×边长'，不是 ×4（×4 是周长）！`};
+    } },
+
+  /* —— 位置与方向（三下）：固定题库 —— */
+  direction: { name:"位置与方向", icon:"🧭", cls:"l2", grade:"三下",
+    tip:"💡 记住口诀：面朝北，右边是东、左边是西；地图'上北下南、左西右东'。",
+    teach:"认方向有两个法宝：<br>🌅 <b>太阳</b>：早上从东边升、傍晚从西边落。早上面对太阳站好：前面是东、后面是西、左手是北、右手是南——不确定时就在心里摆这个姿势。<br>🗺️ <b>地图</b>：上北下南、左西右东。<br>斜方向：夹在北和东中间叫东北，其他同理，把两个字拼起来就行。",
+    bank:[
+      {q:"早晨，太阳从哪个方向升起？", type:"choice", options:["东","西","南","北"], answer:"东", hint:"'东升西落'。"},
+      {q:"傍晚，太阳一般从哪个方向落下？", type:"choice", options:["西","东","南","北"], answer:"西", hint:"'东升西落'。"},
+      {q:"指南针红色的针通常指向哪个方向？", type:"choice", options:["北","南","东","西"], answer:"北", hint:"指南针红色针一般指北。"},
+      {q:"面朝北站立，你的右手边是哪个方向？", type:"choice", options:["东","西","南","北"], answer:"东", hint:"面朝北，右手边是东，左手边是西。"},
+      {q:"面朝南站立，你的后面是哪个方向？", type:"choice", options:["北","东","西","南"], answer:"北", hint:"南的正对面是北。"},
+      {q:"地图上通常'上北下南'，那么地图的左边表示哪个方向？", type:"choice", options:["西","东","南","北"], answer:"西", hint:"上北下南，左西右东。"},
+      {q:"北和东中间的那个方向，叫做？", type:"choice", options:["东北","西北","东南","西南"], answer:"东北", hint:"北、东中间就是东北。"},
+      {q:"从家到学校先向东走，再向北走，那么从学校回家要怎么走？", type:"choice", options:["先向南走，再向西走","先向北走，再向东走","一直向东走"], answer:"先向南走，再向西走", hint:"回去的方向和去的方向正好相反。"},
+      {q:"教室的门朝南，那门正对面的墙一般是哪个方向？", type:"choice", options:["北","东","西","南"], answer:"北", hint:"南的正对面是北。"},
+      {q:"一个人面向东站立，他的左手边是哪个方向？", type:"choice", options:["北","南","东","西"], answer:"北", hint:"面朝东，左手边是北，右手边是南。"},
+    ]},
+
+  /* —— 小数的初步认识（三下）：只学一位小数，不碰更复杂的小数运算 —— */
+  decimal: { name:"小数初步认识", icon:"🔟", cls:"l3", grade:"三下",
+    tip:"💡 一位小数就是零点几，比如0.3就是十分之三。用'元角'理解最直观：1元=10角，3角就是0.3元。比大小先比整数部分，再比小数点后一位。",
+    teach:"小数就是'不满 1 的零头'。<br>💰 用钱想最好懂：1 元=10 角。把 1 元平均分成 10 份，1 份就是 1 角，写成 0.1 元；3 角就是 0.3 元。<br>加减：0.3+0.4 想成 3 角+4 角=7 角=0.7 元，就这么简单。<br>比大小：先比小数点<b>前面</b>的整数，一样大再比小数点后第一位。",
+    gen(){ const t=rnd(1,4);
+      if(t===1){ const n=rnd(1,9); return {q:`<b>${n}</b> 角是多少元？（写成一位小数）`, type:"choice", options:shuffle([`0.${n}`,`${n}.0`,`0.0${n}`]), answer:`0.${n}`, hint:`1元=10角，${n}角就是十分之${n}元，写成0.${n}元。`,
+        exp:`💰 1 元=10 角，${n} 角不够 1 元，只是 10 份里的 ${n} 份。<br>不满 1，所以小数点前写 0；${n} 份写在小数点后第一位：0.${n} 元。<br>检查：${n}.0 是 ${n} 元（太多了），0.0${n} 是 ${n} 分（太少了）。`}; }
+      if(t===2){ let a=rnd(1,9), b=rnd(1,9); while(b===a) b=rnd(1,9);
+        return {q:`比较大小：<b>0.${a}</b> 和 <b>0.${b}</b>，哪个更大？`, type:"choice", options:[`0.${a}`,`0.${b}`], answer: a>b?`0.${a}`:`0.${b}`, hint:"小数点后面的数字大，这个小数就大。",
+          exp:`💰 换成钱：0.${a} 元就是 ${a} 角，0.${b} 元就是 ${b} 角。<br>${a} 角和 ${b} 角，哪个钱多？钱多的那个小数就大。`}; }
+      if(t===3){ const a=rnd(1,4), b=rnd(1,9-a); return {q:`<b>0.${a}</b> + <b>0.${b}</b> = ?（写成一位小数）`, type:"choice", options:shuffle([`0.${a+b}`,`0.${a}${b}`,`${a+b}.0`]), answer:`0.${a+b}`, hint:`0.${a}是${a}个0.1，0.${b}是${b}个0.1，加起来是${a+b}个0.1。`,
+        exp:`💰 换成钱算：0.${a} 元=${a} 角，0.${b} 元=${b} 角。<br>${a} 角+${b} 角=几角？再把它写回小数（几角就是零点几元）。`}; }
+      const a=rnd(4,9), b=rnd(1,a-1); return {q:`<b>0.${a}</b> − <b>0.${b}</b> = ?（写成一位小数）`, type:"choice", options:shuffle([`0.${a-b}`,`0.${a}${b}`,`${a-b}.0`]), answer:`0.${a-b}`, hint:`${a}个0.1减${b}个0.1，还剩${a-b}个0.1。`,
+        exp:`💰 换成钱算：0.${a} 元=${a} 角，花掉 0.${b} 元=${b} 角。<br>${a} 角−${b} 角=几角？再写回小数：几角就是零点几元。`};
+    } },
+
+  /* —— 年月日的秘密（三下）：固定题库 —— */
+  calendar: { name:"年月日的秘密", icon:"📅", cls:"l4", grade:"三下",
+    tip:"💡 一三五七八十腊(12)，三十一天永不差；四六九冬(11)三十天，平年二月二十八，闰年二月把一加。",
+    teach:"月份天数有首儿歌：<b>一三五七八十腊（12 月），三十一天永不差；四六九冬（11 月）三十天</b>；只有二月最特殊——平年 28 天，闰年 29 天。<br>✊ 还可以用拳头数：凸起来的关节是大月（31 天），凹下去的是小月，数到 7 月再从头。<br>闰年大约每 4 年一次，那年 2 月多 1 天，全年 366 天；平年 365 天。",
+    bank:[
+      {q:"一年有多少个月？", type:"number", answer:12, hint:"数一数日历。"},
+      {q:"下面哪一组都是'大月'(31天)？", type:"choice", options:["1、3、5、7、8、10、12月","2、4、6月","全部月份"], answer:"1、3、5、7、8、10、12月", hint:"记住口诀：一三五七八十腊，三十一天永不差。"},
+      {q:"平年二月有多少天？", type:"number", answer:28, hint:"平年二月最少，只有28天。"},
+      {q:"闰年二月有多少天？", type:"number", answer:29, hint:"闰年二月比平年多1天。"},
+      {q:"通常大约每隔几年会遇到一次闰年？", type:"number", answer:4, hint:"差不多每4年有一个闰年。"},
+      {q:"一个星期有多少天？", type:"number", answer:7, hint:"周一到周日。"},
+      {q:"6月是大月还是小月？", type:"choice", options:["小月(30天)","大月(31天)"], answer:"小月(30天)", hint:"4、6、9、11月都是30天的小月。"},
+      {q:"今天是7月1日，再过10天是几月几日？", type:"choice", options:["7月11日","7月10日","8月1日"], answer:"7月11日", hint:"7月1日加10天，就是7月11日。"},
+      {q:"平年一年一共有多少天？", type:"number", answer:365, hint:"平年365天，闰年366天。"},
+      {q:"闰年一年一共有多少天？", type:"number", answer:366, hint:"比平年多1天，因为二月多了1天。"},
+    ]},
+
+  /* —— 数据的收集与整理（三下）：固定题库 —— */
+  datastat: { name:"数据的收集与整理", icon:"📊", cls:"l5", grade:"三下",
+    tip:"💡 看统计表要先弄清楚每一行/每一列代表什么，再比大小、算总数。",
+    teach:"统计就是'把数字排好队，一眼看清楚'。<br>📊 看统计表三步：① 先看标题和每行每列是什么意思；② 比一比，找最大、最小的数；③ 要总数就全部加起来。<br>🍉 生活里：统计全家人爱吃的水果再去买，就不会买错——这就是统计的用处。<br>用'正'字记票数：一个'正'字 5 笔，正好记 5 票。",
+    bank:[
+      {q:"老师统计全班喜欢的运动：篮球12人，跳绳8人，游泳5人。<br>喜欢的人最多的运动是？", type:"choice", options:["篮球","跳绳","游泳"], answer:"篮球", hint:"12>8>5。"},
+      {q:"上面的统计里，喜欢的人最少的运动是？", type:"choice", options:["游泳","跳绳","篮球"], answer:"游泳", hint:"5是最小的数。"},
+      {q:"篮球12人、跳绳8人，两项一共多少人喜欢？", type:"number", answer:20, hint:"12+8=20。"},
+      {q:"统计表记录一天经过校门口的车：小汽车15辆，公交车6辆，摩托车9辆。<br>一共统计了多少辆车？", type:"number", answer:30, hint:"15+6+9=30。"},
+      {q:"想知道全班同学最喜欢的颜色，最好的办法是？", type:"choice", options:["做一次调查统计","随便猜一个","只问一个人"], answer:"做一次调查统计", hint:"调查统计才能反映大家的真实想法。"},
+      {q:"统计表能帮我们很快看出什么？", type:"choice", options:["数量的多少和排名","这些事物的味道","事物的价格"], answer:"数量的多少和排名", hint:"统计表最擅长比数量。"},
+      {q:"用'正'字记录票数，一个完整的'正'字表示几票？", type:"number", answer:5, hint:"'正'字有5笔，每一笔代表1票。"},
+      {q:"四个组收集空瓶子：一组10个，二组8个，三组14个，四组6个。<br>哪个组收集得最多？", type:"choice", options:["三组","一组","四组"], answer:"三组", hint:"14是最大的数。"},
+      {q:"上面四个组一共收集了多少个瓶子？", type:"number", answer:38, hint:"10+8+14+6=38。"},
+    ]},
+
+  /* —— 多步挑战：把前面几关的本事组合起来，一道题要算两步 —— */
+  challenge: { name:"多步挑战", icon:"🚀", cls:"l7", grade:"挑战",
+    tip:"💡 这种题要算两步！先想清楚第一步算出什么，第二步才能接着算。可以在纸上把每一步都写下来。",
+    teach:"两步题就像上楼梯：一步跨不上去，分两步就轻松了！🪜<br>秘诀是倒着想：先问自己'要算出最后的答案，我还<b>缺哪个数</b>？'——缺的那个数，就是第一步要先算的。<br>把第一步的结果写在纸上，再拿它算第二步。<br>慢就是快，一步一步写清楚的人反而先做完。",
+    gen(){ const t=rnd(1,5);
+      if(t===1){ const a=rnd(2,6), b=rnd(3,9), c=rnd(6,20);
+        return {q:`妈妈买了 <b>${a}</b> 支钢笔，每支 <b>${b}</b> 元，<br>又买了 <b>1</b> 本 <b>${c}</b> 元的笔记本，一共花了多少元？`,
+          type:"number", answer:a*b+c, hint:`先算钢笔的钱：${a}×${b}，再加上笔记本的 ${c} 元。`,
+          exp:`问'一共花了多少'，就是钢笔的钱＋笔记本的钱。<br>笔记本的钱知道（${c} 元），钢笔的总钱还<b>不知道</b>——所以第一步先算它：${a} 支 × 每支 ${b} 元 = ？<br>第二步：把算出来的钢笔钱再加 ${c}。<br>🛒 就像在文具店排队付两次钱，一次付钢笔、一次付本子。`}; }
+      if(t===2){ const unit=rnd(2,9), n1=rnd(2,6); let n2=rnd(2,6); while(n2===n1) n2=rnd(2,6); const total=unit*n1;
+        return {q:`<b>${n1}</b> 箱苹果一共 <b>${total}</b> 个，每箱一样多，<br>买 <b>${n2}</b> 箱一共多少个？`,
+          type:"number", answer:unit*n2, hint:`先求 1 箱几个：${total}÷${n1}；再算 ${n2} 箱一共多少：乘 ${n2}。`,
+          exp:`要算 ${n2} 箱有几个，得先知道<b>1 箱</b>有几个——这就是缺的那个数。<br>第一步：${total} 个平均装在 ${n1} 箱里，1 箱 = ${total}÷${n1} 个。<br>第二步：1 箱的个数 × ${n2}。<br>🔑 钥匙永远是先找到'一份'。`}; }
+      if(t===3){ const a=rnd(3,9), b=rnd(2,4);
+        return {q:`小华有 <b>${a}</b> 本书，小丽的书是小华的 <b>${b}</b> 倍，<br>小丽比小华多多少本？`,
+          type:"number", answer:a*b-a, hint:`先算小丽有几本：${a}×${b}，再减去小华的 ${a} 本。`,
+          exp:`问'小丽比小华<b>多</b>多少'，要用小丽的减小华的。小华的知道（${a} 本），小丽的还<b>不知道</b>——第一步先算她：${a} 的 ${b} 倍 = ${a}×${b}。<br>第二步：小丽的本数 − ${a}。<br>画两条线段比一比：小华一小段，小丽 ${b} 段，多出来的就是 ${b}−1 段。`}; }
+      if(t===4){ const boxes=rnd(2,3), a=rnd(1, Math.floor(9/boxes));
+        return {q:`一箱橙子重 <b>${a}</b> 千克，妈妈买了 <b>${boxes}</b> 箱，<br>一共多少<b>克</b>？（1千克=1000克）`,
+          type:"number", answer:a*boxes*1000, hint:`先算一共几千克：${a}×${boxes}，再乘 1000 换成克。`,
+          exp:`第一步：先算一共几<b>千克</b>：${a}×${boxes} = ？千克。<br>第二步：题目问的是<b>克</b>，要换单位！1 千克=1000 克，所以把千克数 ×1000。<br>💰 就像 1 元换 10 角一样，千克换克就是乘 1000，后面添三个 0。`}; }
+      const ans=rnd(2,8), b=rnd(2,4), a=ans*b;
+      return {q:`钢笔每支 <b>${a}</b> 元，正好是橡皮价格的 <b>${b}</b> 倍。<br>橡皮多少元一块？`,
+        type:"number", answer:ans, hint:`钢笔是橡皮的 ${b} 倍，反过来用除法：${a}÷${b}。`,
+        exp:`钢笔（${a} 元）是橡皮的 ${b} 倍——意思是 ${a} 元里装着 ${b} 个'橡皮的价钱'。<br>求橡皮，就把 ${a} 平均分成 ${b} 份：${a}÷${b}。<br>✅ 检查：算出来的答案 ×${b}，应该正好变回 ${a}。`};
+    } },
+};
+
+/* 关卡菜单、出题、判分、动画等全部由共用引擎处理 */
+</script>
+<script src="../_engine/quiz.js"></script>
+</body>
+</html>

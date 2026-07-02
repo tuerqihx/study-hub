@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃学习台 🏡</title>
+<style>
+  * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+  input { -webkit-user-select: text; user-select: text; }
+  html,body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg,#fff7e6 0%,#ffeef5 50%,#e8f4ff 100%);
+    color:#3a3a4a; min-height:100vh; padding:24px 18px 60px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  /* 顶部问候 */
+  .top { text-align:center; margin-bottom:18px; }
+  .top h1 { font-size: 40px; margin:6px 0; letter-spacing:2px; }
+  .hello { font-size: 22px; color:#7a6; font-weight:bold; }
+  .datebar { font-size:16px; color:#999; margin-top:4px; }
+
+  /* 奖励面板 */
+  .reward {
+    background:#fff; border-radius:24px; padding:18px 20px; margin:0 0 22px;
+    box-shadow:0 6px 20px rgba(255,170,120,.18); border:3px solid #ffe2b8;
+  }
+  .reward-row { display:flex; justify-content:space-around; text-align:center; flex-wrap:wrap; gap:10px;}
+  .stat { flex:1; min-width:90px; }
+  .stat .num { font-size:34px; font-weight:bold; color:#ff8c42; }
+  .stat .lbl { font-size:15px; color:#888; margin-top:2px;}
+  .ladder { margin-top:14px; padding-top:14px; border-top:2px dashed #ffe2b8; }
+  .ladder .title { font-size:15px; color:#888; margin-bottom:10px; }
+  .ladder-row { display:flex; justify-content:space-around; text-align:center; flex-wrap:wrap; gap:8px; }
+  .ladder-row .cell { flex:1; min-width:70px; }
+  .ladder-row .ce { font-size:34px; line-height:1; }
+  .ladder-row .cn { font-size:20px; font-weight:bold; color:#ff8c42; margin-top:2px; }
+  .ladder-row .cl { font-size:13px; color:#999; }
+  .ladder-row .cell.hot .ce { filter:drop-shadow(0 0 6px #ffd34d); }
+  .ladder-hint { text-align:center; font-size:15px; color:#a6772f; margin-top:12px; line-height:1.5; }
+  .ladder-btns { text-align:center; margin-top:12px; }
+  .redeem-btn { background:linear-gradient(140deg,#ff9a56,#ff6b6b); color:#fff; border:none; border-radius:14px;
+    font-size:18px; font-weight:bold; padding:10px 22px; cursor:pointer; font-family:inherit; box-shadow:0 4px 12px rgba(255,120,90,.3); }
+  .redeem-btn:active { transform:scale(.97); }
+  .parent-link { font-size:13px; color:#bbb; margin-left:14px; cursor:pointer; text-decoration:underline; }
+  .redeem-panel { margin-top:14px; background:#fff7ef; border-radius:16px; padding:14px; }
+  .redeem-panel .rtitle { font-size:15px; color:#a6772f; margin-bottom:10px; text-align:center; }
+  .reward-opt { display:block; width:100%; background:#fff; border:2px solid #ffd9b0; border-radius:12px;
+    font-size:18px; font-weight:bold; color:#ff7a33; padding:12px; margin:8px 0; cursor:pointer; font-family:inherit; }
+  .reward-opt:active { transform:scale(.99); background:#fff0e0; }
+
+  /* 今日任务 */
+  .today { background:#fff; border-radius:24px; padding:18px 20px; margin:0 0 22px; box-shadow:0 6px 20px rgba(90,150,255,.15); border:3px solid #cfe6ff; }
+  .today .t-title { font-size:18px; font-weight:bold; color:#3b82f6; margin-bottom:12px; text-align:center; }
+  .t-list { display:flex; flex-direction:column; gap:10px; }
+  .t-item { display:flex; align-items:center; gap:10px; background:#f4f9ff; border-radius:14px; padding:10px 12px; }
+  .t-item.offline { background:#fff7e6; }
+  .t-item .ti { font-size:26px; }
+  .t-item .tn { flex:1; font-size:17px; font-weight:bold; }
+  .t-item .tg { background:#3b82f6; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:bold; padding:7px 16px; cursor:pointer; font-family:inherit; }
+  .t-item .tg:active { transform:scale(.96); }
+  .t-bar { height:14px; background:#eef0f3; border-radius:10px; overflow:hidden; margin:14px 0 6px; }
+  .t-fill { height:100%; width:0; border-radius:10px; background:linear-gradient(90deg,#5ac8fa,#3b82f6); transition:width .4s; }
+  .t-prog { text-align:center; font-size:15px; color:#3b82f6; font-weight:bold; }
+  .grid-title { font-size:16px; color:#999; font-weight:bold; margin:4px 4px 10px; }
+
+  /* 科目卡片 */
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; }
+  .card {
+    border-radius:24px; padding:22px 16px; text-align:center; cursor:pointer;
+    border:none; color:#fff; font-family:inherit; transition:transform .12s, box-shadow .12s;
+    box-shadow:0 6px 16px rgba(0,0,0,.12); position:relative;
+  }
+  .card:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 10px 24px rgba(0,0,0,.18);}
+  .card:active { transform:translateY(0) scale(.98); }
+  .card .ico { font-size:54px; display:block; }
+  .card .name { font-size:23px; font-weight:bold; margin-top:6px; }
+  .card .sub  { font-size:14px; opacity:.92; margin-top:4px; }
+  .c-en  { background:linear-gradient(140deg,#5ac8fa,#3b82f6); }
+  .c-math{ background:linear-gradient(140deg,#ff9a56,#ff6b6b); }
+  .c-cn  { background:linear-gradient(140deg,#9b8cff,#7c5cff); }
+  .c-sci { background:linear-gradient(140deg,#56d6a0,#1fae8c); }
+  .c-logic{ background:linear-gradient(140deg,#ffcf5c,#ff9f43); }
+  .soon { opacity:.55; cursor:default; }
+  .soon:hover { transform:none; box-shadow:0 6px 16px rgba(0,0,0,.12);}
+  .badge-soon {
+    position:absolute; top:10px; right:10px; background:rgba(255,255,255,.9);
+    color:#666; font-size:12px; padding:2px 8px; border-radius:10px; font-weight:bold;
+  }
+
+  /* 家长看板：错题本 */
+  .reviewbook { margin-top:24px; background:#fff; border-radius:20px; padding:16px 20px;
+    border:3px dashed #ddd; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .rv-title { font-size:16px; font-weight:bold; color:#888; margin-bottom:10px; }
+  .rv-list { display:flex; flex-direction:column; gap:6px; }
+  .rv-item { display:flex; align-items:baseline; gap:8px; background:#fafafa; border-radius:10px; padding:8px 10px; font-size:14px; }
+  .rv-item .rv-subj { flex:0 0 auto; font-weight:bold; color:#666; }
+  .rv-item .rv-q { flex:1; color:#444; }
+  .rv-item .rv-d { flex:0 0 auto; color:#bbb; font-size:12px; }
+  .rv-empty { color:#bbb; font-size:15px; text-align:center; padding:6px; }
+  .rv-locked { text-align:center; padding:10px; }
+  .rv-unlock-btn { background:#f4f4f4; border:2px dashed #ccc; color:#999; font-size:15px; font-weight:bold;
+    padding:10px 20px; border-radius:12px; cursor:pointer; font-family:inherit; }
+  .rv-unlock-btn:active { transform:scale(.97); }
+
+  /* 电脑小达人 */
+  .pcskill {
+    margin-top:24px; background:#fff; border-radius:20px; padding:16px 20px;
+    border:3px solid #d9ecff; box-shadow:0 4px 14px rgba(80,150,255,.12);
+  }
+  .pcskill h3 { margin:0 0 8px; font-size:18px; color:#3b82f6;}
+  .pcskill .tip { font-size:17px; line-height:1.6; }
+  .pcskill .next { margin-top:10px; background:#eaf4ff; border:none; color:#3b82f6;
+    font-size:15px; padding:6px 14px; border-radius:12px; cursor:pointer; font-family:inherit;}
+
+  .footer { text-align:center; margin-top:26px; color:#bbb; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="hello" id="hello">你好呀，桃桃！</div>
+    <h1>🏡 桃桃学习台</h1>
+    <div class="datebar" id="datebar"></div>
+  </div>
+
+  <!-- 奖励面板 -->
+  <div class="reward">
+    <div class="reward-row">
+      <div class="stat"><div class="num" id="totalStars">0</div><div class="lbl">⭐ 累计星星</div></div>
+      <div class="stat"><div class="num" id="streak">0</div><div class="lbl">🔥 连续打卡</div></div>
+      <div class="stat"><div class="num" id="todayStars">0</div><div class="lbl">今天的星星</div></div>
+      <div class="stat"><div class="num" id="dayCount">0</div><div class="lbl">📅 学习天数</div></div>
+    </div>
+    <div class="ladder">
+      <div class="title">🎁 我的奖励册 —— 5⭐换1🌸，5🌸换1🍎，5🍎换1🌳，🌳换大奖！</div>
+      <div class="ladder-row" id="ladderRow"></div>
+      <div class="ladder-hint" id="ladderHint"></div>
+      <div class="ladder-btns">
+        <button class="redeem-btn" id="redeemBtn" onclick="openRedeem()">🎁 兑换奖励</button>
+        <span class="parent-link" onclick="setRewards()">✏️ 家长设置奖励</span>
+      </div>
+      <div id="redeemPanel" class="redeem-panel" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 今日任务 -->
+  <div class="today">
+    <div class="t-title">📅 今天做这些（攒到 <b id="goalNum">5</b> ⭐ 就达标啦！）</div>
+    <div class="t-list" id="todayList"></div>
+    <div class="t-bar"><div class="t-fill" id="todayFill"></div></div>
+    <div class="t-prog" id="todayProg"></div>
+  </div>
+
+  <!-- 科目卡片 -->
+  <div class="grid-title">📚 所有科目（想多玩，自己挑）</div>
+  <div class="grid">
+    <button class="card c-en" onclick="go('英语/发音练习/英语发音练习.html')">
+      <span class="ico">🗣️</span><span class="name">英语发音</span><span class="sub">跟读闯关 · 拿星星</span>
+    </button>
+    <button class="card c-math" onclick="go('数学/数学练习.html')">
+      <span class="ico">📐</span><span class="name">数学练习</span><span class="sub">闯四关 · 拿星星</span>
+    </button>
+    <button class="card c-cn" onclick="go('语文/语文阅读.html')">
+      <span class="ico">📖</span><span class="name">语文阅读</span><span class="sub">读故事 · 答问题</span>
+    </button>
+    <button class="card c-sci" onclick="go('科学/科学闯关.html')">
+      <span class="ico">🔬</span><span class="name">科学闯关</span><span class="sub">动手玩 · 拿星星</span>
+    </button>
+    <button class="card c-logic" onclick="go('逻辑/逻辑闯关.html')">
+      <span class="ico">🧩</span><span class="name">逻辑游戏</span><span class="sub">动动脑 · 真好玩</span>
+    </button>
+  </div>
+
+  <!-- 家长看板：错题本（密码可见） -->
+  <div class="reviewbook">
+    <div class="rv-title">👀 家长看板 · 最近错题</div>
+    <div id="rvLocked" class="rv-locked">
+      <button class="rv-unlock-btn" onclick="unlockReview()">🔒 输入密码查看</button>
+    </div>
+    <div class="rv-list" id="reviewList" style="display:none;"></div>
+  </div>
+
+  <!-- 电脑小达人 -->
+  <div class="pcskill">
+    <h3>💻 电脑小达人 · 一步步学会用电脑</h3>
+    <div id="pcNo" style="font-size:14px;color:#3b82f6;font-weight:bold;margin-bottom:6px;"></div>
+    <div class="tip" id="pcTip" style="font-size:17px;line-height:1.7;"></div>
+    <div id="pcTry"></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="next" onclick="pcPrev()">← 上一课</button>
+      <button class="next" onclick="pcNext()">下一课 →</button>
+    </div>
+  </div>
+
+  <div class="footer">用完直接关掉浏览器窗口就行～ 明天再来挣星星！</div>
+
+</div>
+
+<script>
+/* ============ 跳转 / 提示 ============ */
+function go(path){ location.href = path; }
+function soon(name){ alert("「"+name+"」马上就来啦！\n再等爸爸做好哦 😊"); }
+
+/* ============ 日期问候 ============ */
+const WEEK = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+(function(){
+  const d = new Date();
+  document.getElementById("datebar").textContent =
+    d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日 "+WEEK[d.getDay()];
+  const h = d.getHours();
+  const greet = h<11 ? "早上好呀，桃桃！" : (h<18 ? "下午好呀，桃桃！" : "晚上好呀，桃桃！");
+  document.getElementById("hello").textContent = greet;
+})();
+
+/* ============ 奖励汇总：扫描所有 taotao_*_v1 学习数据 ============
+   约定：每个学习App把数据存成  localStorage["taotao_<科目>_v1"] = {days:{ "2026-07-06":{stars:N}, ... }}
+   主页自动把所有App的星星按天合并 —— 以后新做的App只要照这个格式存，就会自动出现在这里。 */
+/* 奖励阶梯：5⭐=1🌸，5🌸=1🍎，5🍎=1🌳 → 1🌳=125⭐ */
+const PER = 5;
+const TREE_COST = PER*PER*PER;   // 125 ⭐ = 1 棵大树
+/* 主页自己的小账本：已兑换花掉的星星 + 奖励清单 */
+const HUB_KEY = "taotao_hub_v1";
+const DEFAULT_REWARDS = ["看一集喜欢的动画片","去公园玩一次","选一本新的课外书","一支冰淇淋","周末多30分钟游戏时间","和爸爸妈妈做一次小手工"];
+function loadHub(){ try{ return JSON.parse(localStorage.getItem(HUB_KEY))||{spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; }catch(e){ return {spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; } }
+function saveHub(){ try{ localStorage.setItem(HUB_KEY,JSON.stringify(HUB)); }catch(e){} }
+let HUB = loadHub(); if(!HUB.rewards||!HUB.rewards.length) HUB.rewards=DEFAULT_REWARDS.slice();
+function dkey(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+
+function collectDays(){
+  // 返回 { "2026-07-06": 合并后的总星星, ... }
+  const merged = {};
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i);
+    if(!/^taotao_.+_v1$/.test(key)) continue;
+    let obj; try { obj = JSON.parse(localStorage.getItem(key)); } catch(e){ continue; }
+    if(!obj || !obj.days) continue;
+    for(const day in obj.days){
+      const rec = obj.days[day] || {};
+      const s = Number(rec.stars)||0;
+      merged[day] = (merged[day]||0) + s;
+    }
+  }
+  return merged;
+}
+
+function refreshReward(){
+  const days = collectDays();
+  const allDates = Object.keys(days).sort();
+  let total = 0, todayCount=0;
+  const today = dkey(new Date());
+  allDates.forEach(d=>{ total += days[d]; });
+  todayCount = days[today] || 0;
+
+  // 连续打卡：从今天(或昨天)往前数有活动的天
+  function active(k){ return (days[k]||0) > 0; }
+  let probe = new Date();
+  if(!active(dkey(probe))) probe.setDate(probe.getDate()-1);
+  let streak = 0;
+  while(active(dkey(probe))){ streak++; probe.setDate(probe.getDate()-1); }
+
+  document.getElementById("totalStars").textContent = total;
+  document.getElementById("streak").textContent = streak;
+  document.getElementById("todayStars").textContent = todayCount;
+  document.getElementById("dayCount").textContent = allDates.filter(d=>days[d]>0).length;
+
+  // 可用星星 = 累计获得 − 已兑换花掉；再换算成 树/果/花/星（五进制阶梯）
+  const avail = Math.max(0, total - (HUB.spent||0));
+  window.__earnedTotal = total; window.__avail = avail;
+  const trees = Math.floor(avail / TREE_COST);
+  let r = avail % TREE_COST;
+  const fruits = Math.floor(r / (PER*PER)); r = r % (PER*PER);
+  const flowers = Math.floor(r / PER);
+  const starsLeft = r % PER;
+  window.__trees = trees;
+
+  const cell=(emoji,n,label,hot)=>'<div class="cell'+(hot?' hot':'')+'"><div class="ce">'+emoji+'</div><div class="cn">× '+n+'</div><div class="cl">'+label+'</div></div>';
+  document.getElementById("ladderRow").innerHTML =
+    cell("🌳",trees,"大树",trees>0)+cell("🍎",fruits,"果子")+cell("🌸",flowers,"小花")+cell("⭐",starsLeft,"星星");
+
+  let hint = "再得 <b>"+(PER-starsLeft)+"</b> 颗 ⭐ 就能多开 1 朵 🌸！";
+  if(trees>0) hint += "<br>🎉 你有 <b>"+trees+"</b> 棵大树 🌳，可以兑换大奖啦！";
+  else hint += "<br>攒满 1 棵大树 🌳（"+TREE_COST+"⭐）就能换大奖，还差 <b>"+(TREE_COST-avail)+"</b> 颗 ⭐，加油！";
+  document.getElementById("ladderHint").innerHTML = hint;
+}
+refreshReward();
+// 从别的App回到主页时刷新（星星实时同步累积）
+window.addEventListener("pageshow", refreshReward);
+
+/* ============ 家长看板：汇总所有 App 的错题 ============ */
+const SUBJ_LABEL = {math:"📐数学", chinese:"📖语文", science:"🔬科学", logic:"🧩逻辑", pron:"🗣️英语"};
+function esc(s){ return String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function collectReview(){
+  const items = [];
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i);
+    if(!/^taotao_.+_v1$/.test(key)) continue;
+    let obj; try { obj = JSON.parse(localStorage.getItem(key)); } catch(e){ continue; }
+    if(!obj || !Array.isArray(obj.review)) continue;
+    const subj = SUBJ_LABEL[key.replace(/^taotao_/,"").replace(/_v1$/,"")] || key;
+    obj.review.forEach(r => items.push({ subj, m:r.m, q:r.q, d:r.d }));
+  }
+  items.sort((a,b) => (b.d||"").localeCompare(a.d||""));
+  return items;
+}
+function refreshReviewBook(){
+  const items = collectReview().slice(0, 20);
+  const box = document.getElementById("reviewList");
+  if(!items.length){ box.innerHTML = '<div class="rv-empty">还没有错题记录，太棒啦！</div>'; return; }
+  box.innerHTML = items.map(it =>
+    '<div class="rv-item"><span class="rv-subj">'+esc(it.subj)+'</span><span class="rv-q">'+esc(it.q)+'</span><span class="rv-d">'+esc(it.d)+'</span></div>'
+  ).join("");
+}
+// 不存明文密码，只存校验值——防止有人（包括桃桃）翻网页源代码直接看到数字
+const RV_HASH = 82444;
+function rvCheck(p){ let h=0; for(const c of p) h=(h*31+c.charCodeAt(0))%100000; return h===RV_HASH; }
+function unlockReview(){
+  const p = prompt("请输入密码查看错题本：");
+  if(p===null) return;
+  if(rvCheck(p)){
+    document.getElementById("rvLocked").style.display = "none";
+    document.getElementById("reviewList").style.display = "";
+    refreshReviewBook();
+  } else {
+    alert("密码不对哦～");
+  }
+}
+window.unlockReview = unlockReview;
+// 每次回到主页都重新锁上，需要再次输入密码
+window.addEventListener("pageshow", function(){
+  document.getElementById("rvLocked").style.display = "";
+  document.getElementById("reviewList").style.display = "none";
+  document.getElementById("reviewList").innerHTML = "";
+});
+
+/* ============ 今日任务（按星期轮换 + ⭐目标按周递增） ============ */
+const APPS = {
+  english:{n:"英语发音", i:"🗣️", h:"英语/发音练习/英语发音练习.html", sub:"跟读 10–15 分钟"},
+  math:   {n:"数学练习", i:"📐", h:"数学/数学练习.html", sub:"做今天解锁的那一关"},
+  chinese:{n:"语文阅读", i:"📖", h:"语文/语文阅读.html", sub:"读今天那一篇"},
+  science:{n:"科学闯关", i:"🔬", h:"科学/科学闯关.html", sub:"闯今天那一关"},
+  logic:  {n:"逻辑游戏", i:"🧩", h:"逻辑/逻辑闯关.html", sub:"动动脑、想一想"},
+};
+// 周一到周五各主攻一科，周六数学+科学，周日轻松
+const WEEKMAIN = {1:"math", 2:"chinese", 3:"math", 4:"science", 5:"logic", 6:"math"};
+// ⭐目标：暑假启动(7/6)起每周+1，从5到12封顶；启动前固定5
+function todayGoal(){
+  const start = new Date(2026,6,6);            // 2026-07-06
+  const w = Math.floor((new Date() - start)/(7*86400000));
+  let g = 5 + (w>0?w:0); if(g<5) g=5; if(g>12) g=12; return g;
+}
+function renderToday(){
+  const days = collectDays(); const todayStars = days[dkey(new Date())] || 0;
+  const goal = todayGoal(); document.getElementById("goalNum").textContent = goal;
+  const dow = new Date().getDay();
+  const list = document.getElementById("todayList"); list.innerHTML = "";
+  function online(key){ const a=APPS[key]; const d=document.createElement("div"); d.className="t-item";
+    d.innerHTML='<span class="ti">'+a.i+'</span><span class="tn">'+a.n+'<br><span style="font-size:13px;color:#999;font-weight:normal">'+a.sub+'</span></span>';
+    const b=document.createElement("button"); b.className="tg"; b.textContent="去 ▶"; b.onclick=()=>go(a.h); d.appendChild(b); list.appendChild(d); }
+  function offline(emoji,txt,note){ const d=document.createElement("div"); d.className="t-item offline";
+    d.innerHTML='<span class="ti">'+emoji+'</span><span class="tn">'+txt+'<br><span style="font-size:13px;color:#a6772f;font-weight:normal">'+note+'</span></span>'; list.appendChild(d); }
+
+  online("english");                              // 每天：英语发音
+  if(dow===0){ offline("🌳","今天是休息日","出去玩、看看大自然，逻辑游戏想玩可以玩"); }
+  else { online(WEEKMAIN[dow]); if(dow===6) online("science"); }   // 工作日主科；周六加科学
+  offline("📖","睡前亲子阅读 15 分钟","和爸爸妈妈一起读，不用电脑");
+
+  const pct = Math.min(100, Math.round(todayStars/goal*100));
+  document.getElementById("todayFill").style.width = pct+"%";
+  const prog = document.getElementById("todayProg");
+  if(todayStars>=goal) prog.innerHTML = "🎉 今天达标啦！再玩是奖励，不玩也很棒～";
+  else prog.textContent = "今天已得 "+todayStars+" / "+goal+" ⭐，加油！";
+}
+renderToday();
+window.addEventListener("pageshow", renderToday);
+
+/* ---- 兑换奖励 ---- */
+function openRedeem(){
+  const panel=document.getElementById("redeemPanel");
+  if(panel.style.display==="block"){ panel.style.display="none"; return; }
+  const trees = window.__trees||0;
+  if(trees<1){
+    alert("还差一点点！攒满 1 棵大树 🌳（"+TREE_COST+"⭐）才能换奖励，\n现在还差 "+(TREE_COST-(window.__avail||0))+" 颗 ⭐，继续加油！💪");
+    return;
+  }
+  let html='<div class="rtitle">你有 '+trees+' 棵大树 🌳，用 1 棵换一个奖励：</div>';
+  HUB.rewards.forEach((rw,i)=>{ html+='<button class="reward-opt" onclick="redeem('+i+')">🎁 '+rw+'</button>'; });
+  panel.innerHTML=html; panel.style.display="block";
+}
+function redeem(i){
+  const rw=HUB.rewards[i]; if(rw===undefined) return;
+  HUB.spent=(HUB.spent||0)+TREE_COST; HUB.log.push({d:dkey(new Date()),reward:rw}); saveHub();
+  document.getElementById("redeemPanel").style.display="none"; refreshReward();
+  alert("🎉 兑换成功！\n拿着这个去找爸爸妈妈领奖：\n\n🎁 "+rw+"\n\n（用掉了 1 棵大树 🌳）");
+}
+function setRewards(){
+  const v=prompt("家长设置：每行写一个奖励（桃桃攒满 1 棵大树🌳 = "+TREE_COST+"⭐ 可换一个）", (HUB.rewards||[]).join("\n"));
+  if(v===null) return;
+  const list=v.split("\n").map(s=>s.trim()).filter(Boolean);
+  HUB.rewards=list.length?list:DEFAULT_REWARDS.slice(); saveHub();
+  alert("已保存奖励清单 ✅（共 "+HUB.rewards.length+" 个）");
+}
+
+/* ============ 电脑小达人：从基础开始的一门小课，按顺序学，记住学到第几课 ============ */
+const PC_LESSONS = [
+  { t:"🖱️ 第1课 · 认识触控板",
+    c:"用一根手指在触控板上滑动，屏幕上的小箭头（光标）就跟着动。<br>• 轻轻按一下 = <b>单击</b>（选东西、点按钮）<br>• 快速按两下 = <b>双击</b>（打开文件）<br>👉 试一试：把光标移到上面的彩色卡片上，单击一下。" },
+  { t:"⌨️ 第2课 · 认识键盘",
+    c:"键盘中间一大片是字母键。先认识三个好朋友：<br>• 最长的那条 = <b>空格键</b>（空一格）<br>• <b>回车 ⏎</b>（换行 / 确认）<br>• <b>删除 ⌫</b>（删掉打错的字）<br>👉 在键盘上把这三个键找出来。" },
+  { t:"🔤 第3课 · 学打字（试一试）", typing:true,
+    c:"打字前要切到拼音输入法。我们先练打字母——下面会出现一个字母，你在键盘上找到它、按下去就行，打对一个换一个！" },
+  { t:"🌐 第4课 · 怎么找网页",
+    c:"想上网看东西：<br>① 点开浏览器（红黄绿蓝的圆球 = Chrome）<br>② 最上面那条长长的 = <b>地址栏</b><br>③ 在里面打要搜的词（比如「小学数学游戏」），按 <b>回车 ⏎</b> 就找到啦。<br>👉 不认识的网站先别乱点。" },
+  { t:"💾 第5课 · 保存和「后悔药」",
+    c:"• <b>⌘ + S</b>：把做好的东西保存下来<br>• <b>⌘ + Z</b>：撤销，打错删错能退回去（后悔药）<br>• <b>⌘ 和 +</b>：把网页放大看清楚<br>👉 ⌘ 是空格键旁边的 Command 键。" },
+  { t:"🛡️ 第6课 · 上网要安全",
+    c:"网上的东西不能全信！遇到这些一定先<b>问爸爸妈妈</b>：<br>• 突然弹出的窗口、广告<br>• 让你输密码、要钱的<br>• 不认识的链接、「点我领奖」<br>👉 记住：拿不准就不点，先问大人。" },
+];
+let pcIdx = 0;
+try { pcIdx = Math.min(PC_LESSONS.length-1, Math.max(0, Number(localStorage.getItem("taotao_pc_lesson"))||0)); } catch(e){}
+function pcShow(){
+  const L = PC_LESSONS[pcIdx];
+  document.getElementById("pcNo").textContent = "第 "+(pcIdx+1)+" / "+PC_LESSONS.length+" 课";
+  document.getElementById("pcTip").innerHTML = "<b>"+L.t+"</b><br>"+L.c;
+  try { localStorage.setItem("taotao_pc_lesson", pcIdx); } catch(e){}
+  const tryBox = document.getElementById("pcTry");
+  if(L.typing){ tryBox.innerHTML = typingHTML(); newTypeTarget(); }
+  else { tryBox.innerHTML = ""; }
+}
+function pcNext(){ pcIdx = Math.min(PC_LESSONS.length-1, pcIdx+1); pcShow(); }
+function pcPrev(){ pcIdx = Math.max(0, pcIdx-1); pcShow(); }
+
+/* —— 打字小练习 —— */
+const TYPE_POOL = "abcdefghijklmnopqrstuvwxyz".split("");
+let typeTarget="", typeHit=0;
+function typingHTML(){
+  return '<div style="margin-top:12px;text-align:center;background:#eaf4ff;border-radius:14px;padding:14px;">'+
+    '<div style="font-size:15px;color:#3b82f6;">在键盘上按出这个字母：</div>'+
+    '<div id="typeTarget" style="font-size:56px;font-weight:bold;color:#ff8c42;margin:6px 0;">_</div>'+
+    '<input id="typeInput" maxlength="1" autocomplete="off" oninput="checkType(this)" '+
+      'style="font-size:30px;width:84px;text-align:center;border:2px solid #9fc7ff;border-radius:12px;padding:6px;">'+
+    '<div id="typeMsg" style="margin-top:8px;font-size:16px;font-weight:bold;color:#1fae8c;min-height:22px;">已打对 '+typeHit+' 个</div>'+
+    '</div>';
+}
+function newTypeTarget(){ typeTarget = TYPE_POOL[Math.floor(Math.random()*TYPE_POOL.length)];
+  const el=document.getElementById("typeTarget"); if(el) el.textContent=typeTarget; }
+function checkType(inp){
+  const v=(inp.value||"").toLowerCase(); if(!v) return;
+  if(v===typeTarget){ typeHit++; document.getElementById("typeMsg").textContent="打对啦！⭐ 已打对 "+typeHit+" 个，再来一个～"; inp.value=""; newTypeTarget(); }
+  else { document.getElementById("typeMsg").textContent="不是这个哦，再找找字母 "+typeTarget.toUpperCase(); inp.value=""; }
+}
+pcShow();
+</script>
+</body>
+</html>

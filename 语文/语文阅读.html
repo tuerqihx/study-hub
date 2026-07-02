@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃的语文阅读 📖</title>
+<style>
+  * { box-sizing:border-box; }
+  .noselect { -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#f3eeff 0%,#eef3ff 100%); color:#3a3450; min-height:100vh; padding:18px 16px 50px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .back { background:#fff; border:2px solid #c9b8ff; color:#7c5cff; font-weight:bold; font-size:16px;
+    padding:8px 16px; border-radius:14px; cursor:pointer; font-family:inherit; }
+  .star-now { font-size:18px; font-weight:bold; color:#7c5cff; }
+  h1 { text-align:center; font-size:30px; margin:4px 0 16px; }
+  .menu { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; }
+  .lv { border:none; color:#fff; border-radius:22px; padding:22px 14px; cursor:pointer; font-family:inherit;
+    text-align:center; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; }
+  .lv:hover{transform:translateY(-4px) scale(1.02);} .lv:active{transform:scale(.97);}
+  .lv .i{font-size:44px;display:block;} .lv .n{font-size:20px;font-weight:bold;margin-top:6px;} .lv .d{font-size:13px;opacity:.92;margin-top:3px;}
+  .l1{background:linear-gradient(140deg,#9b8cff,#7c5cff);} .l2{background:linear-gradient(140deg,#5ac8fa,#3b82f6);}
+  .l3{background:linear-gradient(140deg,#56d6a0,#1fae8c);} .l4{background:linear-gradient(140deg,#ff9a56,#ff6b6b);}
+  .card { display:none; }
+  .passage { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:0 4px 16px rgba(124,92,255,.14);
+    border:3px solid #e0d7ff; font-size:19px; line-height:2; margin-bottom:14px; }
+  .passage .ptitle { font-size:20px; font-weight:bold; text-align:center; color:#7c5cff; margin-bottom:8px; }
+  .ppic { display:block; max-width:100%; max-height:440px; margin:0 auto 14px; border-radius:14px; box-shadow:0 4px 16px rgba(124,92,255,.2); border:3px solid #e8dcc8; }
+  .qbox { background:#fff; border-radius:20px; padding:20px; box-shadow:0 4px 16px rgba(124,92,255,.14); border:3px solid #e0d7ff; }
+  .progress { font-size:14px; color:#aaa; text-align:center; margin-bottom:6px; }
+  .qtag { display:inline-block; background:#efeaff; color:#7c5cff; font-size:13px; font-weight:bold; padding:2px 10px; border-radius:10px; margin-bottom:8px;}
+  .q { font-size:21px; line-height:1.5; margin:4px 0 16px; } .q b{color:#7c5cff;}
+  .opts { display:grid; gap:12px; }
+  .opt { background:#f6f3ff; border:2px solid #ddd2ff; border-radius:16px; padding:14px 16px; font-size:19px; font-weight:bold;
+    cursor:pointer; font-family:inherit; color:#3a3450; transition:.1s; text-align:left; }
+  .opt:hover{background:#ece5ff;} .opt:active{transform:scale(.99);}
+  .opt.right{background:#d7f7e3;border-color:#56d6a0;} .opt.wrong{background:#ffe1e1;border-color:#ff8585;}
+  .feedback{text-align:center;font-size:21px;font-weight:bold;min-height:32px;margin:14px 0 6px;} .feedback.ok{color:#1fae8c;} .feedback.no{color:#ff8c42;}
+  .next{display:none;background:#7c5cff;color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:bold;padding:14px 30px;cursor:pointer;font-family:inherit;margin:6px auto 0;}
+  .done{display:none;text-align:center;background:#fff;border-radius:24px;padding:30px 20px;box-shadow:0 6px 20px rgba(124,92,255,.2);border:3px solid #e0d7ff;}
+  .done .big{font-size:64px;} .done .msg{font-size:24px;font-weight:bold;margin:10px 0;} .done .got{font-size:19px;color:#7c5cff;margin-bottom:18px;}
+  .done button{background:#7c5cff;color:#fff;border:none;border-radius:16px;font-size:19px;font-weight:bold;padding:13px 26px;cursor:pointer;font-family:inherit;margin:6px;}
+  .done .ghost{background:#fff;color:#7c5cff;border:2px solid #c9b8ff;}
+</style>
+</head>
+<body>
+<div class="wrap noselect">
+  <div class="bar">
+    <button class="back" onclick="goHome()">🏡 回学习台</button>
+    <span class="star-now" id="starNow">今天 ⭐ 0</span>
+  </div>
+  <h1>📖 桃桃的语文阅读</h1>
+  <div class="menu" id="menu"></div>
+
+  <div class="card" id="card">
+    <div class="passage"><div class="ptitle" id="ptitle"></div><img id="ppic" class="ppic" style="display:none"><div id="ptext"></div></div>
+    <div class="qbox">
+      <div class="progress" id="prog"></div>
+      <span class="qtag" id="qtag"></span>
+      <div class="q" id="q"></div>
+      <div class="opts" id="answerArea"></div>
+      <div class="feedback" id="fb"></div>
+      <button class="next" id="nextBtn" onclick="nextQ()">下一题 →</button>
+    </div>
+  </div>
+
+  <div class="done" id="done">
+    <div class="big">🎉</div>
+    <div class="msg" id="doneMsg"></div>
+    <div class="got" id="doneGot"></div>
+    <button onclick="location.reload()">再读一篇</button>
+    <button class="ghost" onclick="goHome()">回学习台</button>
+  </div>
+</div>
+<script>
+const STORE_KEY="taotao_chinese_v1";
+function loadStore(){ try{return JSON.parse(localStorage.getItem(STORE_KEY))||{days:{},review:[]};}catch(e){return {days:{},review:[]};} }
+function saveStore(){ try{localStorage.setItem(STORE_KEY,JSON.stringify(STORE));}catch(e){} }
+let STORE=loadStore(); if(!STORE.review)STORE.review=[]; if(!STORE.done)STORE.done={};
+function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function todayRec(){const k=dkey(new Date());if(!STORE.days[k])STORE.days[k]={stars:0,correct:0,guessed:0};return STORE.days[k];}
+function showStarNow(){document.getElementById("starNow").textContent="今天 ⭐ "+todayRec().stars;}
+showStarNow();
+
+/* 每天时间额度（制造稀缺感，非无限刷）：用完当天锁住，明天重新满格 */
+const TIME_LIMIT_MIN=12;
+function timeRec(){ const r=todayRec(); if(!r.timeSec) r.timeSec=0; return r; }
+function usedSec(){ return timeRec().timeSec; }
+function remainSec(){ return Math.max(0, TIME_LIMIT_MIN*60 - usedSec()); }
+let sessionStart=null;
+function tickTime(){ if(!sessionStart) return; const now=Date.now(); const r=timeRec(); r.timeSec=(r.timeSec||0)+(now-sessionStart)/1000; sessionStart=now; saveStore(); }
+function renderTimeBanner(){ let b=document.getElementById("timeBanner");
+  if(!b){ const menu=document.getElementById("menu"); b=document.createElement("div"); b.id="timeBanner";
+    b.style.cssText="text-align:center;font-size:15px;font-weight:bold;color:#999;margin:0 0 10px;"; menu.parentNode.insertBefore(b, menu); }
+  const r=Math.ceil(remainSec()/60);
+  b.textContent = r>0 ? ("⏳ 今天语文还能玩 "+r+" 分钟") : "⏰ 今天语文的时间用完啦，明天再来玩～"; }
+
+function goHome(){ tickTime(); location.href="../index.html"; }
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+let AC=null; function actx(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();return AC;}catch(e){return null;}}
+function tone(f,d,t,w,g){const c=actx();if(!c)return;const s=c.currentTime+(w||0);const o=c.createOscillator(),ga=c.createGain();o.type=t||"sine";o.frequency.value=f;ga.gain.setValueAtTime(g||0.12,s);ga.gain.exponentialRampToValueAtTime(0.0001,s+d);o.connect(ga);ga.connect(c.destination);o.start(s);o.stop(s+d);}
+function sndRight(){tone(660,.12,"triangle",0);tone(990,.16,"triangle",.1);}
+function sndWrong(){tone(170,.2,"sawtooth",0,.07);}
+function sndCombo(){tone(780,.1,"triangle",0);tone(1040,.1,"triangle",.08);tone(1320,.14,"triangle",.16);}
+function sndFinish(){[523,659,784,1047].forEach((f,i)=>tone(f,.18,"triangle",i*.12));}
+function burst(em){const arr=em||["⭐","🌟","🎉","✨"];for(let i=0;i<14;i++){const s=document.createElement("span");s.textContent=arr[i%arr.length];s.style.cssText="position:fixed;left:"+rnd(8,92)+"%;top:"+rnd(12,42)+"%;font-size:"+rnd(20,38)+"px;pointer-events:none;z-index:9999;transition:all 1.1s ease-out;opacity:1;";document.body.appendChild(s);requestAnimationFrame(()=>{s.style.top=rnd(72,100)+"%";s.style.opacity="0";});setTimeout(()=>s.remove(),1200);}}
+function floatPlus(){const st=document.getElementById("starNow");const p=document.createElement("span");p.textContent="+1⭐";p.style.cssText="position:fixed;font-size:22px;font-weight:bold;color:#7c5cff;pointer-events:none;z-index:9999;transition:all .9s ease-out;";const r=st?st.getBoundingClientRect():{left:innerWidth/2,top:60};p.style.left=r.left+"px";p.style.top=r.top+"px";document.body.appendChild(p);requestAnimationFrame(()=>{p.style.top=(r.top-42)+"px";p.style.opacity="0";});setTimeout(()=>p.remove(),950);}
+let barWrap=null;
+function ensureBar(){if(barWrap)return;const prog=document.getElementById("prog");if(!prog)return;barWrap=document.createElement("div");barWrap.style.cssText="height:12px;background:#eef0f3;border-radius:8px;overflow:hidden;margin:6px 0 10px;";barWrap.innerHTML='<div id="bar" style="height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#9b8cff,#7c5cff);transition:width .3s;"></div>';prog.parentNode.insertBefore(barWrap,prog.nextSibling);}
+function setBar(d,t){ensureBar();const b=document.getElementById("bar");if(b)b.style.width=Math.round(d/t*100)+"%";}
+
+/* 每篇短文 = 一关。题型标签：找信息 / 概括 / 推断 / 联系生活 —— 对应阅读理解四动作。 */
+const PASSAGES = [
+  { name:"荷花池", icon:"🪷", cls:"l1", title:"荷花池",
+    text:"夏天的清早，公园的池塘里开满了荷花。白的、粉的，一朵挨着一朵。绿绿的荷叶像一把把小伞，遮住了水面。几条小鱼在荷叶下游来游去，好像在和荷花捉迷藏。一阵风吹过，荷花轻轻点头，香味飘得满园都是。",
+    questions:[
+      {tag:"找信息", q:"池塘里的荷花有哪些颜色？", options:["白的和粉的","红的和黄的","蓝的和紫的"], answer:"白的和粉的", hint:"在第二句里找'白的、粉的'。"},
+      {tag:"找信息", q:"文中把荷叶比作了什么？", options:["小伞","小船","小鱼"], answer:"小伞", hint:"'荷叶像一把把小伞'。"},
+      {tag:"概括", q:"这段话主要写的是什么？", options:["夏天荷花池的美景","怎样种荷花","小鱼的故事"], answer:"夏天荷花池的美景", hint:"整段都在描写荷花池有多美。"},
+    ]},
+  { name:"小蚂蚁", icon:"🐜", cls:"l2", title:"小蚂蚁搬粮食",
+    text:"一只小蚂蚁找到一粒大米，可它怎么也搬不动。它没有放弃，跑回家叫来了许多伙伴。大家一起用力，米粒一点点被抬回了洞里。冬天来了，别的小虫又冷又饿，小蚂蚁们却在暖和的洞里吃得饱饱的。",
+    questions:[
+      {tag:"找信息", q:"小蚂蚁搬不动大米时，它怎么做的？", options:["叫来伙伴一起搬","把米丢掉了","自己哭了"], answer:"叫来伙伴一起搬", hint:"'跑回家叫来了许多伙伴'。"},
+      {tag:"推断", q:"为什么冬天蚂蚁们能吃得饱饱的？", options:["因为它们提前搬好了粮食","因为有人送饭","因为冬天不饿"], answer:"因为它们提前搬好了粮食", hint:"它们在之前就把米搬回了洞里。"},
+      {tag:"概括", q:"这个故事告诉我们什么道理？", options:["团结起来、早做准备就能过好冬天","蚂蚁很小","大米很重"], answer:"团结起来、早做准备就能过好冬天", hint:"想想蚂蚁做对了哪两件事。"},
+    ]},
+  { name:"天上的云", icon:"☁️", cls:"l3", title:"奇妙的云",
+    text:"天上的云真有趣。有时候像一群绵羊，慢慢地走过天空；有时候像一条大龙，张着大嘴；一会儿又变成了棉花糖，软软的。傍晚的时候，云被太阳染成了红色、金色，美极了。",
+    questions:[
+      {tag:"找信息", q:"傍晚的云被太阳染成了什么颜色？", options:["红色和金色","黑色和白色","绿色"], answer:"红色和金色", hint:"最后一句里找。"},
+      {tag:"找信息", q:"文中把云比作了哪些东西？", options:["绵羊、大龙、棉花糖","小鱼、小猫","房子、汽车"], answer:"绵羊、大龙、棉花糖", hint:"数一数文里出现的比喻。"},
+      {tag:"概括", q:"这段主要写云的什么特点？", options:["千变万化、很有趣","很重","会下雨"], answer:"千变万化、很有趣", hint:"云一会儿这样、一会儿那样。"},
+    ]},
+  { name:"一把伞", icon:"☂️", cls:"l4", title:"下雨天",
+    text:"乌云越来越多，天一下子暗了下来。小明忘记带伞，正在发愁。这时，同学小红跑过来，把自己的伞分给他一半，两个人挤在一把伞下，一起回了家。雨还在下，他们的心里却暖暖的。",
+    questions:[
+      {tag:"找信息", q:"小明遇到了什么困难？", options:["忘记带伞","丢了书包","迷路了"], answer:"忘记带伞", hint:"'小明忘记带伞'。"},
+      {tag:"推断", q:"为什么他们的心里暖暖的？", options:["因为同学互相帮助、很温暖","因为天气很热","因为跑得快"], answer:"因为同学互相帮助、很温暖", hint:"小红帮了小明，所以心里暖。"},
+      {tag:"联系生活", q:"如果你的同学没带伞，你会怎么做？", options:["和他一起打一把伞","自己先走","笑话他"], answer:"和他一起打一把伞", hint:"想想怎么做才是关心同学。"},
+    ]},
+
+  /* ===== 读短文（新增） ===== */
+  { name:"蚕宝宝", icon:"🐛", cls:"l1", sub:"读短文 · 答题",
+    title:"蚕宝宝", text:"春天，老师给我们发了几条蚕宝宝。它们白白的、胖胖的，最爱吃桑叶，吃起来沙沙地响。过了些日子，蚕宝宝吐出细细的丝，把自己包成一个白色的茧。再后来，茧里飞出了蛾子。原来，蚕的一生要经过卵、幼虫、茧、蛾这几次变化。",
+    questions:[
+      {tag:"找信息", q:"蚕宝宝最爱吃什么？", options:["桑叶","白菜","米饭"], answer:"桑叶", hint:"'最爱吃桑叶'。"},
+      {tag:"找信息", q:"蚕把自己包成了什么？", options:["白色的茧","小房子","一片叶子"], answer:"白色的茧", hint:"'包成一个白色的茧'。"},
+      {tag:"概括", q:"蚕的一生经过了哪几次变化？", options:["卵、幼虫、茧、蛾","只长大不变化","一直是蛾子"], answer:"卵、幼虫、茧、蛾", hint:"最后一句总结了。"},
+    ]},
+  { name:"第一次煮面", icon:"🍜", cls:"l2", sub:"读短文 · 答题",
+    title:"我第一次煮面", text:"今天妈妈不在家，我决定自己煮面。我先烧开一锅水，再小心地把面条放进去，用筷子轻轻搅。等面变软了，我加了一点盐和青菜。虽然有点咸，但这是我自己做的第一顿饭，心里特别自豪。",
+    questions:[
+      {tag:"找信息", q:"“我”往面里加了什么？", options:["盐和青菜","糖和鸡蛋","辣椒"], answer:"盐和青菜", hint:"'加了一点盐和青菜'。"},
+      {tag:"找信息", q:"这碗面的味道怎么样？", options:["有点咸","特别甜","没味道"], answer:"有点咸", hint:"'虽然有点咸'。"},
+      {tag:"推断", q:"“我”为什么特别自豪？", options:["这是自己做的第一顿饭","面很好吃","妈妈夸了我"], answer:"这是自己做的第一顿饭", hint:"第一次自己做饭，很了不起。"},
+    ]},
+  { name:"勤劳的蜜蜂", icon:"🐝", cls:"l3", sub:"读短文 · 答题",
+    title:"勤劳的蜜蜂", text:"蜜蜂是勤劳的小昆虫。天一亮，它们就飞到花丛中采花蜜，一趟又一趟，从不偷懒。许多蜜蜂酿出的蜜，要采上千朵花才能凑够一点点。我们吃的每一勺甜甜的蜂蜜，都是它们辛苦换来的。",
+    questions:[
+      {tag:"找信息", q:"蜜蜂飞到哪里采花蜜？", options:["花丛中","树洞里","水里"], answer:"花丛中", hint:"'飞到花丛中采花蜜'。"},
+      {tag:"推断", q:"为什么说蜂蜜来之不易？", options:["要采上千朵花才凑够一点点","蜂蜜很贵","蜜蜂很小"], answer:"要采上千朵花才凑够一点点", hint:"想想要采多少花。"},
+      {tag:"概括", q:"这段主要夸蜜蜂的什么品质？", options:["勤劳","漂亮","聪明"], answer:"勤劳", hint:"开头就点明了。"},
+    ]},
+  { name:"诚实的孩子", icon:"🌷", cls:"l4", sub:"读短文 · 答题",
+    title:"诚实的孩子", text:"列宁小时候到姑妈家做客，不小心打碎了一个花瓶。表哥表姐都说不是自己干的，列宁当时也没敢承认。回家后，他心里很难受，就写了一封信，向姑妈认了错。姑妈回信说：诚实的孩子，最可爱。",
+    questions:[
+      {tag:"找信息", q:"列宁不小心打碎了什么？", options:["花瓶","杯子","镜子"], answer:"花瓶", hint:"'打碎了一个花瓶'。"},
+      {tag:"找信息", q:"回家后列宁怎么做的？", options:["写信向姑妈认错","假装不知道","怪表哥"], answer:"写信向姑妈认错", hint:"'写了一封信，向姑妈认了错'。"},
+      {tag:"联系生活", q:"这个故事让你明白了什么？", options:["做错事要诚实承认","打碎东西要藏起来","做客不能乱动"], answer:"做错事要诚实承认", hint:"姑妈说诚实的孩子最可爱。"},
+    ]},
+
+  /* ===== 古诗词（三上 / 三下 经典） ===== */
+  { name:"古诗·山行", icon:"🍁", cls:"l1", sub:"读古诗 · 答题",
+    title:"山行〔唐〕杜牧", text:"远上寒山石径斜，<br>白云生处有人家。<br>停车坐爱枫林晚，<br>霜叶红于二月花。",
+    questions:[
+      {tag:"常识", q:"这首《山行》的作者是谁？", options:["杜牧","李白","杜甫"], answer:"杜牧", hint:"题目下面就写着作者。"},
+      {tag:"诗意", q:"诗人为什么停下车来？", options:["因为喜爱傍晚的枫林","因为车坏了","因为天黑了"], answer:"因为喜爱傍晚的枫林", hint:"'停车坐爱枫林晚'，坐＝因为。"},
+      {tag:"画面", q:"“霜叶红于二月花”是说枫叶？", options:["比二月的花还要红","和花一样高","会开花"], answer:"比二月的花还要红", hint:"'红于'＝比……更红。"},
+    ]},
+  { name:"古诗·望天门山", icon:"⛰️", cls:"l2", sub:"读古诗 · 答题",
+    title:"望天门山〔唐〕李白", text:"天门中断楚江开，<br>碧水东流至此回。<br>两岸青山相对出，<br>孤帆一片日边来。",
+    questions:[
+      {tag:"常识", q:"《望天门山》的作者是谁？", options:["李白","王安石","苏轼"], answer:"李白", hint:"唐代大诗人李白。"},
+      {tag:"画面", q:"诗里的“碧水”是什么颜色的水？", options:["碧绿色","黄色","黑色"], answer:"碧绿色", hint:"'碧'就是青绿色。"},
+      {tag:"找信息", q:"“孤帆一片”写的是什么？", options:["一条小船","一座山","一朵云"], answer:"一条小船", hint:"帆＝船帆，指小船。"},
+    ]},
+  { name:"古诗·绝句", icon:"🐦", cls:"l3", sub:"读古诗 · 答题",
+    title:"绝句〔唐〕杜甫", text:"迟日江山丽，<br>春风花草香。<br>泥融飞燕子，<br>沙暖睡鸳鸯。",
+    questions:[
+      {tag:"推断", q:"这首诗描写的是哪个季节？", options:["春天","秋天","冬天"], answer:"春天", hint:"'春风花草香'。"},
+      {tag:"找信息", q:"“泥融飞燕子”里飞的是什么鸟？", options:["燕子","大雁","麻雀"], answer:"燕子", hint:"诗句里就有。"},
+      {tag:"常识", q:"这首《绝句》的作者是谁？", options:["杜甫","李白","白居易"], answer:"杜甫", hint:"题目下面写着。"},
+    ]},
+  { name:"古诗·元日", icon:"🧨", cls:"l4", sub:"读古诗 · 答题",
+    title:"元日〔宋〕王安石", text:"爆竹声中一岁除，<br>春风送暖入屠苏。<br>千门万户曈曈日，<br>总把新桃换旧符。",
+    questions:[
+      {tag:"常识", q:"诗题“元日”指的是哪一天？", options:["农历正月初一（春节）","中秋节","端午节"], answer:"农历正月初一（春节）", hint:"元日＝一年的第一天。"},
+      {tag:"找信息", q:"“爆竹声中”写的是过什么节？", options:["过年（春节）","过生日","清明"], answer:"过年（春节）", hint:"放爆竹、换桃符都是过年。"},
+      {tag:"常识", q:"作者王安石是哪个朝代的？", options:["宋代","唐代","清代"], answer:"宋代", hint:"题目里标着〔宋〕。"},
+    ]},
+
+  /* ===== 成语故事 ===== */
+  { name:"成语·守株待兔", icon:"🌳", cls:"l1", sub:"读故事 · 明道理",
+    title:"守株待兔", text:"古时候，有个农夫在田里干活。忽然一只兔子飞奔过来，撞在树桩上死了，农夫白捡了一只兔子。从此他天天守在树桩旁，再也不种田，只等兔子来撞。结果再也没等到兔子，田里却长满了野草。",
+    questions:[
+      {tag:"找信息", q:"农夫第一只兔子是怎么得到的？", options:["兔子自己撞死在树桩上","他抓住的","别人送的"], answer:"兔子自己撞死在树桩上", hint:"'撞在树桩上死了'。"},
+      {tag:"推断", q:"农夫最后的结果怎么样？", options:["没等到兔子，田也荒了","天天有兔子","成了富翁"], answer:"没等到兔子，田也荒了", hint:"'田里长满了野草'。"},
+      {tag:"寓意", q:"这个成语告诉我们？", options:["不能靠运气，不劳动就想收获是不行的","守在树边就有兔子","种田没有用"], answer:"不能靠运气，不劳动就想收获是不行的", hint:"农夫错在不劳动只等运气。"},
+    ]},
+  { name:"成语·亡羊补牢", icon:"🐑", cls:"l2", sub:"读故事 · 明道理",
+    title:"亡羊补牢", text:"从前有个人养了一群羊。一天，羊圈破了个洞，狼从洞里把一只羊叼走了。邻居劝他赶紧把洞补好，他却不听。第二天，又少了一只羊。这下他后悔了，赶紧把羊圈补得结结实实，从此再也没丢过羊。",
+    questions:[
+      {tag:"找信息", q:"羊是怎么少的？", options:["狼从破洞里叼走了","自己跑了","卖掉了"], answer:"狼从破洞里叼走了", hint:"'狼从洞里把羊叼走'。"},
+      {tag:"推断", q:"他把羊圈补好以后，结果怎样？", options:["再也没丢过羊","还是天天丢","羊全跑了"], answer:"再也没丢过羊", hint:"最后一句。"},
+      {tag:"寓意", q:"“亡羊补牢”告诉我们？", options:["出了问题及时补救，还不算晚","丢了就别管","养羊很难"], answer:"出了问题及时补救，还不算晚", hint:"补牢虽晚，仍有用。"},
+    ]},
+  { name:"成语·掩耳盗铃", icon:"🔔", cls:"l3", sub:"读故事 · 明道理",
+    title:"掩耳盗铃", text:"从前有个人想偷别人家门上的大铃铛，可铃铛一碰就会响。他想了个“好办法”：把自己的耳朵捂住再去偷，心想这样就听不见铃声了。结果手一碰铃铛，铃声大响，他立刻被人抓住了。",
+    questions:[
+      {tag:"找信息", q:"他想出的“办法”是什么？", options:["捂住自己的耳朵去偷","半夜去偷","戴上手套"], answer:"捂住自己的耳朵去偷", hint:"'把自己的耳朵捂住'。"},
+      {tag:"推断", q:"他捂住自己的耳朵，别人能听见铃声吗？", options:["能，别人照样听得见","不能","铃不会响"], answer:"能，别人照样听得见", hint:"捂的是自己的耳朵。"},
+      {tag:"寓意", q:"这个故事笑话了什么样的人？", options:["自己骗自己的人","胆子小的人","耳朵不好的人"], answer:"自己骗自己的人", hint:"骗得了自己，骗不了别人。"},
+    ]},
+
+  /* ===== 国学 · 通识常识 ===== */
+  { name:"二十四节气", icon:"🌾", cls:"l4", sub:"长知识 · 答题",
+    title:"二十四节气", text:"我们的祖先把一年分成二十四个节气，用来指导种田和生活。比如“立春”表示春天开始，“谷雨”前后适合播种，“立秋”天气开始转凉，“冬至”这天白天最短、黑夜最长。二十四节气，是中国人很了不起的智慧。",
+    questions:[
+      {tag:"找信息", q:"“立春”表示什么？", options:["春天开始","天气变冷","下大雨"], answer:"春天开始", hint:"'立春表示春天开始'。"},
+      {tag:"找信息", q:"哪个节气这天白天最短？", options:["冬至","立春","立秋"], answer:"冬至", hint:"'冬至这天白天最短'。"},
+      {tag:"概括", q:"古人定二十四节气主要是用来？", options:["指导种田和生活","记录天气好玩","划分月份"], answer:"指导种田和生活", hint:"开头就说了。"},
+    ]},
+  { name:"传统节日", icon:"🎏", cls:"l1", sub:"长知识 · 答题",
+    title:"我们的传统节日", text:"中国有许多传统节日。春节是一年的开始，人们贴春联、放鞭炮、吃饺子；端午节为了纪念屈原，要吃粽子、赛龙舟；中秋节全家团圆，一起赏月、吃月饼。这些节日里，藏着家人团聚的温暖。",
+    questions:[
+      {tag:"找信息", q:"端午节人们吃什么？", options:["粽子","月饼","饺子"], answer:"粽子", hint:"'端午节……吃粽子、赛龙舟'。"},
+      {tag:"找信息", q:"中秋节人们会做什么？", options:["赏月、吃月饼","放鞭炮","赛龙舟"], answer:"赏月、吃月饼", hint:"'中秋节……赏月、吃月饼'。"},
+      {tag:"常识", q:"端午节是为了纪念谁？", options:["屈原","李白","孔子"], answer:"屈原", hint:"文中提到了。"},
+    ]},
+
+  /* ===== 三下课本原文改写（统编版三年级下册，跟学校进度对得上） ===== */
+  { name:"燕子", icon:"🐦", cls:"l1", sub:"课本 · 三下",
+    title:"燕子", text:"一身乌黑光滑的羽毛，一对轻快有力的翅膀，加上剪刀似的尾巴，凑成了活泼可爱的小燕子。微风吹拂着千万条才展开带黄色嫩叶的柳丝，青的草，绿的叶，各色鲜艳的花，都像赶集似的聚拢来，形成了烂漫无比的春天。这么多的燕子从南方赶来，为春天增添了许多生趣。",
+    questions:[
+      {tag:"找信息", q:"燕子的尾巴像什么？", options:["剪刀","扇子","梳子"], answer:"剪刀", hint:"'剪刀似的尾巴'。"},
+      {tag:"找信息", q:"文中说燕子是从哪里飞来的？", options:["南方","北方","西方"], answer:"南方", hint:"'这么多的燕子从南方赶来'。"},
+      {tag:"概括", q:"这段话主要写了什么？", options:["燕子的样子和烂漫的春天","燕子怎么捉虫子","燕子怎么筑巢"], answer:"燕子的样子和烂漫的春天", hint:"先写燕子外形，再写春天的景色。"},
+    ]},
+  { name:"荷花", icon:"🪻", cls:"l2", sub:"课本 · 三下",
+    title:"荷花", text:"清早，我到公园去玩，一进门，就闻到一阵清香。荷花已经开了不少了。荷叶挨挨挤挤的，像一个个碧绿的大圆盘。白荷花在这些大圆盘之间冒出来。有的才展开两三片花瓣，有的花瓣全展开了，露出嫩黄色的小莲蓬，还有的才是花骨朵儿，看起来饱胀得马上要破裂似的。这么多的白荷花，一朵有一朵的姿势。",
+    questions:[
+      {tag:"找信息", q:"文中把荷叶比作了什么？", options:["碧绿的大圆盘","绿色的伞","小船"], answer:"碧绿的大圆盘", hint:"'像一个个碧绿的大圆盘'。"},
+      {tag:"找信息", q:"这么多白荷花的姿势一样吗？", options:["不一样，一朵有一朵的姿势","一模一样","只有两种姿势"], answer:"不一样，一朵有一朵的姿势", hint:"最后一句直接说了。"},
+      {tag:"推断", q:"作者是在哪里就闻到荷花香味的？", options:["一进公园门口就闻到了","走到荷花跟前才闻到","没有闻到香味"], answer:"一进公园门口就闻到了", hint:"'一进门，就闻到一阵清香'。"},
+    ]},
+  { name:"小虾", icon:"🦐", cls:"l3", sub:"课本 · 三下",
+    title:"小虾", text:"我家的鱼缸里养了几只小虾。它们的身子是透明的，一节一节的，头上两根细细的触须一直在动。平时它们最爱静静地趴在水底，一有响动，就飞快地蹦跳游开。小虾们经常打架，一只用钳子钳住另一只的触须不放，直到分出胜负才肯罢休。看小虾成了我每天最开心的事。",
+    questions:[
+      {tag:"找信息", q:"小虾头上有什么在一直动？", options:["细细的触须","眼睛","嘴巴"], answer:"细细的触须", hint:"'头上两根细细的触须一直在动'。"},
+      {tag:"找信息", q:"小虾平时最爱做什么？", options:["静静地趴在水底","不停地游动","跳出鱼缸"], answer:"静静地趴在水底", hint:"'最爱静静地趴在水底'。"},
+      {tag:"推断", q:"作者为什么每天都爱看小虾？", options:["观察小虾的样子和习性很有趣","小虾很好吃","小虾会说话"], answer:"观察小虾的样子和习性很有趣", hint:"'看小虾成了我每天最开心的事'。"},
+    ]},
+  { name:"海底世界", icon:"🐚", cls:"l4", sub:"课本 · 三下",
+    title:"海底世界", text:"你可知道，大海的深处是怎样的吗？海面上波涛汹涌，可是在海面以下几十米深的地方，却是静悄悄的，没有一点儿声音。海底的动物常常在窃窃私语：海参靠肌肉伸缩爬行，每小时只能前进四米；梭子鱼却能游得飞快；还有的动物像蜗牛一样，紧紧地贴在船底下，一天就能“漂洋过海”。海底不仅动物种类繁多，还蕴藏着丰富的矿物、煤和石油。海底真是一个景色奇异、物产丰富的世界。",
+    questions:[
+      {tag:"找信息", q:"海面以下几十米深的地方是什么样的？", options:["静悄悄的，没有一点儿声音","波涛汹涌","一片漆黑"], answer:"静悄悄的，没有一点儿声音", hint:"和海面上完全不同。"},
+      {tag:"找信息", q:"海参靠什么爬行？", options:["肌肉伸缩","脚","翅膀"], answer:"肌肉伸缩", hint:"'海参靠肌肉伸缩爬行'。"},
+      {tag:"概括", q:"这段话主要写了什么？", options:["海底景色奇异、物产丰富","怎么捕鱼","海面上的波浪"], answer:"海底景色奇异、物产丰富", hint:"最后一句是全文的总结。"},
+      {tag:"推断", q:"为什么说海底是“景色奇异、物产丰富”的世界？", options:["动物种类多、活动方式各不相同，还有丰富的矿产","因为海底很安静","因为海底很深"], answer:"动物种类多、活动方式各不相同，还有丰富的矿产", hint:"文中既写了各种动物，又写了矿物、煤和石油。"},
+    ]},
+  { name:"火烧云", icon:"🌇", cls:"l4", sub:"课本 · 三下",
+    title:"火烧云", text:"晚饭过后，火烧云上来了。霞光照得小孩子的脸红红的。大白狗变成红色的了，红公鸡变成金色的了。天空的云一会儿变成一匹马，马头向南，马尾向西，好像在跑；一会儿又变成一条大狗，很凶猛地蹲着；还没等看清楚，那条狗又不知跑到哪里去了。天上的形状变来变去，一会儿一个样，看得人眼睛都花了。",
+    questions:[
+      {tag:"找信息", q:"火烧云是什么时候出现的？", options:["晚饭过后","早晨","中午"], answer:"晚饭过后", hint:"第一句就说了。"},
+      {tag:"找信息", q:"云先变成了什么，后来又变成了什么？", options:["先变成马，后变成狗","先变成狗，后变成马","一直是马"], answer:"先变成马，后变成狗", hint:"按文中顺序找。"},
+      {tag:"概括", q:"这段话主要写了什么？", options:["火烧云变化多端、非常好看","怎样喂大白狗","怎么做红烧鸡"], answer:"火烧云变化多端、非常好看", hint:"整段都在写云的样子在不停变化。"},
+    ]},
+  { name:"我们奇妙的世界", icon:"🌈", cls:"l1", sub:"课本 · 三下",
+    title:"我们奇妙的世界", text:"我们这个世界真是奇妙。天上，云彩一会儿变成绵羊，一会儿变成大海；朝霞和晚霞把天空染成好看的颜色。地上，一颗小小的种子能长成参天大树；一滴滴的雨水汇聚成奔腾的江河。生活中的一切，只要你留心去看，都是奇妙的、有趣的。",
+    questions:[
+      {tag:"找信息", q:"文中说天上的云彩会变成什么？", options:["绵羊和大海","房子和汽车","小鸟和大树"], answer:"绵羊和大海", hint:"'云彩一会儿变成绵羊，一会儿变成大海'。"},
+      {tag:"推断", q:"作者想通过这段话告诉我们什么？", options:["只要留心观察，生活中处处是奇妙的事物","天上的云很危险","种子不会发芽"], answer:"只要留心观察，生活中处处是奇妙的事物", hint:"最后一句是全文的总结。"},
+      {tag:"联系生活", q:"看到一片普通的树叶，怎样做才能发现它的奇妙之处？", options:["仔细观察它的形状、纹路、颜色","随手扔掉，没什么好看的","从来不注意树叶"], answer:"仔细观察它的形状、纹路、颜色", hint:"想想课文说的'留心去看'。"},
+    ]},
+  { name:"赵州桥", icon:"🌉", cls:"l2", sub:"课本 · 三下",
+    title:"赵州桥", text:"赵州桥坐落在河北省赵县的洨河上，是隋朝的石匠李春设计和参加建造的，已经有一千四百多年了。这座桥不但坚固，而且美观。桥面两侧的石栏上，雕刻着精美的图案：有的刻着两条相互缠绕的龙，好像在戏耍；有的刻着双龙戏珠；还有的刻着盘着的龙。这些图案雕刻得十分精美，为赵州桥增添了不少美感。",
+    questions:[
+      {tag:"找信息", q:"赵州桥是谁设计建造的？", options:["李春","鲁班","张衡"], answer:"李春", hint:"'隋朝的石匠李春设计和参加建造的'。"},
+      {tag:"找信息", q:"赵州桥已经有多少年的历史？", options:["一千四百多年","一百多年","五百多年"], answer:"一千四百多年", hint:"文中直接给出了数字。"},
+      {tag:"概括", q:"这段话主要写赵州桥的什么特点？", options:["坚固又美观","很危险","很矮小"], answer:"坚固又美观", hint:"'不但坚固，而且美观'。"},
+    ]},
+  { name:"一幅名扬中外的画", icon:"🖼️", cls:"l3", sub:"课本 · 三下",
+    title:"一幅名扬中外的画", text:"北宋时候，画家张择端画了一幅名叫《清明上河图》的画。这幅画长有五米多，画上的人物有五百多个，形态各不相同：有骑马的、有挑担的、有坐轿的、有做生意的……画上还有各种各样的房屋、桥梁、街道，把北宋都城汴梁热闹的街市生活都画了下来。这幅画不但内容丰富，而且十分传神，是我国绘画史上的瑰宝。",
+    questions:[
+      {tag:"找信息", q:"《清明上河图》是谁画的？", options:["张择端","王安石","苏轼"], answer:"张择端", hint:"'画家张择端画了一幅……画'。"},
+      {tag:"找信息", q:"这幅画上大约有多少个人物？", options:["五百多个","五十多个","五个"], answer:"五百多个", hint:"'画上的人物有五百多个'。"},
+      {tag:"推断", q:"为什么说这幅画“名扬中外”？", options:["它内容丰富、画得传神，是绘画史上的瑰宝","因为它是最大的画","因为它是最贵的画"], answer:"它内容丰富、画得传神，是绘画史上的瑰宝", hint:"最后一句说明了原因。"},
+    ]},
+  { name:"古诗·惠崇春江晚景", icon:"🦆", cls:"l1", sub:"课本 · 三下古诗",
+    title:"惠崇春江晚景〔宋〕苏轼", text:"竹外桃花三两枝，<br>春江水暖鸭先知。<br>蒌蒿满地芦芽短，<br>正是河豚欲上时。",
+    questions:[
+      {tag:"常识", q:"《惠崇春江晚景》的作者是谁？", options:["苏轼","杜甫","王安石"], answer:"苏轼", hint:"题目下面写着作者。"},
+      {tag:"诗意", q:"“春江水暖鸭先知”是说谁最先感觉到江水变暖了？", options:["鸭子","桃花","芦苇"], answer:"鸭子", hint:"'鸭先知'就是鸭子先知道。"},
+      {tag:"画面", q:"这首诗写的是哪个季节的景色？", options:["春天","夏天","秋天"], answer:"春天", hint:"竹外桃花、春江水暖，都是春天的景象。"},
+    ]},
+  { name:"古诗·三衢道中", icon:"🚣", cls:"l2", sub:"课本 · 三下古诗",
+    title:"三衢道中〔宋〕曾几", text:"梅子黄时日日晴，<br>小溪泛尽却山行。<br>绿阴不减来时路，<br>添得黄鹂四五声。",
+    questions:[
+      {tag:"常识", q:"《三衢道中》的作者是谁？", options:["曾几","李白","苏轼"], answer:"曾几", hint:"题目下面写着作者。"},
+      {tag:"找信息", q:"诗人坐船走完小溪后，又是怎么走的？", options:["改成走山路","继续坐船","坐车"], answer:"改成走山路", hint:"'小溪泛尽却山行'，泛尽＝坐船走完了。"},
+      {tag:"画面", q:"回来的路上比来的时候多了什么？", options:["黄鹂鸟的叫声","下雨","下雪"], answer:"黄鹂鸟的叫声", hint:"'添得黄鹂四五声'。"},
+    ]},
+  { name:"古诗·清明", icon:"🌧️", cls:"l3", sub:"课本 · 三下古诗",
+    title:"清明〔唐〕杜牧", text:"清明时节雨纷纷，<br>路上行人欲断魂。<br>借问酒家何处有，<br>牧童遥指杏花村。",
+    questions:[
+      {tag:"常识", q:"《清明》的作者是谁？", options:["杜牧","杜甫","白居易"], answer:"杜牧", hint:"题目下面写着作者。"},
+      {tag:"找信息", q:"诗人向谁打听酒家在哪里？", options:["牧童","农夫","路人"], answer:"牧童", hint:"'牧童遥指杏花村'。"},
+      {tag:"推断", q:"“路上行人欲断魂”是形容行人怎样的心情？", options:["伤感、忧愁","高兴、快乐","生气"], answer:"伤感、忧愁", hint:"清明时节容易让人想起故人，心情低落。"},
+    ]},
+  { name:"古诗·九月九日忆山东兄弟", icon:"🏔️", cls:"l4", sub:"课本 · 三下古诗",
+    title:"九月九日忆山东兄弟〔唐〕王维", text:"独在异乡为异客，<br>每逢佳节倍思亲。<br>遥知兄弟登高处，<br>遍插茱萸少一人。",
+    questions:[
+      {tag:"常识", q:"这首诗的作者是谁？", options:["王维","李白","孟浩然"], answer:"王维", hint:"题目下面写着作者。"},
+      {tag:"诗意", q:"“每逢佳节倍思亲”是说诗人在什么时候更加想念亲人？", options:["过节的时候","下雨的时候","上学的时候"], answer:"过节的时候", hint:"'佳节'就是节日。"},
+      {tag:"推断", q:"诗人为什么会想到兄弟们“遍插茱萸少一人”？", options:["因为自己不在家乡，没办法和兄弟们一起过节","因为他不喜欢兄弟","因为茱萸不够用"], answer:"因为自己不在家乡，没办法和兄弟们一起过节", hint:"诗人独自在外地，想象家乡兄弟们登高时缺了自己一个人。"},
+    ]},
+  { name:"寓言·鹿角和鹿腿", icon:"🦌", cls:"l1", sub:"课本 · 三下寓言",
+    title:"鹿角和鹿腿", text:"一只鹿在池塘边喝水，看见自己映在水中的影子。它对自己的角赞叹不已，觉得又大又美；却对细长的腿很不满意，抱怨它们难看。忽然，一头狮子扑了过来，鹿撒开腿飞快地奔跑，四条腿帮它甩掉了狮子。可是跑到树林里，美丽的角却被树枝挂住，差点被狮子追上，费了好大力气才挣脱逃命。逃到安全的地方，鹿才明白：它嫌弃的腿在关键时刻救了自己的命，而它喜爱的角差点让自己送命。",
+    questions:[
+      {tag:"找信息", q:"鹿一开始喜欢自己的什么，嫌弃自己的什么？", options:["喜欢角，嫌弃腿","喜欢腿，嫌弃角","两个都喜欢"], answer:"喜欢角，嫌弃腿", hint:"'对自己的角赞叹不已……对细长的腿很不满意'。"},
+      {tag:"推断", q:"最后是什么帮助鹿甩掉了狮子？", options:["四条腿","美丽的角","池塘"], answer:"四条腿", hint:"'四条腿帮它甩掉了狮子'。"},
+      {tag:"寓意", q:"这个故事告诉我们什么道理？", options:["不能只看外表好不好看，有用的东西更重要","角比腿好看","狮子跑得慢"], answer:"不能只看外表好不好看，有用的东西更重要", hint:"腿不好看却救命，角好看却差点害命。"},
+    ]},
+  { name:"寓言·池子与河流", icon:"🏞️", cls:"l2", sub:"课本 · 三下寓言",
+    title:"池子与河流", text:"一条河流和一个池子是邻居。河流每天不停地向前流淌，从不停歇；池子却安安静静地躺在原地，笑话河流：“你这样辛苦地流来流去，多累呀，不如像我这样安逸自在。”河流没有理会，仍旧不停地向前流去。后来遇上大旱，很久没有下雨，池子的水渐渐干涸，变成了一滩烂泥；河流却因为不断流动、不断有新水补充，依然清澈见底，奔腾不息。",
+    questions:[
+      {tag:"找信息", q:"大旱来了以后，池子变成了什么样？", options:["干涸成了一滩烂泥","水更多了","变成了小河"], answer:"干涸成了一滩烂泥", hint:"文中最后一句说了池子的结果。"},
+      {tag:"推断", q:"为什么河流在大旱中还能保持清澈？", options:["因为它不断流动，能不断补充新水","因为它比池子大","因为下雨都下在河里"], answer:"因为它不断流动，能不断补充新水", hint:"想想河流和池子最大的不同是什么。"},
+      {tag:"寓意", q:"这个故事告诉我们什么道理？", options:["要像河流一样不断前进、不安于现状，生命才有活力","安逸自在最好","河流比池子聪明"], answer:"要像河流一样不断前进、不安于现状，生命才有活力", hint:"池子安逸不动，最后干涸了；河流不停流动，反而一直清澈。"},
+    ]},
+
+  /* ===== 挑战·综合理解（需要把好几句话连起来想） ===== */
+  { name:"转学的新同学", icon:"🌱", cls:"l2", sub:"挑战 · 综合理解",
+    title:"转学的新同学", text:"开学第一天，班里来了一位新同学小雨，她一句话也不说，只是低着头坐在角落。下课时，同学们围过去想认识她，她却往后缩了缩。细心的班长发现小雨的铅笔盒空空的，就悄悄把自己多的一支铅笔放在她桌上，没有说话。第二天，小雨主动对班长说了“谢谢”，声音很小，但脸上露出了笑容。又过了几天，小雨已经能和大家一起做游戏了。",
+    questions:[
+      {tag:"找信息", q:"班长发现小雨的什么东西是空的？", options:["铅笔盒","书包","水杯"], answer:"铅笔盒", hint:"'小雨的铅笔盒空空的'。"},
+      {tag:"推断", q:"小雨一开始为什么不愿意说话、还往后缩？", options:["她是新来的，还不熟悉大家，有点害怕","她不喜欢这个班","她生病了"], answer:"她是新来的，还不熟悉大家，有点害怕", hint:"她是刚转来的新同学，第一天当然会紧张。"},
+      {tag:"推断", q:"是什么让小雨渐渐愿意和大家一起玩了？", options:["班长不声张的关心和大家的接纳","老师批评了她","她自己突然想通了"], answer:"班长不声张的关心和大家的接纳", hint:"把班长送笔、小雨道谢、后来一起做游戏这几件事连起来想。"},
+      {tag:"与文章不符", q:"下面哪一句和文章内容不符？", options:["小雨一开始就很爱说话","班长把自己多的铅笔给了小雨","小雨后来能和大家一起做游戏"], answer:"小雨一开始就很爱说话", hint:"文章说她'一句话也不说'，正好相反。"},
+    ]},
+  { name:"会认错的哥哥", icon:"🧱", cls:"l3", sub:"挑战 · 综合理解",
+    title:"会认错的哥哥", text:"弟弟不小心打翻了哥哥搭了一下午的积木塔，哭着说“对不起”。哥哥皱了皱眉，刚想生气，忽然想起自己上周也不小心弄坏了弟弟的画，弟弟当时原谅了他。于是哥哥深吸一口气，说：“没关系，我们一起重新搭，这次搭得更高！”兄弟俩一起动手，没过多久，一座比原来更高的积木塔就立起来了。",
+    questions:[
+      {tag:"找信息", q:"弟弟打翻了什么？", options:["积木塔","水杯","书本"], answer:"积木塔", hint:"'不小心打翻了哥哥搭了一下午的积木塔'。"},
+      {tag:"推断", q:"哥哥为什么最后没有生气，反而原谅了弟弟？", options:["想起弟弟之前也原谅过自己","觉得积木不重要","妈妈在旁边看着"], answer:"想起弟弟之前也原谅过自己", hint:"'忽然想起自己上周也……弟弟当时原谅了他'。"},
+      {tag:"概括", q:"这个故事主要讲了什么？", options:["将心比心、宽容待人","搭积木的方法","弟弟很调皮"], answer:"将心比心、宽容待人", hint:"哥哥想起自己被原谅的经历，才原谅了弟弟。"},
+      {tag:"与文章不符", q:"下面哪一句和文章内容不符？", options:["最后哥哥没有理弟弟，自己走开了","哥哥想起自己也曾被弟弟原谅","两人一起搭了一座更高的积木塔"], answer:"最后哥哥没有理弟弟，自己走开了", hint:"文章说'兄弟俩一起动手'，是一起搭的。"},
+    ]},
+
+  /* ===== 📜 民国课本（爸爸买的《打开民国课本①启蒙·初识》拍照上传，原文原图+轻理解题，保留原文之美） ===== */
+  { name:"人", icon:"📜", cls:"l1", sub:"民国课本 · 第1课", img:"民国课本/img/L01.jpg",
+    title:"人", text:"人",
+    questions:[ {tag:"认字", q:"这一课要认识的字是？", options:["人","天","水"], answer:"人", hint:"看图里的大字。"} ]},
+  { name:"手足", icon:"📜", cls:"l2", sub:"民国课本 · 第2课", img:"民国课本/img/L02_03.jpg",
+    title:"手足", text:"手足",
+    questions:[ {tag:"认字", q:"这一课的两个字是？", options:["手足","眼耳","头发"], answer:"手足", hint:"看图里的大字。"} ]},
+  { name:"山水田", icon:"📜", cls:"l3", sub:"民国课本 · 第3课", img:"民国课本/img/L02_03.jpg",
+    title:"山水田", text:"山水田",
+    questions:[ {tag:"认字", q:"这一课的三个字是？", options:["山水田","天地人","风雨雷"], answer:"山水田", hint:"看图里的大字。"} ]},
+  { name:"天地日月", icon:"📜", cls:"l4", sub:"民国课本 · 第4课", img:"民国课本/img/L04_05.jpg",
+    title:"天地日月", text:"天地日月",
+    questions:[ {tag:"认字", q:"这一课的四个字是？", options:["天地日月","春夏秋冬","东南西北"], answer:"天地日月", hint:"看图里的大字。"} ]},
+  { name:"早起", icon:"📜", cls:"l1", sub:"民国课本 · 第5课", img:"民国课本/img/L04_05.jpg",
+    title:"早起", text:"早起，月落日出。",
+    questions:[ {tag:"推断", q:"这一课说的是一天中的什么时候？", options:["清早","傍晚","半夜"], answer:"清早", hint:"'早起'，还有'月落日出'，都是清早的景象。"} ]},
+  { name:"池中鱼", icon:"📜", cls:"l2", sub:"民国课本 · 第6课", img:"民国课本/img/L06_07.jpg",
+    title:"池中鱼", text:"池中鱼，游来游去。",
+    questions:[ {tag:"找信息", q:"池塘里的鱼在做什么？", options:["游来游去","睡觉","跳出水面"], answer:"游来游去", hint:"文中就写着。"} ]},
+  { name:"窗前阶下", icon:"📜", cls:"l3", sub:"民国课本 · 第7课", img:"民国课本/img/L06_07.jpg",
+    title:"窗前阶下", text:"窗前阶下，红花绿叶。",
+    questions:[ {tag:"找信息", q:"窗前台阶下有什么？", options:["红花绿叶","小猫小狗","竹子石头"], answer:"红花绿叶", hint:"文中就写着。"} ]},
+  { name:"山高水长", icon:"📜", cls:"l4", sub:"民国课本 · 第8课", img:"民国课本/img/L08_09.jpg",
+    title:"山高水长", text:"山高水长，风多雨少。",
+    questions:[ {tag:"概括", q:"这一课在描写什么？", options:["山水和天气","做游戏","吃饭"], answer:"山水和天气", hint:"山高水长是山水，风多雨少是天气。"} ]},
+  { name:"竹高林茂", icon:"📜", cls:"l1", sub:"民国课本 · 第9课", img:"民国课本/img/L08_09.jpg",
+    title:"竹高林茂", text:"竹高林茂，天冷月明。",
+    questions:[ {tag:"推断", q:"这一课写的是哪种天气的夜晚？", options:["寒冷的夜晚","炎热的夏夜","下雨的午后"], answer:"寒冷的夜晚", hint:"'天冷月明'点明了天气和时间。"} ]},
+  { name:"水满池", icon:"📜", cls:"l2", sub:"民国课本 · 第10课", img:"民国课本/img/L10_11.jpg",
+    title:"水满池", text:"水满池，花满架，鱼游水，蝶穿花。",
+    questions:[
+      {tag:"找信息", q:"这段话里出现了哪些小动物？", options:["鱼和蝶","鸟和兔","猫和狗"], answer:"鱼和蝶", hint:"'鱼游水，蝶穿花'。"},
+      {tag:"联系生活", q:"这样花开蝶飞、鱼儿游动的画面，最可能是哪个季节？", options:["春夏","寒冬","雪天"], answer:"春夏", hint:"花开、蝴蝶多，是暖和的季节。"},
+    ]},
+  { name:"寒天大雪", icon:"📜", cls:"l3", sub:"民国课本 · 第11课", img:"民国课本/img/L10_11.jpg",
+    title:"寒天大雪", text:"寒天大雪，推窗一望，屋瓦皆白。",
+    questions:[ {tag:"推断", q:"推开窗子看到了什么？", options:["屋顶的瓦都变白了(下雪了)","满地红花","下雨了"], answer:"屋顶的瓦都变白了(下雪了)", hint:"'屋瓦皆白'是因为下了大雪。"} ]},
+  { name:"兄兄弟弟", icon:"📜", cls:"l4", sub:"民国课本 · 第12课", img:"民国课本/img/L12_13.jpg",
+    title:"兄兄弟弟", text:"兄兄弟弟，各有新书，各有新图，识新字。",
+    questions:[ {tag:"找信息", q:"兄弟俩在做什么？", options:["各自看新书、认新字","一起踢球","一起睡觉"], answer:"各自看新书、认新字", hint:"'各有新书……识新字'。"} ]},
+  { name:"散学回家", icon:"📜", cls:"l1", sub:"民国课本 · 第13课", img:"民国课本/img/L12_13.jpg",
+    title:"散学回家", text:"散学回家，青草地，放风筝。",
+    questions:[
+      {tag:"找信息", q:"放学后，孩子们在草地上做什么？", options:["放风筝","写作业","睡觉"], answer:"放风筝", hint:"文中就写着。"},
+      {tag:"推断", q:"放风筝一般在什么季节比较常见？", options:["春天，风比较多","冬天","雨天"], answer:"春天，风比较多", hint:"风筝要靠风才能飞起来。"},
+    ]},
+  { name:"日夜旦夕", icon:"📜", cls:"l2", sub:"民国课本 · 第14课", img:"民国课本/img/L14_15.jpg",
+    title:"日夜旦夕", text:"日夜，旦夕，天初明，人初起。",
+    questions:[ {tag:"推断", q:"“天初明，人初起”说的是什么时候？", options:["清晨","半夜","傍晚"], answer:"清晨", hint:"天刚亮，人刚起床。"} ]},
+  { name:"天初晚", icon:"📜", cls:"l3", sub:"民国课本 · 第15课", img:"民国课本/img/L14_15.jpg",
+    title:"天初晚", text:"天初晚，月光明，窗前远望，月在东方。",
+    questions:[ {tag:"找信息", q:"这时候月亮在什么方向？", options:["东方","西方","正上方"], answer:"东方", hint:"'月在东方'——刚好呼应数学'位置与方向'关卡。"} ]},
+  { name:"两岸间", icon:"📜", cls:"l4", sub:"民国课本 · 第16课", img:"民国课本/img/L16_17.jpg",
+    title:"两岸间", text:"两岸间，架板桥，桥上行人，桥下行船。",
+    questions:[ {tag:"找信息", q:"板桥的桥下发生了什么？", options:["有船通行","有人睡觉","种着花"], answer:"有船通行", hint:"'桥下行船'。"} ]},
+  { name:"庭前树", icon:"📜", cls:"l1", sub:"民国课本 · 第17课", img:"民国课本/img/L16_17.jpg",
+    title:"庭前树", text:"庭前树，有鸟巢，小鸟一群，树间飞鸣。",
+    questions:[ {tag:"找信息", q:"庭院前的树上有什么？", options:["鸟巢，还有一群小鸟","果实","秋千"], answer:"鸟巢，还有一群小鸟", hint:"'有鸟巢……小鸟一群'。"} ]},
+  { name:"鸟有两翼", icon:"📜", cls:"l2", sub:"民国课本 · 第18课", img:"民国课本/img/L18_19.jpg",
+    title:"鸟有两翼", text:"鸟有两翼，故能飞，兽有四足，故善走。",
+    questions:[ {tag:"推断", q:"鸟为什么能飞？", options:["因为它有两只翅膀","因为它有四条腿","因为它很轻"], answer:"因为它有两只翅膀", hint:"'鸟有两翼，故能飞'。"} ]},
+  { name:"虾多足", icon:"📜", cls:"l3", sub:"民国课本 · 第19课", img:"民国课本/img/L18_19.jpg",
+    title:"虾多足", text:"虾多足，身有节，入水能游，出水能跳。",
+    questions:[ {tag:"找信息", q:"虾的身体有什么特点？", options:["脚多，身体有节","没有脚","身体是软软的一整块"], answer:"脚多，身体有节", hint:"'虾多足，身有节'。"} ]},
+  { name:"院中雄鸡", icon:"📜", cls:"l4", sub:"民国课本 · 第20课", img:"民国课本/img/L20_21.jpg",
+    title:"院中雄鸡", text:"院中雄鸡，日将出，喔喔啼；日将中，喔喔啼。",
+    questions:[
+      {tag:"找信息", q:"公鸡在太阳快出来的时候会做什么？", options:["喔喔啼叫","睡觉","躲起来"], answer:"喔喔啼叫", hint:"'日将出，喔喔啼'。"},
+      {tag:"找信息", q:"除了太阳快出来的时候，公鸡还在什么时候啼叫？", options:["太阳快到正中间的时候","半夜","傍晚"], answer:"太阳快到正中间的时候", hint:"'日将中，喔喔啼'。"},
+    ]},
+  { name:"玻璃缸中", icon:"📜", cls:"l1", sub:"民国课本 · 第21课", img:"民国课本/img/L20_21.jpg",
+    title:"玻璃缸中", text:"玻璃缸中，金鱼两尾，小猫来，欲捕鱼，我入室，猫逃去。",
+    questions:[
+      {tag:"推断", q:"小猫想做什么？", options:["想抓玻璃缸里的金鱼","想喝水","想睡觉"], answer:"想抓玻璃缸里的金鱼", hint:"'小猫来，欲捕鱼'。"},
+      {tag:"推断", q:"小猫为什么最后跑走了？", options:["因为“我”走进了屋子，猫害怕了","因为鱼跳出来了","因为下雨了"], answer:"因为“我”走进了屋子，猫害怕了", hint:"'我入室，猫逃去'。"},
+    ]},
+  { name:"民国课本·小麻雀", icon:"📜", cls:"l2", sub:"民国课本 · 第22课", img:"民国课本/img/L22_23.jpg",
+    title:"小麻雀", text:"小麻雀，兴致好，草地上，学体操，不能走，只能跳。",
+    questions:[ {tag:"推断", q:"小麻雀为什么“只能跳”不能走？", options:["这是麻雀本来的样子，走路就是蹦蹦跳跳的","它的腿受伤了","它太累了"], answer:"这是麻雀本来的样子，走路就是蹦蹦跳跳的", hint:"麻雀本来就是这样跳着走路的。"} ]},
+  { name:"民国课本·大路上", icon:"📜", cls:"l3", sub:"民国课本 · 第23课", img:"民国课本/img/L22_23.jpg",
+    title:"大路上", text:"大路上，人往来，或乘车，或步行。",
+    questions:[ {tag:"找信息", q:"大路上的人们是怎么来往的？", options:["有的坐车，有的走路","都骑马","都坐船"], answer:"有的坐车，有的走路", hint:"'或乘车，或步行'。"} ]},
+  { name:"这是我的家", icon:"📜", cls:"l4", sub:"民国课本 · 第59课", img:"民国课本/img/L59_60.jpg",
+    title:"这是我的家", text:"这是我的家，我们都爱它，池里有游鱼，园里有花草，四面有田地，种豆又种瓜。",
+    questions:[
+      {tag:"找信息", q:"“我”家的园子里种了什么？", options:["花草，还种着豆和瓜","只有石头","什么都没种"], answer:"花草，还种着豆和瓜", hint:"'园里有花草……种豆又种瓜'。"},
+      {tag:"概括", q:"为什么大家都爱这个家？", options:["因为家里有鱼、有花草、有田地，很美好","因为家里很有钱","因为家很大"], answer:"因为家里有鱼、有花草、有田地，很美好", hint:"把前面几句连起来想。"},
+    ]},
+  { name:"敬客", icon:"📜", cls:"l1", sub:"民国课本 · 第60课", img:"民国课本/img/L59_60.jpg",
+    title:"敬客", text:"客初来，请客上坐，客将去，让客先行。",
+    questions:[
+      {tag:"找信息", q:"客人刚来的时候，主人应该怎么做？", options:["请客人坐到上座","让客人自己找地方坐","不用理会客人"], answer:"请客人坐到上座", hint:"'客初来，请客上坐'。"},
+      {tag:"推断", q:"客人要走的时候，主人应该怎么做？", options:["让客人先走","自己先走","把客人留下"], answer:"让客人先走", hint:"'客将去，让客先行'，这是待客的礼貌。"},
+    ]},
+];
+
+let cur=null, qi=0, answered=false, firstWrong=false, combo=0, roundStars=0, roundGuessed=0, bestCombo=0;
+const NUM=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
+function ensureContinueBar(){ let bar=document.getElementById("continueBar");
+  if(!bar){ bar=document.createElement("div"); bar.id="continueBar"; bar.style.cssText="text-align:center;margin:0 0 16px;";
+    const menu=document.getElementById("menu"); menu.parentNode.insertBefore(bar, menu); }
+  return bar; }
+function renderContinueBar(curIdx, timeUp){ const bar=ensureContinueBar();
+  if(timeUp || curIdx<0){ bar.innerHTML=""; return; }
+  const p=PASSAGES[curIdx];
+  bar.innerHTML='<button id="continueBtn" style="background:linear-gradient(140deg,#7c5cff,#9b8cff);color:#fff;border:none;'+
+    'border-radius:18px;font-size:19px;font-weight:bold;padding:15px 28px;cursor:pointer;font-family:inherit;'+
+    'box-shadow:0 6px 16px rgba(124,92,255,.32);">▶️ 接着读：'+p.icon+' '+p.name+'</button>';
+  document.getElementById("continueBtn").onclick=()=>start(curIdx); }
+
+function makeCard(idx,curIdx,timeUp){ const p=PASSAGES[idx]; const b=document.createElement("button");
+  const prevDone=(idx===0)||!!STORE.done[PASSAGES[idx-1].title];
+  const done=!!STORE.done[p.title], locked=timeUp||!prevDone, isCur=(idx===curIdx)&&!timeUp;
+  const num=NUM[idx]||((idx+1)+".");
+  let stt = timeUp?'⏰ 今天时间用完啦':done?'✓ 读过啦（可复习）':locked?'🔒 先读上一篇':isCur?'👉 现在读这个':(p.sub||'读短文 · 答题');
+  b.className="lv "+p.cls;
+  b.innerHTML='<span class="i">'+p.icon+'</span><span class="n">'+num+' '+p.name+'</span><span class="d">'+stt+'</span>';
+  if(locked){ b.style.opacity="0.45"; b.style.filter="grayscale(0.6)";
+    b.onclick=()=>alert(timeUp?"今天语文的时间用完啦，明天再来挑战！":"先把前面的读完，再读这一篇哦 😊"); }
+  else b.onclick=()=>start(idx);
+  if(isCur) b.style.boxShadow="0 0 0 4px #ffd34d, 0 8px 20px rgba(0,0,0,.18)";
+  else if(done) b.style.outline="3px solid #c9b8ff";
+  return b; }
+
+function renderMenu(){ const m=document.getElementById("menu"); m.innerHTML="";
+  renderTimeBanner();
+  const timeUp = remainSec()<=0;
+  let curIdx=-1;
+  for(let i=0;i<PASSAGES.length;i++){ const prevDone=(i===0)||!!STORE.done[PASSAGES[i-1].title]; if(prevDone && !STORE.done[PASSAGES[i].title]){ curIdx=i; break; } }
+  renderContinueBar(curIdx, timeUp);
+
+  const activeIdx=[], doneIdxArr=[];
+  PASSAGES.forEach((p,idx)=>{ (STORE.done[p.title] ? doneIdxArr : activeIdx).push(idx); });
+  activeIdx.forEach(idx=>{ m.appendChild(makeCard(idx, curIdx, timeUp)); });
+
+  if(doneIdxArr.length){
+    const wrap=document.createElement("div"); wrap.style.cssText="grid-column:1/-1;text-align:center;margin-top:14px;";
+    const toggle=document.createElement("button");
+    toggle.textContent="✓ 已读过 "+doneIdxArr.length+" 篇（点开复习）";
+    toggle.style.cssText="background:none;border:2px dashed #ccc;color:#999;padding:8px 18px;border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit;";
+    const doneGrid=document.createElement("div");
+    doneGrid.className="menu"; doneGrid.style.cssText="display:none;margin-top:12px;";
+    doneIdxArr.forEach(idx=>{ doneGrid.appendChild(makeCard(idx, curIdx, timeUp)); });
+    toggle.onclick=()=>{ doneGrid.style.display = doneGrid.style.display==="none" ? "grid":"none"; };
+    wrap.appendChild(toggle); m.appendChild(wrap); m.appendChild(doneGrid);
+  }
+}
+renderMenu();
+function backToMenu(){ tickTime(); sessionStart=null; document.getElementById("done").style.display="none"; document.getElementById("card").style.display="none"; document.getElementById("menu").style.display=""; renderMenu(); }
+function start(idx){
+  if(remainSec()<=0){ alert("今天语文的时间用完啦，明天再来挑战！"); return; }
+  cur=PASSAGES[idx]; qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0; sessionStart=Date.now();
+  document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
+  document.getElementById("card").style.display="block";
+  document.getElementById("ptitle").textContent=cur.title;
+  document.getElementById("ptext").innerHTML=cur.text;
+  const pic=document.getElementById("ppic");
+  if(cur.img){ pic.src=cur.img; pic.style.display="block"; } else { pic.style.display="none"; pic.removeAttribute("src"); }
+  showQ(); }
+function showQ(){ answered=false; firstWrong=false;
+  const total=cur.questions.length; const item=cur.questions[qi];
+  document.getElementById("prog").textContent="📖 "+cur.title+"　第 "+(qi+1)+" / "+total+" 题"+(combo>=2?"　🔥连对"+combo:"");
+  setBar(qi,total);
+  document.getElementById("qtag").textContent=item.tag;
+  document.getElementById("q").innerHTML=item.q;
+  document.getElementById("fb").textContent=""; document.getElementById("fb").className="feedback";
+  document.getElementById("nextBtn").style.display="none";
+  const area=document.getElementById("answerArea"); area.innerHTML="";
+  shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o; b.onclick=()=>pick(b,o); area.appendChild(b); });
+}
+function pick(el,val){ if(answered)return; const item=cur.questions[qi];
+  if(val===item.answer){ el.classList.add("right"); good(); }
+  else { el.classList.add("wrong"); el.textContent="✗ "+el.textContent; el.onclick=null; bad(item); } }
+const PRAISE=["读得真仔细！","答对啦！","你真会读！","厉害！","就是这样！"];
+function good(){ answered=true; const fb=document.getElementById("fb");
+  const item=cur.questions[qi]; const k=(item.q||"").replace(/<[^>]+>/g,"").trim();
+  const r=todayRec(); if(!r.awarded) r.awarded={};
+  if(!firstWrong){
+    if(r.awarded[k]){ saveStore(); sndRight(); fb.className="feedback ok"; fb.textContent="✅ 对啦！这题今天已经拿过 ⭐ 了——读没读过的篇目才加星哦"; }
+    else { r.awarded[k]=true; r.stars++; r.correct++; saveStore(); showStarNow(); floatPlus(); roundStars++; combo++; if(combo>bestCombo)bestCombo=combo; sndRight();
+      let msg=PRAISE[Math.floor(Math.random()*PRAISE.length)]+" ⭐"; if(combo>=3){ msg="🔥 连对 "+combo+" 个！ "+msg; sndCombo(); burst(["🔥","⭐","🌟"]); }
+      fb.className="feedback ok"; fb.textContent=msg; }
+  } else { r.guessed=(r.guessed||0)+1; saveStore(); roundGuessed++; combo=0;
+    fb.className="feedback ok"; fb.textContent="答对了！这题先记下来，下次争取一次就对 ✊（这题不加星）"; }
+  setBar(qi+1,cur.questions.length);
+  document.getElementById("nextBtn").style.display="block";
+}
+function bad(item){ if(!firstWrong){ firstWrong=true; recordMiss(item); } combo=0; sndWrong();
+  const fb=document.getElementById("fb"); fb.className="feedback no"; fb.textContent="✗ 再读读短文～ 提示："+(item.hint||"答案就在文章里哦"); }
+function recordMiss(item){ try{ STORE.review.push({d:dkey(new Date()),m:cur.title,q:(item.q||"").replace(/<[^>]+>/g," ").trim()}); if(STORE.review.length>80)STORE.review=STORE.review.slice(-80); saveStore(); }catch(e){} }
+function nextQ(){ qi++; tickTime();
+  // 时间额度只卡"要不要开始读下一篇"，正在读的这一篇不会中途被打断
+  if(qi>=cur.questions.length){ finish(); } else { showQ(); } }
+function finish(){ document.getElementById("card").style.display="none";
+  if(cur){ STORE.done[cur.title]=true; saveStore(); }   // 读完这篇 → 解锁下一篇
+  const d=document.getElementById("done"); d.style.display="block";
+  if(!document.getElementById("toMenuBtn")){ const bt=document.createElement("button"); bt.id="toMenuBtn"; bt.className="ghost"; bt.textContent="📋 选别的篇目"; bt.onclick=backToMenu; d.appendChild(bt); }
+  const perfect=(roundStars===cur.questions.length);
+  document.getElementById("doneMsg").textContent= perfect ? "🏆 《"+cur.title+"》全部一次答对！" : "《"+cur.title+"》读完啦！";
+  document.getElementById("doneGot").innerHTML="这一篇：一次答对 <b>"+roundStars+"</b> 题（得 "+roundStars+" ⭐）"+(roundGuessed?("，试出来 "+roundGuessed+" 题（不加星）"):"")+(bestCombo>=3?("<br>最高连对 🔥"+bestCombo):"")+"<br>今天一共 ⭐ "+todayRec().stars+" 颗（每5颗⭐换1朵🌸！）";
+  sndFinish(); burst(perfect?["🏆","🎉","⭐","🌟","✨"]:null);
+}
+</script>
+</body>
+</html>

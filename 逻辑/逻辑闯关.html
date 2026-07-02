@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃的逻辑闯关 🧩</title>
+<style>
+  * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#fff6e0 0%,#fff0f6 100%); color:#4a4030; min-height:100vh; padding:18px 16px 50px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .back { background:#fff; border:2px solid #ffd98a; color:#f59f00; font-weight:bold; font-size:16px;
+    padding:8px 16px; border-radius:14px; cursor:pointer; font-family:inherit; }
+  .star-now { font-size:18px; font-weight:bold; color:#f59f00; }
+  h1 { text-align:center; font-size:30px; margin:4px 0 16px; }
+  .menu { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; }
+  .lv { border:none; color:#fff; border-radius:22px; padding:22px 14px; cursor:pointer; font-family:inherit;
+    text-align:center; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; }
+  .lv:hover{transform:translateY(-4px) scale(1.02);} .lv:active{transform:scale(.97);}
+  .lv .i{font-size:46px;display:block;} .lv .n{font-size:21px;font-weight:bold;margin-top:6px;} .lv .d{font-size:13px;opacity:.92;margin-top:3px;}
+  .l1{background:linear-gradient(140deg,#ffcf5c,#ff9f43);} .l2{background:linear-gradient(140deg,#9b8cff,#7c5cff);} .l3{background:linear-gradient(140deg,#5ac8fa,#3b82f6);}
+  .l4{background:linear-gradient(140deg,#56d6a0,#1fae8c);} .l5{background:linear-gradient(140deg,#ff8fb3,#ff5c8a);}
+  .card { background:#fff; border-radius:24px; padding:22px 20px; box-shadow:0 6px 20px rgba(255,180,80,.18);
+    border:3px solid #ffe7b8; display:none; }
+  .progress { font-size:14px; color:#aaa; text-align:center; margin-bottom:6px; }
+  .tip { background:#fff7e6; border-radius:14px; padding:10px 14px; font-size:15px; color:#a6772f; margin-bottom:14px; line-height:1.5; }
+  .q { font-size:24px; line-height:1.5; text-align:center; margin:6px 0 18px; min-height:60px; } .q b{color:#f59f00;}
+  .opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .opt { background:#fff8ec; border:2px solid #ffe4b3; border-radius:16px; padding:16px; font-size:22px; font-weight:bold;
+    cursor:pointer; font-family:inherit; color:#4a4030; transition:.1s; }
+  .opt:hover{background:#fff1d6;} .opt:active{transform:scale(.97);}
+  .opt.right{background:#d7f7e3;border-color:#56d6a0;} .opt.wrong{background:#ffe1e1;border-color:#ff8585;}
+  .answbox{text-align:center;margin-bottom:12px;}
+  .answ{display:inline-block;min-width:120px;font-size:34px;font-weight:bold;color:#7c5cff;border-bottom:4px solid #e3d6ff;padding:4px 18px;letter-spacing:2px;}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:0 auto;}
+  .key{background:#fff8ec;border:2px solid #ffe4b3;border-radius:14px;padding:16px;font-size:24px;font-weight:bold;cursor:pointer;font-family:inherit;color:#4a4030;}
+  .key:active{transform:scale(.95);background:#fff1d6;} .key.go{background:#56d6a0;color:#fff;border-color:#56d6a0;} .key.del{background:#ffd9b0;border-color:#ffd9b0;}
+  .feedback{text-align:center;font-size:22px;font-weight:bold;min-height:34px;margin:14px 0 6px;} .feedback.ok{color:#1fae8c;} .feedback.no{color:#ff8c42;}
+  .next{display:none;background:#f59f00;color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:bold;padding:14px 30px;cursor:pointer;font-family:inherit;margin:6px auto 0;}
+  .done{display:none;text-align:center;background:#fff;border-radius:24px;padding:30px 20px;box-shadow:0 6px 20px rgba(255,180,80,.2);border:3px solid #ffe7b8;}
+  .done .big{font-size:64px;} .done .msg{font-size:24px;font-weight:bold;margin:10px 0;} .done .got{font-size:19px;color:#f59f00;margin-bottom:18px;}
+  .done button{background:#f59f00;color:#fff;border:none;border-radius:16px;font-size:19px;font-weight:bold;padding:13px 26px;cursor:pointer;font-family:inherit;margin:6px;}
+  .done .ghost{background:#fff;color:#f59f00;border:2px solid #ffd98a;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <button class="back" onclick="goHome()">🏡 回学习台</button>
+    <span class="star-now" id="starNow">今天 ⭐ 0</span>
+  </div>
+  <h1>🧩 桃桃的逻辑闯关</h1>
+  <div class="menu" id="menu"></div>
+  <div class="card" id="card">
+    <div class="progress" id="prog"></div>
+    <div class="tip" id="tip"></div>
+    <div class="q" id="q"></div>
+    <div id="answerArea"></div>
+    <div class="feedback" id="fb"></div>
+    <button class="next" id="nextBtn" onclick="nextQ()">下一题 →</button>
+  </div>
+  <div class="done" id="done">
+    <div class="big">🎉</div>
+    <div class="msg" id="doneMsg"></div>
+    <div class="got" id="doneGot"></div>
+    <button onclick="restart()">再来一关</button>
+    <button class="ghost" onclick="goHome()">回学习台</button>
+  </div>
+</div>
+<script>
+/* 配置：存储/游戏逻辑由 ../_engine/quiz.js 提供 */
+const STORE_KEY="taotao_logic_v1";
+const TIME_LIMIT_MIN=12; // 每天这一科的时间额度（分钟），用完锁到明天
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+
+const MODULES = {
+  /* —— 找规律：自动随机出题，永远不重复 —— */
+  pattern:{ name:"找规律", icon:"🔢", cls:"l1",
+    tip:"💡 先看每一个数(或图)比前一个多了什么、变了什么，找出'藏起来的规律'。",
+    gen(){ const t=rnd(1,7);
+      if(t===1){ const s=rnd(1,9), d=[2,3,4,5][rnd(0,3)]; return {q:[s,s+d,s+2*d,s+3*d].join(", ")+", <b>?</b>", type:"number", answer:s+4*d, hint:"每次多 "+d+"。"}; }
+      if(t===2){ const s=rnd(22,40), d=[1,2,3][rnd(0,2)]; return {q:[s,s-d,s-2*d,s-3*d].join(", ")+", <b>?</b>", type:"number", answer:s-4*d, hint:"每次少 "+d+"。"}; }
+      if(t===3){ const s=[1,2,3][rnd(0,2)]; return {q:[s,s*2,s*4,s*8].join(", ")+", <b>?</b>", type:"number", answer:s*16, hint:"每次翻一倍(×2)。"}; }
+      if(t===4){ const a=["🔴","🟡","🔵","🟢","⭐","❤️"]; let x=a[rnd(0,5)],y=a[rnd(0,5)]; while(y===x)y=a[rnd(0,5)];
+        return {q:[x,y,x,y,x].join("")+" 后面是？", type:"choice", options:shuffle([x,y]), answer:y, hint:"两个交替出现。"}; }
+      if(t===5){ const a=["🐶","🐱","🐰","🐻","🦊","🐯"]; const p=shuffle(a).slice(0,3);
+        return {q:[p[0],p[1],p[2],p[0],p[1]].join("")+" 后面是？", type:"choice", options:shuffle(p), answer:p[2], hint:"三个一组，循环重复。"}; }
+      if(t===6){ const s=rnd(1,5), d0=rnd(1,3), inc=rnd(1,2);
+        let seq=[s], d=d0; for(let i=0;i<4;i++){ seq.push(seq[seq.length-1]+d); d+=inc; }
+        return {q:"🚀 "+seq.join(", ")+", <b>?</b>", type:"number", answer:seq[seq.length-1]+d, hint:"这次每次多的数量也在变——看看每次比上次多加了几。"}; }
+      const s=rnd(1,4); const seq=[]; for(let i=0;i<3;i++){ seq.push(s+i); seq.push((s+i)*10); }
+      return {q:"🚀 "+seq.join(", ")+", <b>?</b>", type:"number", answer:s+3, hint:"藏着两条规律：单数位置在数数，双数位置是它的10倍。"};
+    }},
+
+  /* —— 谁不一样：分类归纳 —— */
+  classify:{ name:"谁不一样", icon:"🧩", cls:"l2",
+    tip:"💡 它们大多是'同一类'，只有一个是'外人'。把那个外人找出来，并想清楚理由。",
+    bank:[
+      {q:"哪个不是一类？", type:"choice", options:["苹果","香蕉","萝卜"], answer:"萝卜", hint:"萝卜是蔬菜，其它是水果。"},
+      {q:"哪个不是一类？", type:"choice", options:["猫","狗","桌子"], answer:"桌子", hint:"桌子不是动物。"},
+      {q:"哪个不是一类？", type:"choice", options:["红色","黄色","圆形"], answer:"圆形", hint:"圆形是形状，不是颜色。"},
+      {q:"哪个不是一类？", type:"choice", options:["春天","夏天","下雨"], answer:"下雨", hint:"下雨是天气，不是季节。"},
+      {q:"哪个不是一类？", type:"choice", options:["铅笔","尺子","苹果"], answer:"苹果", hint:"苹果不是文具。"},
+      {q:"哪个不是动物？", type:"choice", options:["老虎","大象","石头"], answer:"石头", hint:"石头没有生命。"},
+      {q:"哪个不是交通工具？", type:"choice", options:["汽车","飞机","香蕉"], answer:"香蕉", hint:"香蕉是水果。"},
+      {q:"哪个不会飞？", type:"choice", options:["小鸟","飞机","汽车"], answer:"汽车", hint:"汽车在地上跑。"},
+      {q:"哪个不是数字？", type:"choice", options:["3","7","A"], answer:"A", hint:"A 是字母。"},
+      {q:"哪个不是身体部位？", type:"choice", options:["手","脚","帽子"], answer:"帽子", hint:"帽子是戴的东西。"},
+      {q:"哪个不是双数？", type:"choice", options:["2","6","9"], answer:"9", hint:"9 是单数。"},
+      {q:"哪个不能喝？", type:"choice", options:["水","牛奶","石头"], answer:"石头", hint:"石头不能喝。"},
+      {q:"哪个不是一类？", type:"choice", options:["狮子","老虎","汽车"], answer:"汽车", hint:"狮子老虎是动物，汽车不是。"},
+      {q:"哪个不是乐器？", type:"choice", options:["钢琴","小提琴","苹果"], answer:"苹果", hint:"钢琴小提琴是乐器。"},
+      {q:"哪个不是家具？", type:"choice", options:["椅子","桌子","小狗"], answer:"小狗", hint:"椅子桌子是家具，小狗是动物。"},
+      {q:"哪个不是蔬菜？", type:"choice", options:["白菜","土豆","香蕉"], answer:"香蕉", hint:"白菜土豆是蔬菜，香蕉是水果。"},
+      {q:"哪个不是天气？", type:"choice", options:["晴天","下雨","星期一"], answer:"星期一", hint:"晴天下雨是天气，星期一是日子。"},
+      {q:"哪个不是国家？", type:"choice", options:["中国","北京","美国"], answer:"北京", hint:"中国美国是国家，北京是一座城市。"},
+      {q:"哪个不是月份？", type:"choice", options:["一月","星期五","十二月"], answer:"星期五", hint:"一月十二月是月份，星期五是星期。"},
+      {q:"哪个不是文具？", type:"choice", options:["尺子","订书机","西瓜"], answer:"西瓜", hint:"尺子订书机是文具，西瓜是水果。"},
+    ]},
+
+  /* —— 推理小侦探：排除/条件推理 —— */
+  detect:{ name:"推理小侦探", icon:"🕵️", cls:"l3",
+    tip:"💡 把每句话当线索，一条一条排除，剩下的就是答案。",
+    bank:[
+      {q:"小明比小红高，小红比小华高。谁<b>最高</b>？", type:"choice", options:["小明","小红","小华"], answer:"小明", hint:"小明>小红>小华。"},
+      {q:"盒子里不是红球就是蓝球。老师说'不是蓝球'。是什么球？", type:"choice", options:["红球","蓝球"], answer:"红球", hint:"排除蓝球，只剩红球。"},
+      {q:"今天不是周一就是周二。妈妈说'不是周一'。今天周几？", type:"choice", options:["周二","周一"], answer:"周二", hint:"排除周一。"},
+      {q:"排队：小猫在小狗前面，小狗在小兔前面。谁<b>第一</b>？", type:"choice", options:["小猫","小狗","小兔"], answer:"小猫", hint:"猫→狗→兔。"},
+      {q:"桌上有 3 个苹果，吃掉 1 个，又放上 2 个。现在有几个？", type:"number", answer:4, hint:"3-1+2=4。"},
+      {q:"小红跑得比小明快，小明比小刚快。谁<b>最慢</b>？", type:"choice", options:["小刚","小明","小红"], answer:"小刚", hint:"红>明>刚，最慢是小刚。"},
+      {q:"盒里有红、黄、蓝三个球，拿走红和蓝，<b>剩下</b>什么？", type:"choice", options:["黄球","红球","蓝球"], answer:"黄球", hint:"拿走两个，剩黄。"},
+      {q:"今天是星期三，那么<b>明天</b>是？", type:"choice", options:["星期四","星期二","星期五"], answer:"星期四", hint:"三的后面是四。"},
+      {q:"A 比 B 大，B 比 C 大。<b>最小</b>的是？", type:"choice", options:["C","A","B"], answer:"C", hint:"A>B>C。"},
+      {q:"乐乐不是最高，也不是最矮。三个人里乐乐排第几高？", type:"number", answer:2, hint:"不高不矮，就是中间第 2。"},
+      {q:"如果'下雨就带伞'，小明带了伞，最可能因为？", type:"choice", options:["今天下雨","今天很热"], answer:"今天下雨", hint:"带伞通常因为下雨。"},
+      {q:"一共 5 块糖，分给我和你一样多，每人几块分不完剩几块？每人？", type:"number", answer:2, hint:"5 平均分给 2 人，每人 2 块(剩1)。"},
+      {q:"小刚比小强矮，小强比小亮矮。谁<b>最高</b>？", type:"choice", options:["小亮","小强","小刚"], answer:"小亮", hint:"刚<强<亮，最高是小亮。"},
+      {q:"杯子里不是茶就是水。爸爸说'不是水'。杯子里是什么？", type:"choice", options:["茶","水"], answer:"茶", hint:"排除水，只剩茶。"},
+      {q:"今天不是晴天就是阴天。天气预报说'不是晴天'。今天是什么天？", type:"choice", options:["阴天","晴天"], answer:"阴天", hint:"排除晴天。"},
+      {q:"排队买票：小英在小方前面，小方在小刚前面。谁排在<b>最前面</b>？", type:"choice", options:["小英","小方","小刚"], answer:"小英", hint:"英→方→刚，小英最前面。"},
+      {q:"桌上有 5 支笔，拿走 2 支，又放上 3 支。现在有几支？", type:"number", answer:6, hint:"5-2+3=6。"},
+      {q:"小杰跳得比小伟远，小伟比小强远。谁跳得<b>最远</b>？", type:"choice", options:["小杰","小伟","小强"], answer:"小杰", hint:"杰>伟>强，最远是小杰。"},
+      {q:"盒子里有蓝、绿、黄三支笔，拿走蓝和黄，<b>剩下</b>什么颜色？", type:"choice", options:["绿色","蓝色","黄色"], answer:"绿色", hint:"拿走两支，剩绿色。"},
+      {q:"今天是星期五，那么<b>后天</b>是星期几？", type:"choice", options:["星期日","星期六","星期一"], answer:"星期日", hint:"五后一天是六，再一天是日。"},
+    ]},
+
+  /* —— 事实还是看法：理性思维①（媒介素养的根） —— */
+  fact:{ name:"事实还是看法", icon:"⚖️", cls:"l1",
+    tip:"💡 事实=能查证、能证明、大家都一样；看法=每个人的喜好或想法，可以不一样。两者要分清楚。",
+    bank:[
+      {q:"『今天下雨了』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"看窗外就能查证。"},
+      {q:"『蓝色是最好看的颜色』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的颜色不一样。"},
+      {q:"『这本书有 200 页』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"数一数就知道。"},
+      {q:"『这部动画片最好看』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"是个人喜好。"},
+      {q:"『水烧到 100 度会开』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"可以做实验验证。"},
+      {q:"『数学是最难的科目』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"有人觉得难，有人觉得简单。"},
+      {q:"『我们班有 40 个同学』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"点名就能数出来。"},
+      {q:"『猫比狗可爱』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"可爱是个人感觉。"},
+      {q:"『太阳从东边升起』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"每天都能看到。"},
+      {q:"『冬天比夏天好』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的季节不同。"},
+      {q:"『辣的东西最好吃』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"口味因人而异。"},
+      {q:"『一个星期有 7 天』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"这是定好的、能查证。"},
+      {q:"『长颈鹿的脖子很长』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"用尺子能量出来，谁都一样。"},
+      {q:"『暑假比寒假好玩』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的假期不一样。"},
+      {q:"『一年有十二个月』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"日历上写得清清楚楚。"},
+      {q:"『足球是最好玩的运动』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的运动不一样。"},
+      {q:"『地球是圆的』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"科学已经证明了。"},
+      {q:"『穿裙子比穿裤子好看』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"好不好看是个人感觉。"},
+    ]},
+
+  /* —— 广告的套路：理性思维②（识别劝说与操纵） —— */
+  ad:{ name:"广告的套路", icon:"📢", cls:"l5",
+    tip:"💡 广告是想让你买东西。学会问：它有证据吗？是不是在催我、夸大、吓唬我？拿不准就问爸爸妈妈。",
+    bank:[
+      {q:"广告说『喝了它就能变聪明！』，聪明的做法是？", type:"choice", options:["先怀疑：真的吗？有证据吗","马上相信，赶紧买"], answer:"先怀疑：真的吗？有证据吗", hint:"夸大的承诺要先打个问号。"},
+      {q:"包装写『99% 的人都说好』，能证明它一定好吗？", type:"choice", options:["不一定，要看是谁、怎么调查的","能，这么多人呢"], answer:"不一定，要看是谁、怎么调查的", hint:"没说清楚的数字不能全信。"},
+      {q:"『最后 3 分钟，不买就没了！』这种话是想让你？", type:"choice", options:["着急，来不及想就买","冷静慢慢想清楚"], answer:"着急，来不及想就买", hint:"催你着急，就是不想让你思考。"},
+      {q:"明星在广告里说某零食好吃，它就一定健康吗？", type:"choice", options:["不一定，明星是收钱推广的","一定，明星说的"], answer:"不一定，明星是收钱推广的", hint:"代言是工作，不代表真相。"},
+      {q:"看到『点这里免费领礼物』，应该？", type:"choice", options:["先问爸爸妈妈，可能是骗人的","马上点进去"], answer:"先问爸爸妈妈，可能是骗人的", hint:"天上不会掉馅饼。"},
+      {q:"广告把食物拍得特别诱人，真实的一定一样吗？", type:"choice", options:["不一定，广告会美化","一定一模一样"], answer:"不一定，广告会美化", hint:"照片会精心摆拍。"},
+      {q:"『别人都有，你也得有！』这是想让你？", type:"choice", options:["因为攀比而想要","想清楚自己需不需要"], answer:"因为攀比而想要", hint:"别人有，不等于你需要。"},
+      {q:"玩游戏时弹出『充钱就能赢』，应该？", type:"choice", options:["不理它，这是想让你花钱","马上充钱"], answer:"不理它，这是想让你花钱", hint:"赢靠本事，不靠花钱。"},
+      {q:"『科学家都推荐』但没说是哪位科学家，可信吗？", type:"choice", options:["不太可信，太含糊了","可信，科学家嘛"], answer:"不太可信，太含糊了", hint:"说不清是谁，就要小心。"},
+      {q:"『原价 999，现价 99！』你应该？", type:"choice", options:["想想原价是真的吗、我需不需要","太便宜了赶紧抢"], answer:"想想原价是真的吗、我需不需要", hint:"假打折是常见套路。"},
+      {q:"广告说『买一送一，机会难得』，你应该？", type:"choice", options:["先想想自己是否真的需要","立刻买两份"], answer:"先想想自己是否真的需要", hint:"不需要的东西，送再多也没用。"},
+      {q:"网红说'用了这支笔成绩就能变好'，可信吗？", type:"choice", options:["不可信，成绩靠努力不靠文具","可信，赶紧买一支"], answer:"不可信，成绩靠努力不靠文具", hint:"文具帮不了学习，努力才行。"},
+      {q:"广告里模特用了产品后皮肤变得完美无瑕，照片有没有可能被修过？", type:"choice", options:["有可能，广告照片常常被美化","不可能，肯定是真的"], answer:"有可能，广告照片常常被美化", hint:"广告照片常常经过修饰。"},
+      {q:"游戏广告说『免费下载』，进去后却一直弹窗要充钱，这说明？", type:"choice", options:["'免费'不代表以后都不花钱，要小心","免费的东西肯定都是好的"], answer:"'免费'不代表以后都不花钱，要小心", hint:"很多'免费'游戏靠内购赚钱。"},
+      {q:"广告用很多小朋友说『我喜欢』，就证明这东西一定好吗？", type:"choice", options:["不一定，别人喜欢不代表适合你","一定，那么多人喜欢"], answer:"不一定，别人喜欢不代表适合你", hint:"别人喜欢的，不一定适合自己。"},
+    ]},
+
+  /* —— 怎么知道是真的：理性思维③（证据 + 独立思考，防盲从） —— */
+  evidence:{ name:"怎么知道是真的", icon:"🔍", cls:"l3",
+    tip:"💡 判断真假，最该看『有没有证据和道理』，而不是谁声音大、谁人多。不轻信，也不乱否定——先问'你怎么知道的？'。",
+    bank:[
+      {q:"同学说『操场底下埋着宝藏』，最好怎么做？", type:"choice", options:["问他：你怎么知道的？有证据吗","马上相信跑去挖","直接骂他骗人"], answer:"问他：你怎么知道的？有证据吗", hint:"不轻信也不乱否定，先问证据。"},
+      {q:"网上看到一条很吓人的消息，应该？", type:"choice", options:["先查查真假、问大人","马上转发给所有人"], answer:"先查查真假、问大人", hint:"没核实的消息别乱传。"},
+      {q:"一个人说话很大声、很自信，他说的就一定对吗？", type:"choice", options:["不一定，要看有没有道理和证据","一定对，他那么自信"], answer:"不一定，要看有没有道理和证据", hint:"自信≠正确。"},
+      {q:"全班都说 2+2=5，那 2+2 真的等于 5 吗？", type:"choice", options:["不对，事实不会因为人多就改变","对，大家都这么说"], answer:"不对，事实不会因为人多就改变", hint:"真理不是靠人多决定的。"},
+      {q:"书上或大人说的，就一定 100% 都对吗？", type:"choice", options:["大多对，但也会有错，可以礼貌地问为什么","100% 都对，不许问"], answer:"大多对，但也会有错，可以礼貌地问为什么", hint:"尊重的同时，也可以提问。"},
+      {q:"大家都在做一件你觉得不对的事，你可以？", type:"choice", options:["自己想清楚，对的才做","别人做我就跟着做"], answer:"自己想清楚，对的才做", hint:"自己的脑子要自己用。"},
+      {q:"有人说『因为是我说的，你就必须信』，这个理由好吗？", type:"choice", options:["不好，这不是真正的理由","好，他很厉害"], answer:"不好，这不是真正的理由", hint:"讲道理才算理由。"},
+      {q:"判断一件事是真是假，最该看什么？", type:"choice", options:["有没有证据和道理","谁的声音更大"], answer:"有没有证据和道理", hint:"看证据，不看嗓门。"},
+      {q:"看到一张图说某件事，图一定是真的吗？", type:"choice", options:["不一定，图也可能是假的或拼的","一定是真的"], answer:"不一定，图也可能是假的或拼的", hint:"眼见也不一定为实。"},
+      {q:"遇到不懂的事，最好的态度是？", type:"choice", options:["多问'为什么'，把它弄明白","不懂就算了，或者装懂"], answer:"多问'为什么'，把它弄明白", hint:"敢问问题最棒。"},
+      {q:"如果证据证明你原来想错了，应该？", type:"choice", options:["承认想错了，改过来","死也不认错"], answer:"承认想错了，改过来", hint:"能改主意是聪明，不是丢人。"},
+      {q:"别人夸你或骂你，你就立刻全信吗？", type:"choice", options:["先自己想想是不是真的","别人说啥就是啥"], answer:"先自己想想是不是真的", hint:"别人的话也要过过脑子。"},
+      {q:"同学说他家有一只会说话的狗，你会怎么想？", type:"choice", options:["很好奇，但想先看看证据再相信","立刻相信并告诉所有人"], answer:"很好奇，但想先看看证据再相信", hint:"新奇的事更要看证据。"},
+      {q:"一条消息没有署名、也说不清楚来源，可信度怎么样？", type:"choice", options:["可信度较低，需要多方查证","肯定是真的"], answer:"可信度较低，需要多方查证", hint:"来源不明的消息要打个问号。"},
+      {q:"科学结论主要是靠什么得出来的？", type:"choice", options:["反复的实验和证据","投票的人数"], answer:"反复的实验和证据", hint:"科学看证据，不看人多人少。"},
+      {q:"老师讲错了一个知识点，你发现了，应该怎么做？", type:"choice", options:["礼貌地提出来，一起核实","不敢说，只能憋着"], answer:"礼貌地提出来，一起核实", hint:"礼貌提问不等于不尊重。"},
+      {q:"别人说的话和你亲眼看到的不一样，该怎么办？", type:"choice", options:["再仔细核实一下，不要急着下结论","肯定相信说话的人"], answer:"再仔细核实一下，不要急着下结论", hint:"不轻信也不乱下结论，先核实。"},
+    ]},
+
+  /* —— 多线索推理：挑战关，要把好几条线索连起来想 —— */
+  advdetect:{ name:"多线索推理", icon:"🧠", cls:"l4", sub:"挑战 · 多条线索一起想",
+    tip:"💡 这里的每道题都要用上不止一条线索，最好把线索一条条写下来，再慢慢排除、慢慢算。",
+    bank:[
+      {q:"红、黄、蓝三个球分给甲乙丙。甲不要红色，乙喜欢蓝色，丙不要蓝色也不要黄色。<br>丙拿到了什么颜色？", type:"choice", options:["红色","黄色","蓝色"], answer:"红色", hint:"丙不要蓝也不要黄，剩下的只有红色。"},
+      {q:"四个小朋友排队打饭：小杨排在小林前面，小林排在小周前面，小周排在小马前面。<br>谁排在最后面？", type:"choice", options:["小马","小杨","小周"], answer:"小马", hint:"杨→林→周→马，一个接一个排好。"},
+      {q:"小明比小红大 2 岁，小红比小华大 3 岁，小华今年 6 岁。<br>小明今年几岁？", type:"number", answer:11, hint:"先算小红：6+3=9；再算小明：9+2=11。"},
+      {q:"动物园里猫、狗、兔子一共 8 只，兔子有 2 只，猫比狗多 2 只。<br>狗有几只？", type:"number", answer:2, hint:"猫+狗=8-2=6；较小的数=(总数-相差数)÷2=(6-2)÷2=2。"},
+      {q:"小美比小刚高，小刚比小丽高，小丽比小华高。<br>谁最矮？", type:"choice", options:["小华","小美","小刚"], answer:"小华", hint:"美>刚>丽>华，最后一个最矮。"},
+      {q:"妈妈买了苹果和梨共 15 个，苹果比梨多 3 个。<br>苹果有几个？", type:"number", answer:9, hint:"较大的数=(总数+相差数)÷2=(15+3)÷2=9。"},
+      {q:"三个箱子：箱子1比箱子2少3个球，箱子2比箱子3少2个球，箱子3装了10个球。<br>箱子1装了几个？", type:"number", answer:5, hint:"先算箱子2：10-2=8；再算箱子1：8-3=5。"},
+      {q:"一支钢笔比一块橡皮贵 5 元，钢笔和橡皮一共 9 元。<br>橡皮多少元？", type:"number", answer:2, hint:"较小的数=(总数-相差数)÷2=(9-5)÷2=2。"},
+      {q:"小红、小刚、小丽按个子从矮到高排队：小红比小刚矮，小刚比小丽矮。<br>谁最高？", type:"choice", options:["小丽","小刚","小红"], answer:"小丽", hint:"红<刚<丽，最高是小丽。"},
+      {q:"三只小动物比赛跑步：兔子比乌龟快，乌龟比蜗牛快。<br>谁跑得最慢？", type:"choice", options:["蜗牛","乌龟","兔子"], answer:"蜗牛", hint:"兔>龟>蜗牛，最慢是蜗牛。"},
+      {q:"妈妈买了文具，笔记本比铅笔贵 4 元，两样一共 10 元。<br>铅笔多少钱？", type:"number", answer:3, hint:"较小的数=(总数-相差数)÷2=(10-4)÷2=3。"},
+      {q:"桃桃比乐乐多做对 3 道题，两人一共做对 17 道题。<br>桃桃做对几道？", type:"number", answer:10, hint:"较大的数=(总数+相差数)÷2=(17+3)÷2=10。"},
+      {q:"四个箱子编号1到4：箱子1比箱子2轻 2 千克，箱子2比箱子3轻 3 千克，箱子3重 10 千克。<br>箱子1重几千克？", type:"number", answer:5, hint:"先算箱子2：10-3=7；再算箱子1：7-2=5。"},
+      {q:"小明的钱比小华多，小华的钱比小丽多。<br>谁的钱最少？", type:"choice", options:["小丽","小明","小华"], answer:"小丽", hint:"明>华>丽，最少是小丽。"},
+    ]},
+};
+
+/* 菜单/出题/判分/动画由共用引擎处理 */
+</script>
+<script src="../_engine/quiz.js"></script>
+</body>
+</html>

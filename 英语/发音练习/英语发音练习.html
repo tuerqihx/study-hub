@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃的英语发音闯关 🎤</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(160deg,#a8edea 0%,#fed6e3 100%);
+    min-height: 100vh; color: #2b2b3a;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .wrap { width: 100%; max-width: 560px; padding: 18px; }
+  h1 { text-align:center; font-size: 26px; margin: 10px 0 4px; }
+  .sub { text-align:center; color:#5a5a72; font-size:13px; margin-bottom:12px; }
+
+  .toolbar { display:flex; gap:10px; justify-content:center; margin-bottom:12px; }
+  .tool {
+    border:none; border-radius:18px; padding:9px 16px; font-size:14px; font-weight:700;
+    cursor:pointer; background:#ffffffcc; color:#6a4a7a; box-shadow:0 3px 10px rgba(120,90,140,.15);
+  }
+  .tool:active { transform:scale(.96); }
+
+  .levels { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:14px; }
+  .lvl-btn {
+    border:none; border-radius:20px; padding:8px 14px; font-size:14px; cursor:pointer;
+    background:#ffffffaa; color:#444; font-weight:600;
+  }
+  .lvl-btn.active { background:#ff7eb3; color:#fff; box-shadow:0 4px 12px #ff7eb366; }
+  .card {
+    background:#fff; border-radius:24px; padding:26px 22px; text-align:center;
+    box-shadow:0 12px 30px rgba(120,90,140,.18);
+  }
+  .zh-tip { color:#8a8aa0; font-size:14px; min-height:20px; margin-bottom:6px; }
+  .target { font-size:40px; font-weight:800; line-height:1.3; margin:6px 0 4px; letter-spacing:.5px; }
+  .target .stress { color:#ff5c8a; }
+  .target .w { padding:0 2px; border-radius:6px; transition:.2s; }
+  .target .ok { background:#c8f7c8; }
+  .target .near { background:#fff3bf; }
+
+  /* 老师拆开教（连续读不准时自动出现） */
+  .coach-step { text-align:left; background:#fbf6ff; border:2px solid #e5d4f5; border-radius:14px; padding:12px 14px; margin-top:12px; font-size:15px; line-height:1.8; }
+  .coach-step b { color:#7048a8; }
+  .pat { background:#fff; border-radius:10px; padding:8px 10px; margin-top:8px; }
+  .pat b { color:#e64980; font-size:17px; }
+  .mini { border:none; border-radius:12px; padding:7px 12px; font-size:13px; font-weight:700; cursor:pointer; background:#4dabf7; color:#fff; margin-top:4px; }
+  .mini:active { transform:scale(.95); }
+  .sound-tip { color:#3a9; font-size:13px; min-height:18px; margin:8px 0; }
+  .stars { font-size:28px; min-height:36px; margin:8px 0; letter-spacing:4px; }
+  .heard { font-size:13px; color:#999; min-height:18px; }
+  .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  button.act {
+    border:none; border-radius:16px; padding:14px 18px; font-size:16px; font-weight:700;
+    cursor:pointer; color:#fff; min-width:120px; transition:transform .1s;
+  }
+  button.act:active { transform:scale(.95); }
+  .listen { background:#4dabf7; }
+  .slow { background:#74c0fc; min-width:auto; padding:14px; }
+  .speak { background:#ff7eb3; }
+  .rec { background:#ffa94d; }
+  .nav { background:#ced4da; color:#444; }
+  .speak.listening { background:#e64980; animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 #e6498066;} 50%{box-shadow:0 0 0 14px #e6498000;} }
+  .progress { text-align:center; color:#666; font-size:13px; margin-top:12px; }
+  .scoreboard { text-align:center; margin-top:8px; font-size:15px; color:#7a5; font-weight:700; }
+  audio { margin-top:10px; width:100%; }
+  .warn { background:#fff3bf; color:#856404; padding:12px; border-radius:14px; font-size:13px; margin-top:14px; display:none; }
+  .feedback { font-size:18px; font-weight:700; min-height:26px; margin-top:6px; }
+
+  /* 弹窗（进步 / 这周的词） */
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,30,50,.45);
+    display:none; align-items:center; justify-content:center; padding:18px; z-index:50;
+  }
+  .overlay.show { display:flex; }
+  .modal {
+    background:#fff; border-radius:22px; max-width:520px; width:100%;
+    max-height:88vh; overflow:auto; padding:22px; box-shadow:0 20px 50px rgba(80,50,90,.3);
+  }
+  .modal h2 { margin:0 0 8px; font-size:20px; text-align:center; }
+  .modal .close {
+    float:right; border:none; background:#f1f3f5; border-radius:50%;
+    width:34px; height:34px; font-size:16px; cursor:pointer; line-height:1;
+  }
+  .stats { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:12px 0 6px; }
+  .stat { background:#fbf0f5; border-radius:14px; padding:10px 14px; text-align:center; min-width:78px; }
+  .stat .n { font-size:22px; font-weight:800; color:#e64980; }
+  .stat .l { font-size:12px; color:#888; margin-top:2px; }
+  .chart-title { font-size:13px; color:#888; text-align:center; margin-top:10px; }
+  .empty { text-align:center; color:#aaa; font-size:14px; padding:18px 0; }
+  .ta {
+    width:100%; min-height:160px; border:2px solid #ffd6e7; border-radius:14px;
+    padding:12px; font-size:15px; font-family:inherit; resize:vertical; line-height:1.7;
+  }
+  .ta:focus { outline:none; border-color:#ff7eb3; }
+  .hint { font-size:12px; color:#999; margin:8px 0; line-height:1.7; }
+  .hint code { background:#f3f0f5; padding:1px 6px; border-radius:5px; color:#a05; }
+  .modal-btns { display:flex; gap:10px; justify-content:center; margin-top:14px; }
+  .modal-btns button { border:none; border-radius:14px; padding:12px 18px; font-size:15px; font-weight:700; cursor:pointer; }
+  .save { background:#ff7eb3; color:#fff; }
+  .clear { background:#f1f3f5; color:#666; }
+  .parsed { font-size:13px; color:#3a9; text-align:center; min-height:18px; margin-top:6px; }
+
+  .toast {
+    position:fixed; left:50%; bottom:40px; transform:translateX(-50%);
+    background:#2b2b3a; color:#fff; padding:10px 18px; border-radius:20px;
+    font-size:14px; opacity:0; transition:.3s; z-index:99; pointer-events:none;
+  }
+  .toast.show { opacity:1; }
+  .celebrate {
+    position:fixed; inset:0; pointer-events:none; display:flex;
+    align-items:center; justify-content:center; font-size:84px; opacity:0; z-index:60;
+  }
+  .celebrate.go { animation:cele 1s ease; }
+  @keyframes cele { 0%{opacity:0;transform:scale(.3);} 30%{opacity:1;transform:scale(1.1);} 100%{opacity:0;transform:scale(1.5);} }
+
+  /* 每日目标 + 贴纸册 */
+  .goal { margin:10px auto 0; }
+  .goalbar { height:12px; background:#ffe3ee; border-radius:8px; overflow:hidden; }
+  .goalfill { height:100%; width:0; background:linear-gradient(90deg,#ff9ec4,#ff7eb3); border-radius:8px; transition:width .4s; }
+  .goaltxt { text-align:center; font-size:13px; color:#7a9a5a; margin-top:6px; }
+  .goaltxt b { color:#e64980; }
+  .goaltxt .big { font-size:20px; vertical-align:middle; }
+  .album { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:8px; }
+  .sticker { background:#fff7fb; border:2px solid #ffe0ee; border-radius:14px; width:62px; padding:8px 4px; text-align:center; }
+  .sticker .se { font-size:30px; line-height:1; position:relative; display:inline-block; }
+  .sticker .medal { position:absolute; right:-8px; bottom:-4px; font-size:15px; }
+  .sticker .sd { font-size:11px; color:#aaa; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎤 桃桃的英语发音闯关</h1>
+  <div class="sub">先点「🔊 听一听」→ 再点「🎙️ 我来读」跟着读，看能得几颗星！</div>
+
+  <div class="toolbar">
+    <button class="tool" onclick="openProgress()">📊 我的进步</button>
+    <button class="tool" onclick="openCustom()">✏️ 这周的词</button>
+  </div>
+
+  <div class="levels" id="levels"></div>
+
+  <div class="card">
+    <div class="zh-tip" id="zh"></div>
+    <div class="target" id="target"></div>
+    <div class="sound-tip" id="soundtip"></div>
+    <div class="stars" id="stars"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="heard" id="heard"></div>
+
+    <div class="btns">
+      <button class="act listen" onclick="play(1)">🔊 听一听</button>
+      <button class="act slow" onclick="play(0.6)">🐢 慢速</button>
+      <button class="act speak" id="speakBtn" onclick="listen()">🎙️ 我来读</button>
+    </div>
+    <div class="btns">
+      <button class="act rec" id="recBtn" onclick="toggleRec()">⏺️ 录我的声音</button>
+      <audio id="player" controls style="display:none"></audio>
+    </div>
+
+    <div class="btns">
+      <button class="act nav" onclick="prev()">← 上一个</button>
+      <button class="act nav" onclick="next()">下一个 →</button>
+    </div>
+  </div>
+
+  <div class="progress" id="progress"></div>
+  <div class="scoreboard" id="scoreboard">今天累计 ⭐ 0 颗</div>
+  <div class="goal" id="goal"></div>
+
+  <div class="warn" id="warn"></div>
+</div>
+
+<!-- 进步弹窗 -->
+<div class="overlay" id="progressModal" onclick="if(event.target===this)closeModal('progressModal')">
+  <div class="modal">
+    <button class="close" onclick="closeModal('progressModal')">✕</button>
+    <h2>📊 桃桃的进步</h2>
+    <div id="statsBox"></div>
+    <div class="chart-title">最近 14 天每天得到的 ⭐</div>
+    <div id="chartBox"></div>
+    <div class="chart-title">🏅 我的贴纸册（练满每天目标就集一张）</div>
+    <div id="albumBox"></div>
+  </div>
+</div>
+
+<!-- 自定义内容弹窗 -->
+<div class="overlay" id="customModal" onclick="if(event.target===this)closeModal('customModal')">
+  <div class="modal">
+    <button class="close" onclick="closeModal('customModal')">✕</button>
+    <h2>✏️ 填这周老师的单词 / 课文</h2>
+    <div class="hint">
+      一行一个，怎么写都行（爸爸录入用）：<br>
+      · 只写英文：<code>apple</code><br>
+      · 英文+中文：<code>apple 苹果</code> 或 <code>apple = 苹果</code><br>
+      · 再加发音提示：<code>apple = 苹果 = 结尾 le 轻收</code><br>
+      保存后会自动生成「✏️ 这周老师的词」关卡，桃桃就能听标准音、跟读打分。
+    </div>
+    <textarea class="ta" id="customTA" placeholder="apple = 苹果&#10;banana 香蕉&#10;Good morning! 早上好&#10;thank you = 谢谢 = th 起头，舌尖咬牙中间"></textarea>
+    <div class="parsed" id="parsedInfo"></div>
+    <div class="modal-btns">
+      <button class="save" onclick="saveCustom()">✅ 保存并生成关卡</button>
+      <button class="clear" onclick="clearCustom()">清空</button>
+    </div>
+  </div>
+</div>
+
+<!-- 老师拆开教弹窗 -->
+<div class="overlay" id="coachModal" onclick="if(event.target===this)closeCoach(false)">
+  <div class="modal">
+    <button class="close" onclick="closeCoach(false)">✕</button>
+    <h2>🧑‍🏫 这个词有点难，我们拆开慢慢学</h2>
+    <div id="coachBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="celebrate" id="celebrate">🎉</div>
+
+<script>
+/* ---------- 练习内容：针对中式发音的薄弱点 ---------- */
+const LEVELS = [
+{ name:"① 难发的音", items:[
+  {t:"three", zh:"三", tip:"th：舌尖轻轻放在上下牙中间，送气！别读成 s 或 f"},
+  {t:"think", zh:"想、认为", tip:"th 同上，舌尖咬在牙中间"},
+  {t:"this", zh:"这个", tip:"th 浊音：舌尖咬牙中间，喉咙振动"},
+  {t:"thank", zh:"谢谢", tip:"th 起头，送气"},
+  {t:"mouth", zh:"嘴巴", tip:"词尾 th：舌尖咬牙轻送气"},
+  {t:"brother", zh:"哥哥/弟弟", tip:"中间 th 浊音，喉咙振动"},
+  {t:"very", zh:"非常", tip:"v：上牙咬下嘴唇，别读成 w"},
+  {t:"voice", zh:"声音", tip:"v 起头：上牙咬下唇"},
+  {t:"five", zh:"五", tip:"词尾 v：上牙咬下唇，别丢掉"},
+  {t:"water", zh:"水", tip:"w：嘴巴嘟成小圆圈，别读成 v"},
+  {t:"window", zh:"窗户", tip:"两个 w 都要嘟圆嘴"},
+  {t:"sheep", zh:"绵羊", tip:"长音 ee：嘴咧开拉长，和 ship(短) 区分"},
+  {t:"ship", zh:"船", tip:"短音 i：又短又快，别拖长"},
+  {t:"green", zh:"绿色", tip:"长音 ee：拉长"},
+  {t:"sit", zh:"坐", tip:"短音 i：又短又快"},
+  {t:"desk", zh:"书桌", tip:"结尾 -sk 轻轻收住，别加“额”音变成“戴斯克”"},
+  {t:"milk", zh:"牛奶", tip:"结尾 -lk 轻收，别变“密欧克”"},
+  {t:"book", zh:"书", tip:"结尾 -k 轻轻收住"},
+  {t:"hand", zh:"手", tip:"结尾 -nd 收干净"},
+  {t:"jump", zh:"跳", tip:"结尾 -mp：双唇一闭收住"},
+]},
+{ name:"② 常用词组", items:[
+  {t:"thank you", zh:"谢谢", tip:"th 起头；别读成“三克油”"},
+  {t:"very good", zh:"很好", tip:"v 咬下唇"},
+  {t:"this is", zh:"这是", tip:"两个 th 连读"},
+  {t:"three books", zh:"三本书", tip:"three 的 th + books 结尾 -ks 轻收"},
+  {t:"how are you", zh:"你好吗", tip:"连起来读，别一个字一个字蹦"},
+]},
+{ name:"③ 短句·练节奏", items:[
+  {t:"How |are |YOU?", zh:"你好吗？", tip:"重音落在 YOU，前面轻快带过"},
+  {t:"What's your |NAME?", zh:"你叫什么名字？", tip:"重音在 NAME"},
+  {t:"I |LIKE |APP-les.", zh:"我喜欢苹果。", tip:"LIKE 和 APP 重读，les 轻轻带过"},
+  {t:"Thank you |VE-ry |MUCH.", zh:"非常感谢。", tip:"VE 和 MUCH 重读"},
+  {t:"This is my |MO-ther.", zh:"这是我妈妈。", tip:"重音在 MO；th 别忘了"},
+  {t:"It's a |SUN-ny |DAY.", zh:"今天是晴天。", tip:"SUN 和 DAY 重读，有起伏才不像背书"},
+]},
+{ name:"④ 小韵律·练语感", items:[
+  {t:"One, two, three, four, five.", zh:"一二三四五", tip:"像唱歌一样，有节奏地数"},
+  {t:"Rain, rain, go away.", zh:"雨呀雨呀走开", tip:"经典童谣，跟着节奏读"},
+  {t:"I can run, I can jump.", zh:"我会跑，我会跳", tip:"run 和 jump 重读，结尾辅音收住"},
+  {t:"Twinkle, twinkle, little star.", zh:"一闪一闪小星星", tip:"twinkle 的 -kle 轻收，little 的 tt 弹一下"},
+]},
+{ name:"🔤 自然拼读", items:[
+  {t:"ship", zh:"船", tip:"sh：像让人安静的“嘘——”，shhh"},
+  {t:"fish", zh:"鱼", tip:"sh 在词尾，轻轻 shhh 收住"},
+  {t:"cheese", zh:"奶酪", tip:"ch 起头（像“去”），后面长音 ee"},
+  {t:"lunch", zh:"午饭", tip:"词尾 -ch 轻收"},
+  {t:"three", zh:"三", tip:"th：舌尖咬上下牙中间，送气"},
+  {t:"this", zh:"这个", tip:"th 浊音：舌尖咬牙，喉咙振动"},
+  {t:"green", zh:"绿色", tip:"ee：长音，嘴角往两边咧开"},
+  {t:"tree", zh:"树", tip:"ee 长音，别读短"},
+  {t:"book", zh:"书", tip:"oo 短音：像很短的“乌”"},
+  {t:"moon", zh:"月亮", tip:"oo 长音：嘴巴嘟成圆圈"},
+  {t:"rain", zh:"雨", tip:"ai：读作“诶”"},
+  {t:"sing", zh:"唱歌", tip:"ng：鼻音，舌根抬起来"},
+]},
+{ name:"🤝 第1单元·问候交友", items:[
+  {t:"hello", zh:"你好", tip:"两个音节 he-llo，重音在后"},
+  {t:"hi", zh:"嗨", tip:"短促有精神"},
+  {t:"name", zh:"名字", tip:"长音 a，读“内姆”"},
+  {t:"friend", zh:"朋友", tip:"词尾 -nd 轻轻收住"},
+  {t:"nice", zh:"好的、美好", tip:"长音 i，结尾 s 轻收"},
+  {t:"meet", zh:"见面", tip:"长音 ee"},
+  {t:"good morning", zh:"早上好", tip:"morning 词尾 -ng 鼻音"},
+  {t:"goodbye", zh:"再见", tip:"good-bye 两段，重音在 bye"},
+  {t:"welcome", zh:"欢迎", tip:"w 嘴巴嘟圆，别读成 v"},
+  {t:"teacher", zh:"老师", tip:"ch 在中间，结尾 -er 轻轻带过"},
+]},
+{ name:"🏃 第2单元·动作言行", items:[
+  {t:"run", zh:"跑", tip:"r 卷舌，短促"},
+  {t:"jump", zh:"跳", tip:"词尾 -mp，双唇轻轻一闭收住"},
+  {t:"walk", zh:"走", tip:"l 不太发音，读“沃克”，-k 轻收"},
+  {t:"sit", zh:"坐", tip:"短音 i，又短又快"},
+  {t:"stand", zh:"站", tip:"词尾 -nd 收住"},
+  {t:"read", zh:"读", tip:"长音 ea，读“瑞德”"},
+  {t:"write", zh:"写", tip:"w 不发音，读“瑞特”"},
+  {t:"listen", zh:"听", tip:"t 不发音，读“立森”"},
+  {t:"look", zh:"看", tip:"oo 短音"},
+  {t:"please", zh:"请", tip:"长音 ea + 结尾浊音 s"},
+]},
+{ name:"✏️ 第3单元·学具与感官", items:[
+  {t:"pen", zh:"钢笔", tip:"短促"},
+  {t:"pencil", zh:"铅笔", tip:"pen-cil 两段"},
+  {t:"book", zh:"书", tip:"oo 短音"},
+  {t:"ruler", zh:"尺子", tip:"r 卷舌起头"},
+  {t:"bag", zh:"书包", tip:"词尾 -g 轻收"},
+  {t:"eye", zh:"眼睛", tip:"读作“爱”"},
+  {t:"ear", zh:"耳朵", tip:"读“ear”，像“衣尔”"},
+  {t:"nose", zh:"鼻子", tip:"长音 o + 结尾浊音 z"},
+  {t:"hand", zh:"手", tip:"词尾 -nd 收住"},
+  {t:"see", zh:"看见", tip:"长音 ee"},
+]},
+{ name:"🍎 第4单元·健康食物", items:[
+  {t:"rice", zh:"米饭", tip:"长音 i，结尾 s 轻收"},
+  {t:"egg", zh:"鸡蛋", tip:"短音 e + -gg 轻收"},
+  {t:"milk", zh:"牛奶", tip:"词尾 -lk 轻收，别读成“密欧克”"},
+  {t:"bread", zh:"面包", tip:"ea 这里读短“诶”，读“布瑞德”"},
+  {t:"apple", zh:"苹果", tip:"app 重读，-le 轻收"},
+  {t:"banana", zh:"香蕉", tip:"三段 ba-na-na，重音在中间"},
+  {t:"fish", zh:"鱼", tip:"词尾 sh 轻收"},
+  {t:"water", zh:"水", tip:"w 嘴嘟圆，别读成 v"},
+  {t:"juice", zh:"果汁", tip:"读“朱斯”，结尾 s 轻收"},
+  {t:"vegetable", zh:"蔬菜", tip:"v 咬下唇；长词分段 veg-ta-ble"},
+]},
+{ name:"🧸 第5单元·新旧物品", items:[
+  {t:"old", zh:"旧的", tip:"词尾 -ld 收住"},
+  {t:"new", zh:"新的", tip:"读“纽”，嘴巴往前嘟"},
+  {t:"big", zh:"大的", tip:"短音 i"},
+  {t:"small", zh:"小的", tip:"sm 起头，长音 a"},
+  {t:"long", zh:"长的", tip:"词尾 -ng 鼻音"},
+  {t:"short", zh:"短的", tip:"sh 起头，-rt 收住"},
+  {t:"toy", zh:"玩具", tip:"oy 读“奥伊”"},
+  {t:"clock", zh:"钟", tip:"cl 起头，-ck 轻收"},
+  {t:"box", zh:"盒子", tip:"词尾 -x 读“克斯”"},
+  {t:"photo", zh:"照片", tip:"ph 读作 f，photo“弗托”"},
+]},
+{ name:"🔢 第6单元·生活数字", items:[
+  {t:"six", zh:"六", tip:"词尾 -x 读“克斯”"},
+  {t:"seven", zh:"七", tip:"v 咬下唇"},
+  {t:"eight", zh:"八", tip:"gh 不发音，读“诶特”"},
+  {t:"nine", zh:"九", tip:"长音 i"},
+  {t:"ten", zh:"十", tip:"短促"},
+  {t:"eleven", zh:"十一", tip:"e-le-ven 三段，v 咬唇"},
+  {t:"twelve", zh:"十二", tip:"结尾 -lve，v 咬下唇"},
+  {t:"twenty", zh:"二十", tip:"tw 起头，读“twen-ti”"},
+  {t:"how many", zh:"多少", tip:"连起来读，别一字一蹦"},
+  {t:"number", zh:"数字", tip:"-mb- 中 b 不发音，读“囊伯”"},
+]},
+];
+
+/* ---------- 本地存档：打卡进度 + 自定义内容 ---------- */
+const STORE_KEY = "taotao_pron_v1";
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {days:{},custom:""}; }
+  catch(e){ return {days:{},custom:""}; }
+}
+function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); }catch(e){} }
+let STORE = loadStore();
+if(!STORE.mastery) STORE.mastery = {};   // 每个词的掌握度：读到≥2星累计次数
+
+/* ---------- 每日目标 + 贴纸册 ---------- */
+const GOAL = 5;    // 每天练到这么多⭐，就解锁今天的贴纸（定得很低，几次跟读就到，专治拖延）
+const BONUS = 10;  // 超过这么多⭐，再奖一枚金奖章
+const STICKERS = ["🦄","🌈","🐶","🎀","🍦","🚀","🦋","🌸","🌟","🐱","🍓","🎈","🐠","🧸","🐧"];
+function stickerForDate(k){ let h=0; for(const c of k) h=(h*31+c.charCodeAt(0))>>>0; return STICKERS[h % STICKERS.length]; }
+
+function dkey(dt){
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function todayRec(){
+  const k = dkey(new Date());
+  if(!STORE.days[k]) STORE.days[k] = {stars:0, attempts:0, perfect:0};
+  return STORE.days[k];
+}
+function isActive(k){ const r=STORE.days[k]; return r && (r.attempts>0 || r.stars>0); }
+function computeStreak(){
+  let d = new Date();
+  if(!isActive(dkey(d))) d.setDate(d.getDate()-1); // 今天还没练，从昨天起算，别让她觉得断了
+  let streak = 0;
+  while(isActive(dkey(d))){ streak++; d.setDate(d.getDate()-1); }
+  return streak;
+}
+
+/* ---------- 把自定义内容解析成关卡 ---------- */
+function parseCustom(text){
+  return (text||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>{
+    let parts;
+    if(/[\t=｜|]/.test(line)){
+      parts = line.split(/[\t=｜|]/).map(s=>s.trim());
+    } else {
+      // 没写分隔符时，自动从第一个汉字处切开： "apple 苹果" -> ["apple","苹果"]
+      const m = line.match(/^([^一-鿿]+?)\s*([一-鿿].*)$/);
+      parts = m ? [m[1].trim(), m[2].trim()] : [line];
+    }
+    return { t: parts[0]||line, zh: parts[1]||"", tip: parts[2]||"" };
+  }).filter(it=> /[a-zA-Z]/.test(it.t)); // 必须含英文才算一条
+}
+function getLevels(){
+  const arr = LEVELS.slice();
+  const items = parseCustom(STORE.custom);
+  if(items.length) arr.push({ name:"✏️ 这周老师的词", items, custom:true });
+  return arr;
+}
+let ALL = getLevels();
+function rebuild(){ ALL = getLevels(); }
+
+/* ---------- 状态 + 掌握度工作集 ---------- */
+let li=0, ii=0;
+const WORK_SET = 6;      // 每关同时只练这么多个词：练熟的淡出，新词补进来
+const MASTER_HITS = 2;   // 一个词读到 ≥2 星累计这么多次 → 掌握、毕业换新词
+function mOf(it){ return it && it.t ? (STORE.mastery[it.t]||0) : 0; }
+let WORK=[];
+function buildWork(){
+  const items = (ALL[li] && ALL[li].items) ? ALL[li].items.slice() : [];
+  items.sort((a,b)=> mOf(a)-mOf(b));      // 没掌握的(掌握度低)排前面，优先练
+  WORK = items.slice(0, Math.min(WORK_SET, items.length));
+  if(ii >= WORK.length) ii = 0;
+}
+function masteredCount(){ return (ALL[li]&&ALL[li].items)? ALL[li].items.filter(it=>mOf(it)>=MASTER_HITS).length : 0; }
+function curItem(){ return WORK[ii] || ((ALL[li]&&ALL[li].items)? ALL[li].items[0] : {t:"",zh:"",tip:""}); }
+let mediaRecorder=null, chunks=[], recording=false;
+let micStream=null;
+async function ensureMic(){
+  if(micStream && micStream.active) return micStream;
+  micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  return micStream;
+}
+
+const $ = id => document.getElementById(id);
+
+function plainText(s){ return s.replace(/\|/g,"").replace(/-/g,""); } // 去掉重音/分隔标记
+function renderTarget(s){
+  // | 标记后面的词是重音；- 是音节分隔（仅显示用）
+  const words = s.split(" ");
+  return words.map(w=>{
+    let stress = w.startsWith("|");
+    let txt = w.replace(/^\|/,"").replace(/-/g,"");
+    return `<span class="w ${stress?'stress':''}">${txt}</span>`;
+  }).join(" ");
+}
+
+function load(){
+  if(li >= ALL.length) li = 0;
+  // 关卡按钮
+  $("levels").innerHTML = ALL.map((l,i)=>
+    `<button class="lvl-btn ${i===li?'active':''}" onclick="setLevel(${i})">${l.name}</button>`).join("");
+  if(!WORK.length) buildWork();
+  const it = curItem();
+  $("zh").textContent = it.zh ? ("意思：" + it.zh) : "（老师布置的词）";
+  $("target").innerHTML = renderTarget(it.t);
+  $("soundtip").textContent = "💡 " + (it.tip || "先点🔊听一听，再跟读～注意结尾辅音收干净");
+  $("stars").textContent = "";
+  $("feedback").textContent = "";
+  $("heard").textContent = "";
+  $("player").style.display="none";
+  const total = (ALL[li]&&ALL[li].items)? ALL[li].items.length : WORK.length;
+  $("progress").textContent = `第 ${ii+1} / ${WORK.length} 个　·　本关已掌握 ${masteredCount()} / ${total} 🎓`;
+  refreshScore();
+}
+function setLevel(i){ li=i; ii=0; buildWork(); load(); }
+function next(){ if(WORK.length){ ii=(ii+1)%WORK.length; } load(); }
+function prev(){ if(WORK.length){ ii=(ii-1+WORK.length)%WORK.length; } load(); }
+
+function refreshScore(){
+  const r = todayRec();
+  $("scoreboard").innerHTML = `今天累计 ⭐ ${r.stars} 颗　·　🔥 连续打卡 ${computeStreak()} 天`;
+  renderGoal(r);
+}
+function renderGoal(r){
+  const k = dkey(new Date());
+  const have = r.stars, pct = Math.min(100, Math.round(have/GOAL*100));
+  let txt;
+  if(r.sticker){
+    txt = `🎯 今天目标达成！获得贴纸 <span class="big">${r.sticker}</span>`;
+    txt += r.bonus ? `　＋金奖章 ${r.bonus}` : `　再得 <b>⭐${Math.max(0,BONUS-have)}</b> 解锁金奖章 🏅`;
+  } else {
+    txt = `🎯 今天目标 ⭐${GOAL}：再得 <b>⭐${Math.max(0,GOAL-have)}</b> 就解锁今天的贴纸 <span class="big">${stickerForDate(k)}</span>`;
+  }
+  $("goal").innerHTML = `<div class="goalbar"><div class="goalfill" style="width:${pct}%"></div></div><div class="goaltxt">${txt}</div>`;
+}
+function checkGoals(r, prev){
+  const k = dkey(new Date());
+  if(prev < GOAL && r.stars >= GOAL && !r.sticker){
+    r.sticker = stickerForDate(k); saveStore();
+    bigCelebrate(r.sticker, `🎉 今天目标达成！解锁贴纸 ${r.sticker}`);
+  }
+  if(prev < BONUS && r.stars >= BONUS && !r.bonus){
+    r.bonus = "🏅"; saveStore();
+    bigCelebrate("🏅", `🏅 哇，今天 ${BONUS} 颗星！金奖章到手！`);
+  }
+  refreshScore();
+}
+function buildAlbum(){
+  const earned = Object.keys(STORE.days).filter(k=>STORE.days[k].sticker).sort();
+  if(!earned.length) return `<div class="empty">还没有贴纸～<br>每天练满 ⭐${GOAL} 就能集到今天这一张！</div>`;
+  return `<div class="album">` + earned.map(k=>{
+    const r=STORE.days[k], p=k.split("-");
+    return `<div class="sticker"><div class="se">${r.sticker}${r.bonus?'<span class="medal">🏅</span>':''}</div><div class="sd">${+p[1]}/${+p[2]}</div></div>`;
+  }).join("") + `</div>`;
+}
+
+/* ---------- 朗读标准音 ---------- */
+let enVoice=null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices().filter(v=>/en[-_]/i.test(v.lang));
+  // 优先美音/英音的自然嗓
+  enVoice = vs.find(v=>/Samantha|Karen|Daniel|Google US English|Google UK/i.test(v.name)) || vs[0] || null;
+}
+speechSynthesis.onvoiceschanged = pickVoice; pickVoice();
+
+function playText(txt, rate){
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang="en-US"; u.rate=rate; if(enVoice) u.voice=enVoice;
+  speechSynthesis.speak(u);
+}
+function play(rate){ playText(plainText(curItem().t), rate); }
+
+/* ---------- 语音识别打分 ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function listen(){
+  if(!SR){ showWarn("这个浏览器不支持语音识别，请用 <b>Chrome 谷歌浏览器</b> 打开本页面。"); return; }
+  const rec = new SR();
+  rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=3;
+  const btn=$("speakBtn"); btn.classList.add("listening"); btn.textContent="🎙️ 在听…";
+  $("feedback").textContent="说出来吧！";
+  rec.onresult = e=>{
+    let heard="";
+    for(let i=0;i<e.results[0].length;i++){ heard += e.results[0][i].transcript+" "; }
+    score(heard.trim());
+  };
+  rec.onerror = e=>{
+    btn.classList.remove("listening"); btn.textContent="🎙️ 我来读";
+    if(e.error==="not-allowed"||e.error==="service-not-allowed")
+      showWarn("需要允许使用<b>麦克风</b>。点地址栏的小锁→允许麦克风，再试。");
+    else if(e.error==="no-speech") $("feedback").textContent="没听到声音，再大声点试试 🙂";
+  };
+  rec.onend = ()=>{ btn.classList.remove("listening"); btn.textContent="🎙️ 我来读"; };
+  try{ rec.start(); }catch(err){ showWarn("启动麦克风失败，刷新页面再试。"); }
+}
+
+function norm(s){ return s.toLowerCase().replace(/[^a-z\s']/g," ").replace(/\s+/g," ").trim(); }
+
+/* 两个词有多像（0~1）：机器把 three 听成 tree 这种，不该算全错 */
+function lev(a,b){ const m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  const d=[]; for(let i=0;i<=m;i++) d[i]=[i]; for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n]; }
+function sim(a,b){ if(!a||!b) return 0; return 1 - lev(a,b)/Math.max(a.length,b.length); }
+
+let FAILS = {};      // 本次练习里，每个词连续没读准的次数（≥2 次自动请出老师拆开教）
+let coachUsed = {};  // 哪些词已经进过"拆开教"模式
+
+function score(heard){
+  const it0 = curItem();
+  const tWords = norm(plainText(it0.t)).split(" ").filter(Boolean);
+  const hWords = norm(heard).split(" ").filter(Boolean);
+  // 整句连起来也比一次：孩子连读时机器常把两个词听成一个
+  const wholeSim = sim(hWords.join(""), tWords.join(""));
+
+  let credit=0; const wordState=[];
+  tWords.forEach(tw=>{
+    let st=0;
+    if(hWords.includes(tw)) st=1;                       // 完全对
+    else{
+      let best=0; hWords.forEach(hw=>{ best=Math.max(best, sim(tw,hw)); });
+      if(best>=0.75 || wholeSim>=0.85) st=0.7;          // 很接近：给大半分
+      else if(best>=0.5 || wholeSim>=0.7) st=0.4;       // 有点像：给小半分
+    }
+    credit+=st; wordState.push(st);
+  });
+  const pct = Math.round(credit/tWords.length*100);
+
+  let wi=0;
+  const html = it0.t.split(" ").map(w=>{
+    const stress=w.startsWith("|");
+    const clean=norm(w.replace(/-/g,""));
+    let cls="";
+    if(clean){ const st=wordState[wi]!==undefined?wordState[wi]:0; wi++;
+      cls = st>=1 ? "ok" : (st>=0.4 ? "near" : ""); }
+    return `<span class="w ${stress?'stress':''} ${cls}">${w.replace(/^\|/,"").replace(/-/g,"")}</span>`;
+  }).join(" ");
+  $("target").innerHTML = html;
+  $("heard").textContent = "机器听到：" + (heard||"(没听清)");
+
+  let s=0, msg="";
+  if(pct>=85){ s=3; msg="完美！发音超清楚 🎉"; }
+  else if(pct>=55){ s=2; msg="很棒！已经很接近了 💪"; }
+  else if(pct>=25){ s=1; msg="不错的开始！听一遍标准音再读 👂"; }
+  else { s=0; msg="再试一次，先点🔊听一听，慢慢学 🙂"; }
+
+  // 同一个词连着 2 次没读准 → 别让她干着急，老师出场拆开教
+  const key = norm(plainText(it0.t));
+  if(s>=2){ FAILS[key]=0; }
+  else{
+    FAILS[key]=(FAILS[key]||0)+1;
+    if(FAILS[key]===2){ msg="这个词有点难，别怕！老师来教你 👇"; setTimeout(openCoach, 900); }
+    else if(FAILS[key]>2){ msg="想想老师教的嘴型，再来一次，你可以的！"; }
+  }
+  // 勇气星：跟老师拆开练过之后，只要敢再开口，就算还没读准也奖 1 颗（每个词每天一次）
+  const r0 = todayRec();
+  if(s===0 && coachUsed[key]){
+    if(!r0.effort) r0.effort={};
+    if(!r0.effort[key]){ r0.effort[key]=true; s=1; msg="敢再试一次就了不起！奖你 1 颗勇气星 🌟"; }
+  }
+  $("stars").textContent = "⭐".repeat(s) + "☆".repeat(3-s);
+  $("feedback").textContent = msg;
+
+  // 记录到今天的存档
+  const r = todayRec();
+  const prev = r.stars;
+  r.stars += s; r.attempts += 1; if(s===3) r.perfect += 1;
+  // 掌握度：读到 ≥2 星就 +1；够 MASTER_HITS 就"毕业"，下次自动换没掌握的词
+  if(s>=2 && it0.t){ const before=STORE.mastery[it0.t]||0; STORE.mastery[it0.t]=before+1;
+    if(before<MASTER_HITS && STORE.mastery[it0.t]>=MASTER_HITS){ setTimeout(()=>toast("🎓 这个词你掌握啦！下次换个新词～"),400); } }
+  saveStore();
+  refreshScore();
+  if(s===3) celebrate();
+  checkGoals(r, prev);
+}
+
+/* ---------- 录音回放（让她听见自己） ---------- */
+async function toggleRec(){
+  if(recording){ mediaRecorder.stop(); return; }
+  try{
+    const stream = await ensureMic();           // 只在第一次申请，之后复用
+    mediaRecorder = new MediaRecorder(stream); chunks=[];
+    mediaRecorder.ondataavailable = e=> chunks.push(e.data);
+    mediaRecorder.onstop = ()=>{
+      const blob = new Blob(chunks,{type:"audio/webm"});
+      const url = URL.createObjectURL(blob);
+      const p=$("player"); p.src=url; p.style.display="block";
+      // 不再 stop 麦克风轨道，保持流活着，下次录音不重新申请
+      recording=false; $("recBtn").textContent="⏺️ 录我的声音"; $("recBtn").style.background="#ffa94d";
+    };
+    mediaRecorder.start(); recording=true;
+    $("recBtn").textContent="⏹️ 停止录音"; $("recBtn").style.background="#fa5252";
+  }catch(err){ showWarn("录音需要<b>麦克风</b>权限。点地址栏小锁→允许麦克风。"); }
+}
+
+function showWarn(html){ const w=$("warn"); w.innerHTML=html; w.style.display="block"; }
+
+/* ---------- 老师拆开教：连续读不准的词，拆成难点音一个一个过 ---------- */
+const PHONICS = [
+  {p:"th", tip:"舌尖轻轻伸出来，被上下牙咬住，往外吹气。对着镜子看：要能看见一点点舌头！别读成 s、t 或 f", ex:"three"},
+  {p:"sh", tip:"让人安静的'嘘——'，嘴唇往前嘟", ex:"ship"},
+  {p:"ch", tip:"像'吃'的声音，短促有力", ex:"cheese"},
+  {p:"ph", tip:"读 f 的音：上牙轻咬下嘴唇吹气", ex:"photo"},
+  {p:"ee", tip:"长音'咿——'，嘴角往两边咧开像在笑，要拉长，别读短", ex:"sheep"},
+  {p:"oo", tip:"嘴巴嘟成小圆圈发'乌'，moon 里拉长，book 里短促", ex:"moon"},
+  {p:"ai", tip:"读'诶'", ex:"rain"},
+  {p:"ay", tip:"读'诶'", ex:"day"},
+  {p:"ng", tip:"鼻音：舌根往上抬顶住，声音从鼻子里出来，嘴巴不要闭", ex:"sing"},
+  {p:"wh", tip:"跟 w 一样：嘴巴嘟成小圆圈", ex:"white"},
+  {p:"qu", tip:"读'夸'的开头：k+w 连在一起", ex:"queen"},
+  {p:"v", tip:"上牙轻轻咬住下嘴唇，喉咙振动出声。摸摸下唇：要麻麻的！别读成 w", ex:"very"},
+  {p:"w", tip:"嘴巴先嘟成小圆圈再弹开，像吹蜡烛前的口型，别咬嘴唇", ex:"water"},
+  {p:"r", tip:"舌头往后卷起来，但不碰到上面", ex:"red"},
+  {p:"l", tip:"舌尖顶住上门牙后面再放开", ex:"look"},
+];
+function findPatterns(word){
+  const w = word.toLowerCase();
+  const found=[], used=new Set();
+  PHONICS.forEach(ph=>{ if(ph.p.length>1 && w.includes(ph.p)){ found.push(ph); used.add(ph.p); } });
+  PHONICS.forEach(ph=>{ if(ph.p.length===1){
+    if(ph.p==="w" && (w.includes("wh")||!w.includes("w"))) return;
+    if(w.includes(ph.p) && !used.has(ph.p)) found.push(ph); } });
+  return found.slice(0,4);
+}
+function openCoach(){
+  const it = curItem(), word = plainText(it.t);
+  coachUsed[norm(word)] = true;
+  const pats = findPatterns(word);
+  let step=1;
+  let html = '<div style="text-align:center;font-size:34px;font-weight:800;margin:6px 0;">'+word+'</div>';
+  if(it.zh) html += '<div style="text-align:center;color:#888;">'+it.zh+'</div>';
+  html += '<div class="coach-step"><b>第'+(step++)+'步 · 超慢听 3 遍</b>，眼睛盯着单词，耳朵找每一个音：<br>'+
+          '<button class="mini js-slow" style="background:#74c0fc;font-size:15px;padding:9px 16px;">🐌 超慢速听</button></div>';
+  if(pats.length){
+    html += '<div class="coach-step"><b>第'+(step++)+'步 · 攻克难点音</b>：'+
+      pats.map((p,i)=>'<div class="pat"><b>'+p.p+'</b> ➜ '+p.tip+'<br><button class="mini js-ex" data-ex="'+p.ex+'">🔊 听示范词 '+p.ex+'</button></div>').join('')+
+      '</div>';
+  }
+  html += '<div class="coach-step"><b>第'+(step++)+'步 · 跟读阶梯</b>：想着嘴型——<br>① 小小声读 2 遍 → ② 正常声音读 2 遍 → ③ 大声读 1 遍。<br>读完就点下面的按钮，读出来就有勇气星 🌟</div>';
+  html += '<div class="modal-btns"><button class="save js-retry">🎙️ 我练好了，再试一次！</button><button class="clear js-skip">先跳过，换个词</button></div>';
+  $("coachBody").innerHTML = html;
+  const body=$("coachBody");
+  body.querySelector(".js-slow").onclick = ()=>playText(word, 0.45);
+  body.querySelectorAll(".js-ex").forEach(b=>{ b.onclick=()=>playText(b.getAttribute("data-ex"), 0.55); });
+  body.querySelector(".js-retry").onclick = ()=>closeCoach(true);
+  body.querySelector(".js-skip").onclick  = ()=>closeCoach(false);
+  $("coachModal").classList.add("show");
+  playText(word, 0.45);
+}
+function closeCoach(retry){
+  $("coachModal").classList.remove("show");
+  if(retry) setTimeout(listen, 400);
+  else { FAILS={}; next(); }
+}
+
+/* ---------- 小庆祝 + 提示条 ---------- */
+function celebrate(emoji){
+  const c=$("celebrate"); c.textContent = emoji || "🎉";
+  c.classList.remove("go"); void c.offsetWidth; c.classList.add("go");
+}
+function bigCelebrate(emoji,msg){ celebrate(emoji); toast(msg); }
+let toastTimer=null;
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ---------- 进步弹窗 ---------- */
+function allTimeStats(){
+  const ks=Object.keys(STORE.days);
+  let totalStars=0, bestDay=0, daysCount=0;
+  ks.forEach(k=>{ const r=STORE.days[k]; totalStars+=r.stars; bestDay=Math.max(bestDay,r.stars); if(isActive(k)) daysCount++; });
+  const active = ks.filter(isActive).sort();
+  let longest=0, cur=0, prev=null;
+  active.forEach(k=>{
+    if(prev){ const pd=new Date(prev); pd.setDate(pd.getDate()+1); cur = (dkey(pd)===k)? cur+1 : 1; }
+    else cur=1;
+    longest=Math.max(longest,cur); prev=k;
+  });
+  return {totalStars, bestDay, daysCount, longest, streak:computeStreak()};
+}
+function buildChart(){
+  const today=new Date(), days=[];
+  for(let i=13;i>=0;i--){ const t=new Date(today); t.setDate(today.getDate()-i); days.push(t); }
+  const vals = days.map(t=>{ const r=STORE.days[dkey(t)]; return r? r.stars:0; });
+  const max=Math.max(6,...vals);
+  const W=480, H=170, padB=26, padT=18, n=days.length, slot=W/n, bw=slot*0.56;
+  let bars="";
+  days.forEach((t,i)=>{
+    const v=vals[i];
+    const h=(H-padB-padT)*(v/max);
+    const x=i*slot+(slot-bw)/2, y=H-padB-Math.max(h,2);
+    const isToday=(i===n-1);
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="5" fill="${isToday?'url(#gToday)':'url(#gBar)'}"/>`;
+    if(v>0) bars += `<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="11" text-anchor="middle" fill="#e64980" font-weight="700">${v}</text>`;
+    if(i%2===0 || isToday) bars += `<text x="${(x+bw/2).toFixed(1)}" y="${H-9}" font-size="10" text-anchor="middle" fill="#aaa">${t.getMonth()+1}/${t.getDate()}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">
+    <defs>
+      <linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a8edea"/><stop offset="1" stop-color="#74c0fc"/></linearGradient>
+      <linearGradient id="gToday" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff9ec4"/><stop offset="1" stop-color="#ff7eb3"/></linearGradient>
+    </defs>${bars}
+  </svg>`;
+}
+function openProgress(){
+  const s=allTimeStats();
+  $("statsBox").innerHTML = `<div class="stats">
+    <div class="stat"><div class="n">🔥 ${s.streak}</div><div class="l">连续打卡(天)</div></div>
+    <div class="stat"><div class="n">⭐ ${s.totalStars}</div><div class="l">累计星星</div></div>
+    <div class="stat"><div class="n">${s.daysCount}</div><div class="l">练习天数</div></div>
+    <div class="stat"><div class="n">${s.bestDay}</div><div class="l">单日最高⭐</div></div>
+    <div class="stat"><div class="n">${s.longest}</div><div class="l">最长连续(天)</div></div>
+  </div>`;
+  $("chartBox").innerHTML = s.daysCount ? buildChart()
+    : `<div class="empty">还没有记录哦～<br>点「🎙️ 我来读」开始第一次打卡吧！</div>`;
+  $("albumBox").innerHTML = buildAlbum();
+  $("progressModal").classList.add("show");
+}
+
+/* ---------- 自定义内容弹窗 ---------- */
+function openCustom(){
+  $("customTA").value = STORE.custom || "";
+  updateParsed();
+  $("customModal").classList.add("show");
+}
+function updateParsed(){
+  const n = parseCustom($("customTA").value).length;
+  $("parsedInfo").textContent = n ? `将生成 ${n} 个练习词 ✅` : "（还没有可识别的英文词）";
+}
+function saveCustom(){
+  STORE.custom = $("customTA").value;
+  saveStore(); rebuild();
+  const n = parseCustom(STORE.custom).length;
+  closeModal("customModal");
+  if(n){ li = ALL.length-1; ii=0; buildWork(); load(); toast(`已生成「这周老师的词」共 ${n} 个 ✅`); }
+  else { if(li>=ALL.length) li=0; buildWork(); load(); toast("已清空这周的词"); }
+}
+function clearCustom(){ $("customTA").value=""; updateParsed(); }
+function closeModal(id){ $(id).classList.remove("show"); }
+$("customTA").addEventListener("input", updateParsed);
+
+buildWork();
+load();
+</script>
+</body>
+</html>

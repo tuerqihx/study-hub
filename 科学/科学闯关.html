@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃桃的科学闯关 🔬</title>
+<style>
+  * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#e6fff4 0%,#e3f7ff 100%); color:#2f4a44; min-height:100vh; padding:18px 16px 50px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .back { background:#fff; border:2px solid #9fe6c8; color:#1fae8c; font-weight:bold; font-size:16px;
+    padding:8px 16px; border-radius:14px; cursor:pointer; font-family:inherit; }
+  .star-now { font-size:18px; font-weight:bold; color:#1fae8c; }
+  h1 { text-align:center; font-size:30px; margin:4px 0 16px; }
+  .menu { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
+  .lv { border:none; color:#fff; border-radius:22px; padding:20px 12px; cursor:pointer; font-family:inherit;
+    text-align:center; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; }
+  .lv:hover { transform:translateY(-4px) scale(1.02); } .lv:active { transform:scale(.97); }
+  .lv .i { font-size:42px; display:block; } .lv .n { font-size:19px; font-weight:bold; margin-top:6px; }
+  .l1{background:linear-gradient(140deg,#ff9a56,#ff6b6b);} .l2{background:linear-gradient(140deg,#56d6a0,#1fae8c);}
+  .l3{background:linear-gradient(140deg,#5ac8fa,#3b82f6);} .l4{background:linear-gradient(140deg,#9b8cff,#7c5cff);}
+  .l5{background:linear-gradient(140deg,#ffcf5c,#ff9f43);}
+  .card { background:#fff; border-radius:24px; padding:22px 20px; box-shadow:0 6px 20px rgba(80,200,160,.18);
+    border:3px solid #bdeedd; display:none; }
+  .progress { font-size:14px; color:#aaa; text-align:center; margin-bottom:6px; }
+  .tip { background:#eafff6; border-radius:14px; padding:10px 14px; font-size:15px; color:#2f8a6f; margin-bottom:14px; line-height:1.5; }
+  .q { font-size:23px; line-height:1.5; text-align:center; margin:6px 0 18px; min-height:56px; } .q b{color:#1fae8c;}
+  .opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .opt { background:#f1fbf7; border:2px solid #cdeee2; border-radius:16px; padding:16px; font-size:20px; font-weight:bold;
+    cursor:pointer; font-family:inherit; color:#2f4a44; transition:.1s; }
+  .opt:hover{background:#e3f7ef;} .opt:active{transform:scale(.97);}
+  .opt.right{background:#d7f7e3;border-color:#56d6a0;} .opt.wrong{background:#ffe1e1;border-color:#ff8585;}
+  .feedback { text-align:center; font-size:22px; font-weight:bold; min-height:34px; margin:14px 0 6px; }
+  .feedback.ok{color:#1fae8c;} .feedback.no{color:#ff8c42;}
+  .next { display:none; background:#1fae8c; color:#fff; border:none; border-radius:16px; font-size:20px; font-weight:bold;
+    padding:14px 30px; cursor:pointer; font-family:inherit; margin:6px auto 0; }
+  .done { display:none; text-align:center; background:#fff; border-radius:24px; padding:30px 20px;
+    box-shadow:0 6px 20px rgba(80,200,160,.2); border:3px solid #bdeedd; }
+  .done .big{font-size:64px;} .done .msg{font-size:24px;font-weight:bold;margin:10px 0;}
+  .done .got{font-size:19px;color:#1fae8c;margin-bottom:18px;}
+  .done button{background:#1fae8c;color:#fff;border:none;border-radius:16px;font-size:19px;font-weight:bold;
+    padding:13px 26px;cursor:pointer;font-family:inherit;margin:6px;}
+  .done .ghost{background:#fff;color:#1fae8c;border:2px solid #9fe6c8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <button class="back" onclick="goHome()">🏡 回学习台</button>
+    <span class="star-now" id="starNow">今天 ⭐ 0</span>
+  </div>
+  <h1>🔬 桃桃的科学闯关</h1>
+  <div class="menu" id="menu"></div>
+  <div class="card" id="card">
+    <div class="progress" id="prog"></div>
+    <div class="tip" id="tip"></div>
+    <div class="q" id="q"></div>
+    <div id="answerArea"></div>
+    <div class="feedback" id="fb"></div>
+    <button class="next" id="nextBtn" onclick="nextQ()">下一题 →</button>
+  </div>
+  <div class="done" id="done">
+    <div class="big">🎉</div>
+    <div class="msg" id="doneMsg"></div>
+    <div class="got" id="doneGot"></div>
+    <button onclick="restart()">再来一关</button>
+    <button class="ghost" onclick="goHome()">回学习台</button>
+  </div>
+</div>
+<script>
+/* 配置：存储/游戏逻辑由 ../_engine/quiz.js 提供 */
+const STORE_KEY="taotao_science_v1";
+const TIME_LIMIT_MIN=12; // 每天这一科的时间额度（分钟），用完锁到明天
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const MODULES = {
+  magnet:{ name:"磁铁的秘密", icon:"🧲", cls:"l1",
+    tip:"🔬 动手玩：拿一块磁铁，去家里找找它能吸住哪些东西、吸不住哪些，记在小本上。",
+    questions:shuffle([
+      {q:"磁铁能吸住下面哪个？", type:"choice", options:["铁钉","塑料尺","橡皮"], answer:"铁钉", hint:"磁铁只吸铁一类的东西。"},
+      {q:"磁铁两端磁力最强的地方，叫做？", type:"choice", options:["磁极","中间","边边"], answer:"磁极", hint:"两头叫磁极，磁力最强。"},
+      {q:"能自由转动的磁铁(指南针)，总是指向？", type:"choice", options:["南和北","东和西"], answer:"南和北", hint:"所以叫'指南'针。"},
+      {q:"两块磁铁'相同的极'靠近，会怎样？", type:"choice", options:["互相推开","紧紧吸住"], answer:"互相推开", hint:"同极相斥(推开)，异极相吸。"},
+      {q:"指南针上有颜色的那根针，通常指向？", type:"choice", options:["北方","南方","西边"], answer:"北方", hint:"红色针一般指北。"},
+      {q:"隔着一张薄纸，磁铁还能吸住铁钉吗？", type:"choice", options:["能，磁力能穿过纸","完全不能"], answer:"能，磁力能穿过纸", hint:"磁力能穿过薄薄的纸。"},
+      {q:"下面哪样东西能被磁铁吸住？", type:"choice", options:["铁做的曲别针","塑料瓶盖","木头筷子"], answer:"铁做的曲别针", hint:"只有铁一类金属会被吸。"},
+      {q:"下面哪样东西不能被磁铁吸住？", type:"choice", options:["玻璃球","铁钉","小铁夹"], answer:"玻璃球", hint:"玻璃不是铁，吸不住。"},
+      {q:"两块磁铁不同的极(一个N、一个S)靠近，会？", type:"choice", options:["互相吸住","互相推开"], answer:"互相吸住", hint:"异极相吸，同极相斥。"},
+      {q:"冰箱贴能贴在冰箱门上，是因为冰箱门里有？", type:"choice", options:["铁一类的金属","塑料","木头"], answer:"铁一类的金属", hint:"磁铁只能吸住铁一类的东西。"},
+      {q:"把一堆图钉和沙子混在一起，怎样最快把图钉分出来？", type:"choice", options:["用磁铁吸","用手一个个挑","用水冲"], answer:"用磁铁吸", hint:"磁铁能一下子把铁的东西吸出来。"},
+      {q:"指南针能指方向，是因为地球本身就像？", type:"choice", options:["一块巨大的磁铁","一块石头","一团火"], answer:"一块巨大的磁铁", hint:"地球有自己的磁场，指南针才会指南北。"},
+      {q:"把一块磁铁摔成两半，会变成？", type:"choice", options:["两块都有磁性的小磁铁","没有磁性的铁块","两块只有一个磁极"], answer:"两块都有磁性的小磁铁", hint:"每一半仍然是完整的磁铁，各有两极。"},
+    ])},
+  plant:{ name:"植物的一生", icon:"🌱", cls:"l2",
+    tip:"🔬 动手玩：泡几颗绿豆，每天给它画一笔、拍张照，看几天后冒出小芽。",
+    questions:shuffle([
+      {q:"种子发芽，最先长出来的是？", type:"choice", options:["根","花","果实"], answer:"根", hint:"先扎根，再长芽。"},
+      {q:"植物的叶子制造养料，主要靠？", type:"choice", options:["阳光","月光","灯光"], answer:"阳光", hint:"叶子靠阳光做饭，叫光合作用。"},
+      {q:"花谢了以后，常常会结出？", type:"choice", options:["果实和种子","新的根"], answer:"果实和种子", hint:"花→果实→种子，又能种出新植物。"},
+      {q:"植物喝水，主要靠身体的哪部分吸？", type:"choice", options:["根","花瓣"], answer:"根", hint:"根在土里吸水。"},
+      {q:"种子要发芽，一般需要？", type:"choice", options:["水、空气和合适的温度","只要黑暗","只要一块石头"], answer:"水、空气和合适的温度", hint:"泡绿豆时给它水和温暖。"},
+      {q:"我们吃的胡萝卜，是植物的哪一部分？", type:"choice", options:["根","花","叶子"], answer:"根", hint:"胡萝卜是长在土里的根。"},
+      {q:"向日葵的大花盘喜欢朝着？", type:"choice", options:["太阳","地面","月亮"], answer:"太阳", hint:"所以它又叫朝阳花。"},
+      {q:"给花浇水，应该浇在？", type:"choice", options:["根部的土里","花瓣上","叶子尖上"], answer:"根部的土里", hint:"根在土里喝水。"},
+      {q:"秋天很多树叶变黄、掉落，这是？", type:"choice", options:["正常现象，准备过冬","树生病了","被虫吃光了"], answer:"正常现象，准备过冬", hint:"落叶是树过冬的本领。"},
+      {q:"大部分植物开花，主要是为了？", type:"choice", options:["繁殖，结出果实和种子","好看","吸引蜜蜂玩耍"], answer:"繁殖，结出果实和种子", hint:"传粉之后，花才能结出果实种子。"},
+      {q:"仙人掌的叶子为什么变成了细细的刺？", type:"choice", options:["减少水分蒸发，适应缺水的沙漠","为了扎人","为了好看"], answer:"减少水分蒸发，适应缺水的沙漠", hint:"叶子变小，蒸发的水分就变少。"},
+      {q:"移栽小树苗时要连着土一起挖，是为了？", type:"choice", options:["保护根，让它更容易活下来","土比较好看","比较省事"], answer:"保护根，让它更容易活下来", hint:"带着土移栽能减少伤根。"},
+      {q:"同一棵向日葵，为什么早上和傍晚朝向不一样？", type:"choice", options:["它会跟着太阳转动","被风吹的","它在睡觉"], answer:"它会跟着太阳转动", hint:"这叫向日性，一直朝着太阳。"},
+    ])},
+  food:{ name:"食物与消化", icon:"🍚", cls:"l3",
+    tip:"🔬 动手玩：吃饭时数一数，一口饭嚼多少下才咽下去？慢慢嚼更好消化哦。",
+    questions:shuffle([
+      {q:"食物进入身体，第一站是哪里？", type:"choice", options:["口腔(嘴)","胃","肠"], answer:"口腔(嘴)", hint:"先用嘴和牙齿。"},
+      {q:"牙齿的主要作用是？", type:"choice", options:["把食物嚼碎","帮助呼吸"], answer:"把食物嚼碎", hint:"嚼碎了才好消化。"},
+      {q:"下面哪个是帮助消化食物的器官？", type:"choice", options:["胃和肠","心脏"], answer:"胃和肠", hint:"胃和肠负责消化吸收。"},
+      {q:"为了身体健康，应该多吃？", type:"choice", options:["蔬菜和水果","很多糖果","只吃肉"], answer:"蔬菜和水果", hint:"营养要均衡。"},
+      {q:"吃饭前应该先做什么才卫生？", type:"choice", options:["洗手","开电视","玩手机"], answer:"洗手", hint:"洗掉手上的细菌。"},
+      {q:"吃饭时怎样对消化最好？", type:"choice", options:["细嚼慢咽","狼吞虎咽","边跑边吃"], answer:"细嚼慢咽", hint:"嚼得细，胃更轻松。"},
+      {q:"食物被嚼碎、咽下去后，先到达哪里？", type:"choice", options:["胃","脑子","脚"], answer:"胃", hint:"嘴→食道→胃。"},
+      {q:"想保护牙齿，应该？", type:"choice", options:["早晚刷牙、少吃糖","顿顿吃糖","从不刷牙"], answer:"早晚刷牙、少吃糖", hint:"糖吃多了容易蛀牙。"},
+      {q:"为什么不能一边跑一边吃东西？", type:"choice", options:["容易呛到、噎住，很危险","跑得慢","不礼貌"], answer:"容易呛到、噎住，很危险", hint:"吃东西要专心，跑动容易呛到。"},
+      {q:"米饭、馒头这类主食，主要给身体提供？", type:"choice", options:["能量","维生素","水分"], answer:"能量", hint:"主食里的淀粉，是身体能量的重要来源。"},
+      {q:"水果和蔬菜里比较丰富的营养是？", type:"choice", options:["维生素和纤维","脂肪","盐"], answer:"维生素和纤维", hint:"多吃蔬果对身体好，能补充维生素。"},
+      {q:"吃太多糖对牙齿有什么影响？", type:"choice", options:["容易长蛀牙","让牙齿更白","没有影响"], answer:"容易长蛀牙", hint:"细菌喜欢糖，会腐蚀牙齿。"},
+    ])},
+  breath:{ name:"空气与呼吸", icon:"💨", cls:"l4",
+    tip:"🔬 动手玩：把手放胸口深吸一口气，感受胸口鼓起来；原地跑十下，再数一分钟呼吸几次。",
+    questions:shuffle([
+      {q:"我们呼吸，主要用哪个器官？", type:"choice", options:["肺","胃"], answer:"肺", hint:"空气进到肺里。"},
+      {q:"我们吸进的空气里，对身体最重要的气体是？", type:"choice", options:["氧气","二氧化碳"], answer:"氧气", hint:"身体需要氧气。"},
+      {q:"跑步以后，我们的呼吸会变得？", type:"choice", options:["更快","更慢"], answer:"更快", hint:"运动需要更多氧气，所以呼吸变快。"},
+      {q:"我们呼出来的气里，比较多的是？", type:"choice", options:["二氧化碳","氧气","水"], answer:"二氧化碳", hint:"吸进氧气，呼出二氧化碳。"},
+      {q:"树木花草白天会放出我们需要的？", type:"choice", options:["氧气","烟","灰尘"], answer:"氧气", hint:"所以多种树空气更好。"},
+      {q:"为什么跑步后要大口大口喘气？", type:"choice", options:["身体需要更多氧气","在唱歌","觉得好玩"], answer:"身体需要更多氧气", hint:"运动费氧气，要赶紧补。"},
+      {q:"平时呼吸，最好用？", type:"choice", options:["鼻子(能挡住脏东西)","一直张嘴","憋着不呼吸"], answer:"鼻子(能挡住脏东西)", hint:"鼻毛能过滤灰尘。"},
+      {q:"遇到很多烟的地方(比如火灾)，应该？", type:"choice", options:["捂住口鼻、弯腰快走","大口呼吸","站着不动"], answer:"捂住口鼻、弯腰快走", hint:"烟往上飘，低处空气好些。"},
+      {q:"打哈欠可能是身体在提醒你？", type:"choice", options:["有点累了，需要休息","很开心","要长高了"], answer:"有点累了，需要休息", hint:"困倦、缺氧时容易打哈欠。"},
+      {q:"在人多不通风的房间待久了，会觉得？", type:"choice", options:["闷、有点喘不过气","更精神","更暖和"], answer:"闷、有点喘不过气", hint:"空气不流通，氧气变少了。"},
+      {q:"打喷嚏、咳嗽时为什么要捂住口鼻？", type:"choice", options:["防止把细菌喷到别人身上","显得有礼貌","没有原因"], answer:"防止把细菌喷到别人身上", hint:"飞沫里可能带着病菌。"},
+      {q:"潜水的人为什么要背氧气瓶？", type:"choice", options:["水里没有空气可以呼吸","为了游得更快","为了保暖"], answer:"水里没有空气可以呼吸", hint:"水下不能像陆地上一样呼吸空气。"},
+    ])},
+  motion:{ name:"运动起来", icon:"🏃", cls:"l5",
+    tip:"🔬 动手玩：用尺子量一量，从沙发走到门口你走几步、用几秒？走一次、跑一次，比一比。",
+    questions:shuffle([
+      {q:"一个东西的位置改变了，说明它在？", type:"choice", options:["运动","睡觉"], answer:"运动", hint:"位置变了就是在运动。"},
+      {q:"比一比谁跑得快，比的是？", type:"choice", options:["速度","颜色"], answer:"速度", hint:"快慢就是速度。"},
+      {q:"想让停着的小车动起来，需要给它？", type:"choice", options:["一个力(推或拉)","一个颜色"], answer:"一个力(推或拉)", hint:"推一下、拉一下，都是力。"},
+      {q:"同样多的时间里，跑得远的人和跑得近的人，谁更快？", type:"choice", options:["跑得远的","跑得近的","一样快"], answer:"跑得远的", hint:"同样时间走得多＝更快。"},
+      {q:"推一个重箱子和一个轻箱子，哪个更费力？", type:"choice", options:["重的","轻的","一样"], answer:"重的", hint:"越重越难推动。"},
+      {q:"钟表上的指针一直在走，它在？", type:"choice", options:["运动","静止","睡觉"], answer:"运动", hint:"位置在变就是运动。"},
+      {q:"坐在向前开的车里，看路边的树好像在？", type:"choice", options:["往后退","往前冲","不动"], answer:"往后退", hint:"其实是车在动，看起来树后退。"},
+      {q:"想让运动的小车快点停下来，可以？", type:"choice", options:["捏刹车","松手不管","再推一把"], answer:"捏刹车", hint:"刹车的摩擦让车停。"},
+      {q:"两个人从同一个地方出发、走一样长的时间，走得远的人？", type:"choice", options:["速度更快","速度更慢","速度一样"], answer:"速度更快", hint:"同样时间走得更远，说明速度更快。"},
+      {q:"滑滑梯为什么能很快滑下去？", type:"choice", options:["滑梯很光滑，摩擦力小","滑梯很陡","有人推"], answer:"滑梯很光滑，摩擦力小", hint:"摩擦力小，滑得就快。"},
+      {q:"拔河比赛，一般哪一方更容易赢？", type:"choice", options:["用的力气总和更大的一方","人数更多的一方","站得更靠前的一方"], answer:"用的力气总和更大的一方", hint:"力气总和大的一方能把对方拉过来。"},
+      {q:"坐在快速上升的电梯里，一开始你会感觉身体？", type:"choice", options:["有点变重、往下沉的感觉","变轻、飘起来","完全没感觉"], answer:"有点变重、往下沉的感觉", hint:"电梯突然加速上升时会有这种感觉。"},
+    ])},
+
+  /* ===== 不局限课本：物理 / 化学 / 天文 / 自然 / 生活里的趣味科学 ===== */
+  sky:{ name:"天上的秘密", icon:"🌍", cls:"l3",
+    tip:"🔭 想一想：白天的太阳、晚上的月亮和星星，它们都离我们很远很远。抬头多看看天。",
+    questions:[
+      {q:"为什么会有白天和黑夜？", type:"choice", options:["地球自己在转圈","太阳一会儿亮一会儿灭","有人开灯关灯"], answer:"地球自己在转圈", hint:"地球自转，转到向着太阳就是白天。"},
+      {q:"月亮自己会发光吗？", type:"choice", options:["不会，它反射太阳的光","会，它是个大火球","会，里面有灯"], answer:"不会，它反射太阳的光", hint:"月亮像镜子，把太阳光照过来。"},
+      {q:"太阳其实是一颗？", type:"choice", options:["会发光发热的大火球(恒星)","很大的石头","一盏灯"], answer:"会发光发热的大火球(恒星)", hint:"太阳是离我们最近的恒星。"},
+      {q:"白天为什么看不见星星？", type:"choice", options:["太阳太亮，把星光盖住了","星星白天回家睡觉","星星掉下来了"], answer:"太阳太亮，把星光盖住了", hint:"星星一直在，只是被太阳的光盖住。"},
+      {q:"我们住的地球是什么形状？", type:"choice", options:["圆圆的球形","方形","平的一块板"], answer:"圆圆的球形", hint:"地球是个大圆球。"},
+      {q:"一年有春夏秋冬四季，是因为？", type:"choice", options:["地球绕着太阳转","太阳变大变小","月亮搬家"], answer:"地球绕着太阳转", hint:"地球绕太阳转一圈是一年。"},
+      {q:"晚上天上一闪一闪的小亮点，大多是？", type:"choice", options:["很远很远的星星","萤火虫","小灯泡"], answer:"很远很远的星星", hint:"它们其实是很大的星，只是太远了。"},
+      {q:"离我们最近、会发光发热的星是？", type:"choice", options:["太阳","月亮","北极星"], answer:"太阳", hint:"白天照着我们的就是它。"},
+      {q:"月亮的形状每天看起来都一样吗？", type:"choice", options:["不一样，会从月牙变圆再变月牙","一样，永远是圆的","一样，永远是月牙"], answer:"不一样，会从月牙变圆再变月牙", hint:"这叫月相变化，大约一个月一个周期。"},
+      {q:"为什么夏天比冬天更热？", type:"choice", options:["夏天太阳照得更直射、白天更长","夏天离太阳更近","冬天没有太阳"], answer:"夏天太阳照得更直射、白天更长", hint:"这和地球倾斜着绕太阳转有关。"},
+      {q:"晚上看到一条很快划过天空的亮线，可能是？", type:"choice", options:["流星，小石块冲进大气层摩擦发光","星星在搬家","有人在放烟花"], answer:"流星，小石块冲进大气层摩擦发光", hint:"小天体和大气摩擦生热，就发光了。"},
+      {q:"用天文望远镜能帮我们看到什么？", type:"choice", options:["看得更远更清楚，比如月亮上的坑","让天空变亮","让星星变多"], answer:"看得更远更清楚，比如月亮上的坑", hint:"望远镜能把远处的东西放大。"},
+    ]},
+
+  water:{ name:"水的变化", icon:"💧", cls:"l4",
+    tip:"🔬 动手玩：把一杯水放冰箱冻成冰，再拿出来看它慢慢化回水——水会变样子。",
+    questions:[
+      {q:"冰化了会变成？", type:"choice", options:["水","空气","糖"], answer:"水", hint:"冰是冻住的水。"},
+      {q:"湿衣服晾干了，上面的水去哪了？", type:"choice", options:["变成水蒸气飞到空气里","被太阳喝掉了","流到地上"], answer:"变成水蒸气飞到空气里", hint:"水会慢慢蒸发，变成看不见的水蒸气。"},
+      {q:"把糖放进水里搅一搅，糖不见了，是因为？", type:"choice", options:["溶解在水里了","真的消失了","变成了水"], answer:"溶解在水里了", hint:"尝一口水，还是甜的——糖还在。"},
+      {q:"从冰箱拿出的冰镇饮料，瓶子外面湿湿的水珠是哪来的？", type:"choice", options:["空气里的水遇冷变出来的","瓶子漏了","有人洒的"], answer:"空气里的水遇冷变出来的", hint:"空气里有看不见的水，遇到冷瓶子就变成水珠。"},
+      {q:"天上的雨是怎么来的？", type:"choice", options:["水蒸气升到天上变成云，再落下来","天上有水龙头","云在哭"], answer:"水蒸气升到天上变成云，再落下来", hint:"这叫水的循环，水一直在旅行。"},
+      {q:"水有三种样子：冰、水，还有？", type:"choice", options:["水蒸气(气体)","糖","沙子"], answer:"水蒸气(气体)", hint:"固体冰、液体水、气体水蒸气。"},
+      {q:"装满水的瓶子冻进冰箱，瓶子可能会？", type:"choice", options:["胀破，因为水结冰会变大","缩小","变颜色"], answer:"胀破，因为水结冰会变大", hint:"水结冰体积会变大，很特别！"},
+      {q:"水结成冰、又化成水，水的本质变了吗？", type:"choice", options:["没变，还是水，只是变了个样子","变成了别的东西","消失了"], answer:"没变，还是水，只是变了个样子", hint:"固态、液态都是水，本质没变。"},
+      {q:"晒盐是利用海水里的水怎样变成盐的？", type:"choice", options:["太阳晒，水蒸发了，盐留下来","盐自己跳出来","海水本来就是盐"], answer:"太阳晒，水蒸发了，盐留下来", hint:"水蒸发后，溶解的盐就留下了。"},
+      {q:"同样多的水，倒进细高的杯子和矮胖的杯子，哪个更多？", type:"choice", options:["一样多，只是形状变了","细高杯子更多","矮胖杯子更多"], answer:"一样多，只是形状变了", hint:"水的量没变，只是杯子的形状不同。"},
+    ]},
+
+  light:{ name:"光和影", icon:"🔆", cls:"l5",
+    tip:"🔬 动手玩：晚上用手电照墙，把手放中间，用手做出小狗、小兔的影子。",
+    questions:[
+      {q:"影子是怎么来的？", type:"choice", options:["东西挡住了光","太阳画上去的","影子自己长出来"], answer:"东西挡住了光", hint:"光照过来被挡住，后面就有影子。"},
+      {q:"一天里，影子什么时候最短？", type:"choice", options:["中午太阳最高的时候","早上","晚上"], answer:"中午太阳最高的时候", hint:"太阳越高，影子越短。"},
+      {q:"光是怎么走路的？", type:"choice", options:["直直地走(沿直线)","拐弯走","绕圈走"], answer:"直直地走(沿直线)", hint:"所以挡住它就有清楚的影子。"},
+      {q:"照镜子时你举右手，镜子里的“你”看起来举？", type:"choice", options:["左手(左右相反)","也是右手","两只手"], answer:"左手(左右相反)", hint:"镜子里左右是反的，试试看！"},
+      {q:"雨后天上的彩虹，大约有几种颜色？", type:"choice", options:["七种","两种","一百种"], answer:"七种", hint:"红橙黄绿蓝靛紫。"},
+      {q:"彩虹的这些颜色，其实藏在哪里？", type:"choice", options:["太阳光里","雨里","云里"], answer:"太阳光里", hint:"阳光照在小水珠上，颜色就分出来了。"},
+      {q:"晚上关了灯就看不见东西，是因为？", type:"choice", options:["没有光了","眼睛坏了","东西跑了"], answer:"没有光了", hint:"要有光，眼睛才能看见东西。"},
+      {q:"为什么晚上路灯下人的影子特别长？", type:"choice", options:["光是斜着照过来的，影子会拉长","路灯坏了","人变高了"], answer:"光是斜着照过来的，影子会拉长", hint:"光的角度越斜，影子越长。"},
+      {q:"透明的玻璃和不透明的木板，哪个能挡住光、留下影子？", type:"choice", options:["木板","玻璃","都不能"], answer:"木板", hint:"玻璃能透光，木板不能。"},
+      {q:"用放大镜看小字，为什么看起来变大了？", type:"choice", options:["放大镜能把光线聚拢，让影像变大","放大镜施了魔法","眼睛看错了"], answer:"放大镜能把光线聚拢，让影像变大", hint:"放大镜是一种特殊形状的镜片。"},
+      {q:"皮影戏的影子是怎么做出来的？", type:"choice", options:["把小人道具挡在灯光和幕布中间","用颜料画上去的","手电筒特别的功能"], answer:"把小人道具挡在灯光和幕布中间", hint:"道具挡住光，幕布上就有影子。"},
+    ]},
+
+  sound:{ name:"声音的秘密", icon:"🔊", cls:"l1",
+    tip:"🔬 动手玩：说话时把手轻轻放在喉咙上，感受它在“发抖”——那就是在振动。",
+    questions:[
+      {q:"声音是怎么产生的？", type:"choice", options:["物体在振动(发抖)","物体在发光","物体变热"], answer:"物体在振动(发抖)", hint:"敲鼓时鼓面在抖，就有声音。"},
+      {q:"用力敲鼓和轻轻敲鼓，哪个声音大？", type:"choice", options:["用力敲","轻轻敲","一样大"], answer:"用力敲", hint:"用的力大，振动大，声音就大。"},
+      {q:"打雷时，为什么先看见闪电、后听见雷声？", type:"choice", options:["光跑得比声音快很多","雷声偷懒","闪电先出门"], answer:"光跑得比声音快很多", hint:"光速比声速快，所以先看到。"},
+      {q:"声音能在水里传播吗？", type:"choice", options:["能，鱼也能听到声音","不能","只能在白天"], answer:"能，鱼也能听到声音", hint:"声音能在水里、空气里传。"},
+      {q:"在没有空气的月球上，能听到声音吗？", type:"choice", options:["不能，声音要靠空气传","能，很大声","只能听一点点"], answer:"不能，声音要靠空气传", hint:"没有空气，声音传不过来。"},
+      {q:"长时间听很大声的音乐，对耳朵？", type:"choice", options:["不好，会伤耳朵","很好","没影响"], answer:"不好，会伤耳朵", hint:"声音太大要保护耳朵。"},
+      {q:"把耳朵贴在桌子一头，另一头轻轻敲，能听见吗？", type:"choice", options:["能，声音也能在桌子里传","完全听不见"], answer:"能，声音也能在桌子里传", hint:"固体也能传声。"},
+      {q:"同一根橡皮筋，拉得越紧，弹出来的声音？", type:"choice", options:["越高、越尖","越低、越闷","不变"], answer:"越高、越尖", hint:"绷得紧，振动快，声音高。"},
+      {q:"很远就能听见救护车，是因为它？", type:"choice", options:["发出很大的警笛声","跑得很快","灯很亮"], answer:"发出很大的警笛声", hint:"声音大，传得远。"},
+      {q:"小提琴的弦有粗有细，这是为什么？", type:"choice", options:["粗细不同振动快慢不同，发出的音高低不同","只是好看","方便区分左右手"], answer:"粗细不同振动快慢不同，发出的音高低不同", hint:"细弦振动快，声音更高。"},
+      {q:"教室里挂上厚厚的窗帘，可以帮助？", type:"choice", options:["减少外面的噪音传进来","让教室更暗","让教室更暖和"], answer:"减少外面的噪音传进来", hint:"软软的窗帘能吸收一部分声音。"},
+      {q:"在空旷的山谷里喊话，为什么会听到回声？", type:"choice", options:["声音碰到远处的山壁反弹回来了","是另一个人在学说话","风把声音吹回来了"], answer:"声音碰到远处的山壁反弹回来了", hint:"声音遇到障碍物会反射。"},
+    ]},
+
+  force:{ name:"看不见的力", icon:"⚖️", cls:"l2",
+    tip:"🔬 想一想：把东西往上抛，它总会掉下来——是谁在悄悄把它往下拉？",
+    questions:[
+      {q:"手里的苹果一松开，会往哪走？", type:"choice", options:["往下掉","往上飞","停在空中"], answer:"往下掉", hint:"地球有引力(重力)，把东西往下拉。"},
+      {q:"我们能稳稳站在地上、不会飘走，是因为？", type:"choice", options:["地球的引力拉着我们","我们很重","鞋子很黏"], answer:"地球的引力拉着我们", hint:"重力把我们“吸”在地面。"},
+      {q:"骑自行车捏刹车能停下来，靠的是？", type:"choice", options:["摩擦力","风力","魔法"], answer:"摩擦力", hint:"刹车和轮子摩擦，把车“拉”住。"},
+      {q:"冬天搓搓手会变暖，是因为？", type:"choice", options:["摩擦会生热","手会发光","空气很暖"], answer:"摩擦会生热", hint:"两只手摩擦，热就出来了。"},
+      {q:"木头放进水里，会？", type:"choice", options:["浮起来","沉下去","融化"], answer:"浮起来", hint:"比水轻的东西会浮。"},
+      {q:"石头放进水里，会？", type:"choice", options:["沉下去","浮起来","飞出来"], answer:"沉下去", hint:"比水重的东西会沉。"},
+      {q:"在结冰的地面上容易滑倒，是因为？", type:"choice", options:["冰太滑，摩擦力小","冰太黏","冰会动"], answer:"冰太滑，摩擦力小", hint:"摩擦力小，脚就抓不住地。"},
+      {q:"为什么运动鞋鞋底要做出一道道花纹？", type:"choice", options:["增加摩擦力，走路不容易滑","好看","减轻鞋子重量"], answer:"增加摩擦力，走路不容易滑", hint:"花纹能增大摩擦力。"},
+      {q:"往上扔一个球，球最后总会往下掉，为什么？", type:"choice", options:["地球引力一直在拉着它","球自己想下来","风把它吹下来了"], answer:"地球引力一直在拉着它", hint:"重力一直存在，不管扔多高都会被拉回来。"},
+      {q:"轮船是铁做的，为什么能浮在水上？", type:"choice", options:["船身做成中空的大形状，靠形状增加浮力","铁本来就很轻","船底有特别涂料"], answer:"船身做成中空的大形状，靠形状增加浮力", hint:"空心的形状能排开更多水，产生更大浮力。"},
+    ]},
+
+  weather:{ name:"天气与四季", icon:"🌦️", cls:"l3",
+    tip:"🌤️ 想一想：每天出门前看看天，是晴是雨是风？试着自己当一周“小气象员”。",
+    questions:[
+      {q:"天上的云，主要是由什么组成的？", type:"choice", options:["很多很多小水珠","棉花","烟"], answer:"很多很多小水珠", hint:"云就是好多小水珠聚在一起。"},
+      {q:"风其实是什么？", type:"choice", options:["流动的空气","会跑的云","树在扇风"], answer:"流动的空气", hint:"空气一流动，就有风。"},
+      {q:"打雷闪电时，下面哪种做法最安全？", type:"choice", options:["躲到屋里，别站大树下","站到大树下避雨","在空地上跑"], answer:"躲到屋里，别站大树下", hint:"大树和空地容易被雷击中。"},
+      {q:"一年里，通常哪个季节最热？", type:"choice", options:["夏天","冬天","春天"], answer:"夏天", hint:"夏天太阳最“毒”。"},
+      {q:"下雪一般在什么样的天气？", type:"choice", options:["很冷的冬天","很热的夏天","刮风的秋天"], answer:"很冷的冬天", hint:"温度很低，雨就变成了雪。"},
+      {q:"雨后天上出现彩虹，需要有？", type:"choice", options:["阳光和空气里的小水珠","很多云","打雷"], answer:"阳光和空气里的小水珠", hint:"阳光+小水珠，才有彩虹。"},
+      {q:"早晨草叶上的小露珠是怎么来的？", type:"choice", options:["空气里的水夜里遇冷变成的","小草出汗了","有人洒的"], answer:"空气里的水夜里遇冷变成的", hint:"和冰镇瓶子上的水珠一个道理。"},
+      {q:"贴着地面白茫茫的雾，其实是？", type:"choice", options:["飘在低处的很多小水珠","白烟","云掉下来了"], answer:"飘在低处的很多小水珠", hint:"雾就是近地面的小水珠。"},
+      {q:"天气预报说明天有雨，出门最好带？", type:"choice", options:["雨伞","扇子","手套"], answer:"雨伞", hint:"看天气，提前准备。"},
+      {q:"为什么沙漠地区昼夜温差特别大？", type:"choice", options:["沙子白天吸热快、晚上散热也快","沙漠没有太阳","沙漠一直很冷"], answer:"沙子白天吸热快、晚上散热也快", hint:"沙子升温降温都比水快得多。"},
+      {q:"台风是一种很强的？", type:"choice", options:["旋转的大风暴，常伴随暴雨","小雨","地震"], answer:"旋转的大风暴，常伴随暴雨", hint:"台风带来强风和大量降水。"},
+      {q:"为什么秋天早晨容易起雾？", type:"choice", options:["夜里气温降低，空气中的水汽遇冷凝结","太阳太热","地上有很多水"], answer:"夜里气温降低，空气中的水汽遇冷凝结", hint:"和露珠的形成道理差不多。"},
+    ]},
+
+  kitchen:{ name:"厨房里的科学", icon:"🧪", cls:"l4",
+    tip:"🍳 想一想：厨房就是个小实验室——做饭时多观察，到处都是科学。",
+    questions:[
+      {q:"切洋葱时为什么会让人想流眼泪？", type:"choice", options:["洋葱放出刺激的气味冲到眼睛","洋葱太伤心","刀太快"], answer:"洋葱放出刺激的气味冲到眼睛", hint:"切开会冒出一种辣眼睛的气体。"},
+      {q:"把气球吹大，是因为里面充进了？", type:"choice", options:["空气","水","糖"], answer:"空气", hint:"我们呼出的气把它撑大了。"},
+      {q:"热水和冷水，哪个能更快把糖化开？", type:"choice", options:["热水","冷水","一样快"], answer:"热水", hint:"越热，溶解得越快。"},
+      {q:"铁的东西放在潮湿地方久了，会？", type:"choice", options:["生锈","变软","发光"], answer:"生锈", hint:"铁遇到水和空气会慢慢生锈。"},
+      {q:"夏天穿浅色衣服为什么更凉快？", type:"choice", options:["浅色不容易吸热","浅色更好看","浅色更薄"], answer:"浅色不容易吸热", hint:"深色吸热多，浅色反光、凉快些。"},
+      {q:"冰箱为什么能让食物不容易坏？", type:"choice", options:["里面冷，让细菌长得很慢","会消毒","把水抽干"], answer:"里面冷，让细菌长得很慢", hint:"低温让食物变坏的细菌“偷懒”。"},
+      {q:"把生鸡蛋放进很咸的盐水里，可能会？", type:"choice", options:["浮起来","立刻化掉","变成熟蛋"], answer:"浮起来", hint:"盐水浮力更大，能托起鸡蛋。"},
+      {q:"刚盛出的热汤太烫，下面哪样能让它快点凉？", type:"choice", options:["吹一吹、摊开放","盖紧盖子","用被子捂住"], answer:"吹一吹、摊开放", hint:"散热快就凉得快。"},
+      {q:"做馒头时面团会发起来变大，是因为里面有了？", type:"choice", options:["很多小气泡","水","糖"], answer:"很多小气泡", hint:"小气泡把面团撑大。"},
+      {q:"为什么用高压锅煮饭比普通锅快？", type:"choice", options:["锅内压力变大，水能烧到比100度更热，煮得更快","高压锅更烫","高压锅更重"], answer:"锅内压力变大，水能烧到比100度更热，煮得更快", hint:"压力越大，水的沸点就越高。"},
+      {q:"切完柠檬的菜刀要及时清洗，是因为柠檬汁是？", type:"choice", options:["酸性的，容易让铁生锈","甜的，会招虫子","很烫的"], answer:"酸性的，容易让铁生锈", hint:"酸性的东西容易腐蚀金属。"},
+      {q:"腌咸菜的时候要放很多盐，主要是为了？", type:"choice", options:["让蔬菜里的水分渗出来，不容易变坏","让菜变咸更好吃","让菜变颜色"], answer:"让蔬菜里的水分渗出来，不容易变坏", hint:"盐能让细菌很难存活，帮助保存食物。"},
+    ]},
+
+  animal:{ name:"动物的本领", icon:"🐾", cls:"l5",
+    tip:"🐾 想一想：每种动物都有自己活下去的“绝招”，留心观察小动物。",
+    questions:[
+      {q:"鱼用身体的哪部分呼吸？", type:"choice", options:["鳃","鼻子","肺"], answer:"鳃", hint:"鱼用鳃在水里呼吸。"},
+      {q:"青蛙小时候叫什么？", type:"choice", options:["蝌蚪","小鱼","毛毛虫"], answer:"蝌蚪", hint:"黑黑的小蝌蚪长大变青蛙。"},
+      {q:"蝙蝠在黑夜里飞不会撞墙，靠的是？", type:"choice", options:["发出声音、听回声来找路","眼睛特别亮","闻味道"], answer:"发出声音、听回声来找路", hint:"像“声音雷达”一样。"},
+      {q:"变色龙会变颜色，主要是为了？", type:"choice", options:["伪装自己、躲避敌人","好看","告诉别人它的心情"], answer:"伪装自己、躲避敌人", hint:"变得和周围一样，敌人就找不到。"},
+      {q:"下面哪种动物冬天会冬眠？", type:"choice", options:["熊","麻雀","金鱼"], answer:"熊", hint:"熊、蛇、青蛙冬天会躲起来睡很久。"},
+      {q:"骆驼能在沙漠里走很久，靠背上的？", type:"choice", options:["驼峰(存着养分)","水袋","小风扇"], answer:"驼峰(存着养分)", hint:"驼峰像“干粮库”。"},
+      {q:"大雁等候鸟冬天为什么飞到南方？", type:"choice", options:["南方暖和、有食物","南方好玩","迷路了"], answer:"南方暖和、有食物", hint:"为了过冬和找吃的。"},
+      {q:"壁虎遇到危险时，尾巴会？", type:"choice", options:["断掉来逃命(以后还能长出来)","变得很长","发出光"], answer:"断掉来逃命(以后还能长出来)", hint:"断尾是保命的本领。"},
+      {q:"猫脸上长长的胡须有什么用？", type:"choice", options:["帮它感知周围、量缝隙宽窄","只是好看","用来保暖"], answer:"帮它感知周围、量缝隙宽窄", hint:"胡须是猫的“探测器”。"},
+      {q:"蜜蜂用什么办法告诉同伴哪里有花蜜？", type:"choice", options:["跳一种特别的“舞蹈”","写信","大声喊叫"], answer:"跳一种特别的“舞蹈”", hint:"蜜蜂靠跳舞的方向和圈数传递信息。"},
+      {q:"啄木鸟一直啄树，为什么脑袋不会被震坏？", type:"choice", options:["它的头骨结构特别，能缓冲震动","它的头很软","它啄得很慢"], answer:"它的头骨结构特别，能缓冲震动", hint:"啄木鸟的头骨像自带减震器。"},
+      {q:"刺猬遇到危险时会怎么做？", type:"choice", options:["缩成一团，用背上的刺保护自己","立刻逃跑","装死不动"], answer:"缩成一团，用背上的刺保护自己", hint:"浑身的刺让敌人不敢轻易下嘴。"},
+      {q:"候鸟长途迁徙时靠什么辨别方向？", type:"choice", options:["太阳、星星和地球磁场等多种方法","问路人","随便乱飞"], answer:"太阳、星星和地球磁场等多种方法", hint:"科学家发现候鸟能感知地球磁场。"},
+    ]},
+
+  linkwhy:{ name:"连连看·为什么", icon:"🧠", cls:"l1", sub:"挑战 · 把两个知识连起来想",
+    tip:"🔬 这里的题要把前面学过的两个道理连起来想一想，别只挑一个熟悉的词就选。",
+    questions:shuffle([
+      {q:"如果长期不让植物晒到阳光，它会怎样？", type:"choice", options:["没法制造养料，慢慢枯萎","长得更快更壮","颜色变得更绿"], answer:"没法制造养料，慢慢枯萎", hint:"叶子要靠阳光才能做“养料”(光合作用)。"},
+      {q:"运动过后为什么呼吸会比平时快很多？", type:"choice", options:["身体需要更多氧气，就加快了呼吸","是因为紧张","只是因为出汗了"], answer:"身体需要更多氧气，就加快了呼吸", hint:"运动很费力气，需要更多氧气帮忙。"},
+      {q:"磁铁隔着一张薄纸能吸住铁钉，那隔着一块厚厚的木板呢？", type:"choice", options:["隔得越厚、磁力越弱，就不容易吸住了","不管多厚都能吸住","完全不可能被隔开"], answer:"隔得越厚、磁力越弱，就不容易吸住了", hint:"磁力会随着隔的东西变厚而减弱。"},
+      {q:"向日葵的花盘为什么总跟着太阳转？", type:"choice", options:["为了多晒太阳，制造更多养料","它在跳舞","它怕黑"], answer:"为了多晒太阳，制造更多养料", hint:"想想植物为什么需要阳光。"},
+      {q:"吃饭时细嚼慢咽，为什么对身体更好？", type:"choice", options:["食物嚼得越碎，胃肠越容易消化吸收","显得比较有礼貌","可以少吃一点"], answer:"食物嚼得越碎，胃肠越容易消化吸收", hint:"想想食物进肚子后要靠哪里消化。"},
+      {q:"秋天树叶为什么大多先变黄，然后才掉落？", type:"choice", options:["叶子里的养分在减少，树在为过冬做准备","是被太阳晒黄的","是被风吹掉颜色的"], answer:"叶子里的养分在减少，树在为过冬做准备", hint:"落叶本身就是树过冬的一种本领。"},
+      {q:"两块磁铁同极靠近会互相推开，如果硬把它们的手一直按住不放呢？", type:"choice", options:["还是能感觉到推开的力，一松手就弹开","按住以后就会变成互相吸","力气会自己消失"], answer:"还是能感觉到推开的力，一松手就弹开", hint:"同极相斥的力一直都在，不会因为被按住而消失。"},
+      {q:"冬天河面结冰，为什么鱼却还能在冰下的水里活着？", type:"choice", options:["冰只结在表面，下面的水没结冰，鱼能游动","鱼在冬天不需要水","整条河都会结成冰"], answer:"冰只结在表面，下面的水没结冰，鱼能游动", hint:"结冰是从水面开始的，下面还是水。"},
+      {q:"为什么运动鞋鞋底有花纹，冰刀底部却磨得很光滑？", type:"choice", options:["运动鞋要增大摩擦力防滑，冰刀要减小摩擦力滑得快","都是为了好看","没有区别"], answer:"运动鞋要增大摩擦力防滑，冰刀要减小摩擦力滑得快", hint:"想想'看不见的力'里学过的摩擦力。"},
+      {q:"为什么高压锅能比普通锅更快把饭煮熟？", type:"choice", options:["锅内气压升高，水能烧到比100度更热，熟得更快","高压锅更大","没有关系"], answer:"锅内气压升高，水能烧到比100度更热，熟得更快", hint:"结合'水的变化'和'厨房里的科学'想一想。"},
+      {q:"候鸟秋天飞去南方，而蛇和熊却选择在原地冬眠，为什么方法不一样？", type:"choice", options:["候鸟能飞很远去找食物，蛇熊行动慢就地睡觉更省力","它们其实做的是一样的事","蛇熊比较懒"], answer:"候鸟能飞很远去找食物，蛇熊行动慢就地睡觉更省力", hint:"结合'动物的本领'想想两种过冬方式各自的道理。"},
+      {q:"打雷的时候，为什么先看到闪电、后听到雷声？", type:"choice", options:["光的速度比声音快得多，所以先看到闪电","声音跑得比光快","闪电和雷声本来就不是同时发生"], answer:"光的速度比声音快得多，所以先看到闪电", hint:"结合'声音的秘密'里学过的光速比声速快。"},
+    ])},
+};
+
+/* 菜单/出题/判分/动画由共用引擎处理 */
+</script>
+<script src="../_engine/quiz.js"></script>
+</body>
+</html>
