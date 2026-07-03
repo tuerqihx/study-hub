@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃的英语发音闯关 🎤</title>
+<title>我的英语发音闯关 🎤</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -132,7 +132,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>🎤 桃桃的英语发音闯关</h1>
+  <h1 id="appTitle">🎤 我的英语发音闯关</h1>
   <div class="sub">先点「🔊 听一听」→ 再点「🎙️ 我来读」跟着读，看能得几颗星！</div>
 
   <div class="toolbar">
@@ -177,7 +177,7 @@
 <div class="overlay" id="progressModal" onclick="if(event.target===this)closeModal('progressModal')">
   <div class="modal">
     <button class="close" onclick="closeModal('progressModal')">✕</button>
-    <h2>📊 桃桃的进步</h2>
+    <h2 id="progTitle">📊 我的进步</h2>
     <div id="statsBox"></div>
     <div class="chart-title">最近 14 天每天得到的 ⭐</div>
     <div id="chartBox"></div>
@@ -196,7 +196,7 @@
       · 只写英文：<code>apple</code><br>
       · 英文+中文：<code>apple 苹果</code> 或 <code>apple = 苹果</code><br>
       · 再加发音提示：<code>apple = 苹果 = 结尾 le 轻收</code><br>
-      保存后会自动生成「✏️ 这周老师的词」关卡，桃桃就能听标准音、跟读打分。
+      保存后会自动生成「✏️ 这周老师的词」关卡，孩子就能听标准音、跟读打分。
     </div>
     <textarea class="ta" id="customTA" placeholder="apple = 苹果&#10;banana 香蕉&#10;Good morning! 早上好&#10;thank you = 谢谢 = th 起头，舌尖咬牙中间"></textarea>
     <div class="parsed" id="parsedInfo"></div>
@@ -792,6 +792,16 @@ $("customTA").addEventListener("input", updateParsed);
 
 buildWork();
 load();
+/* 通用版：从主页的小主人档案里取名字 */
+try{
+  const prof=JSON.parse(localStorage.getItem("profile_v1"))||{};
+  if((prof.name||"").trim()){
+    const n=prof.name.trim();
+    document.title=n+"的英语发音闯关 🎤";
+    document.getElementById("appTitle").textContent="🎤 "+n+"的英语发音闯关";
+    document.getElementById("progTitle").textContent="📊 "+n+"的进步";
+  }
+}catch(e){}
 </script>
 </body>
 </html>

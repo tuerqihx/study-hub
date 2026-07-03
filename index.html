@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃学习台 🏡</title>
+<title>我的学习台 🏡</title>
 <style>
   * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
   input { -webkit-user-select: text; user-select: text; }
@@ -121,8 +121,8 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="hello" id="hello">你好呀，桃桃！</div>
-    <h1>🏡 桃桃学习台</h1>
+    <div class="hello" id="hello">你好呀！</div>
+    <h1>🏡 我的学习台</h1>
     <div class="datebar" id="datebar"></div>
   </div>
 
@@ -211,7 +211,7 @@
     <div id="moveMsg" style="font-size:14px;color:#3a9;margin-top:6px;min-height:18px;"></div>
   </div>
 
-  <div class="footer">用完直接关掉浏览器窗口就行～ 明天再来挣星星！</div>
+  <div class="footer">用完直接关掉浏览器窗口就行～ 明天再来挣星星！　<span class="parent-link" onclick="askName(false)">✏️ 改名字</span></div>
 
 </div>
 
@@ -222,13 +222,39 @@ function soon(name){ alert("「"+name+"」马上就来啦！\n再等爸爸做好
 
 /* ============ 日期问候 ============ */
 const WEEK = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+/* ============ 小主人档案：名字 + 家长密码（通用版：任何小朋友都能用） ============ */
+const PROFILE_KEY = "profile_v1";   // 注意：不叫 taotao_*_v1，避免被当成学习数据扫描
+function loadProfile(){ try{ return JSON.parse(localStorage.getItem(PROFILE_KEY))||{}; }catch(e){ return {}; } }
+function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(PROFILE)); }catch(e){} }
+let PROFILE = loadProfile();
+
+function kidName(){ return (PROFILE.name||"").trim() || "小朋友"; }
+function applyName(){
+  const n = kidName();
+  document.title = n + "学习台 🏡";
+  document.querySelector(".top h1").textContent = "🏡 " + n + "学习台";
+  const h = new Date().getHours();
+  document.getElementById("hello").textContent =
+    (h<11 ? "早上好呀，" : (h<18 ? "下午好呀，" : "晚上好呀，")) + n + "！";
+}
+function askName(first){
+  const tip = first ? "你好呀！这是属于你的学习台～\n先告诉我，你叫什么名字？（写小名就行）"
+                    : "改个名字？现在叫：" + kidName();
+  const v = prompt(tip, first ? "" : kidName());
+  if(v===null) return;
+  const n = v.trim().slice(0,8);
+  if(!n){ if(first) setTimeout(()=>askName(true), 300); return; }
+  PROFILE.name = n; saveProfile(); applyName();
+  if(first) alert("欢迎你，" + n + "！🎉\n做题赢星星，攒星星换大奖，出发吧！");
+}
+window.askName = askName;
+
 (function(){
   const d = new Date();
   document.getElementById("datebar").textContent =
     d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日 "+WEEK[d.getDay()];
-  const h = d.getHours();
-  const greet = h<11 ? "早上好呀，桃桃！" : (h<18 ? "下午好呀，桃桃！" : "晚上好呀，桃桃！");
-  document.getElementById("hello").textContent = greet;
+  applyName();
+  if(!(PROFILE.name||"").trim()) setTimeout(()=>askName(true), 600);
 })();
 
 /* ============ 奖励汇总：扫描所有 taotao_*_v1 学习数据 ============
@@ -245,7 +271,7 @@ const REWARD_COST = REWARD_TREES*TREE_COST;    // 750 ⭐ = 1 个生活大奖
 /* 主页自己的小账本：已兑换花掉的星星 + 奖励清单 */
 const HUB_KEY = "taotao_hub_v1";
 /* 生活大奖（现在稀有又值钱，做成更有吸引力的大目标；家长可用「✏️家长设置奖励」改） */
-const DEFAULT_REWARDS = ["去一次游乐园／海洋馆","挑一个心愿单上的大玩具","去看一场电影＋爆米花","一次特别的亲子小旅行（近郊）","买一套一直想要的乐高／拼装","『桃桃说了算』一整天（合理范围内你安排）","和好朋友约一次一起玩"];
+const DEFAULT_REWARDS = ["去一次游乐园／海洋馆","挑一个心愿单上的大玩具","去看一场电影＋爆米花","一次特别的亲子小旅行（近郊）","买一套一直想要的乐高／拼装","『我说了算』一整天（合理范围内孩子安排）","和好朋友约一次一起玩"];
 function loadHub(){ try{ return JSON.parse(localStorage.getItem(HUB_KEY))||{spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; }catch(e){ return {spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; } }
 function saveHub(){ try{ localStorage.setItem(HUB_KEY,JSON.stringify(HUB)); }catch(e){} }
 let HUB = loadHub(); if(!HUB.rewards||!HUB.rewards.length) HUB.rewards=DEFAULT_REWARDS.slice();
@@ -340,13 +366,28 @@ function refreshReviewBook(){
     '<div class="rv-item"><span class="rv-subj">'+esc(it.subj)+'</span><span class="rv-q">'+esc(it.q)+'</span><span class="rv-d">'+esc(it.d)+'</span></div>'
   ).join("");
 }
-// 不存明文密码，只存校验值——防止有人（包括桃桃）翻网页源代码直接看到数字（当前密码 0807）
-const RV_HASH = 85327;
-function rvCheck(p){ let h=0; for(const c of p) h=(h*31+c.charCodeAt(0))%100000; return h===RV_HASH; }
+/* 错题本密码：每家自己设，只存校验值不存明文——翻源代码也看不到数字。
+   第一次点"查看"时由家长设置；忘了密码：家长在浏览器控制台清掉 profile_v1 里的 rvHash 重设 */
+const RV_HASH_LEGACY = 85327;   // 老档案兼容：设置过自家密码后即失效
+function rvHashOf(p){ let h=0; for(const c of p) h=(h*31+c.charCodeAt(0))%100000; return h; }
+function rvCheck(p){
+  if(PROFILE.rvHash) return rvHashOf(p)===PROFILE.rvHash;
+  return rvHashOf(p)===RV_HASH_LEGACY;
+}
 function unlockReview(){
+  if(!PROFILE.rvHash && !localStorage.getItem("taotao_math_v1") && !localStorage.getItem("taotao_pron_v1")){
+    // 全新设备第一次用：先请家长设置自家密码
+    const p1 = prompt("第一次使用：请家长设置一个错题本密码（孩子不知道的）：");
+    if(!p1 || !p1.trim()) return;
+    const p2 = prompt("再输一遍确认：");
+    if(p2!==p1){ alert("两次输入不一样，再来一次～"); return; }
+    PROFILE.rvHash = rvHashOf(p1.trim()); saveProfile();
+    alert("密码设置好啦，请记牢。");
+  }
   const p = prompt("请输入密码查看错题本：");
   if(p===null) return;
-  if(rvCheck(p)){
+  if(rvCheck(p.trim())){
+    if(!PROFILE.rvHash){ PROFILE.rvHash = rvHashOf(p.trim()); saveProfile(); }  // 老设备顺手转成自家密码
     document.getElementById("rvLocked").style.display = "none";
     document.getElementById("reviewList").style.display = "";
     refreshReviewBook();
@@ -424,7 +465,7 @@ function redeem(i){
   alert("🎉 兑换成功！\n拿着这个去找爸爸妈妈领奖：\n\n🎁 "+rw+"\n\n（用掉了 "+REWARD_TREES+" 棵大树 🌳）");
 }
 function setRewards(){
-  const v=prompt("家长设置：每行写一个生活大奖（桃桃攒满 "+REWARD_TREES+" 棵大树🌳 = "+REWARD_COST+"⭐ 可换一个）", (HUB.rewards||[]).join("\n"));
+  const v=prompt("家长设置：每行写一个生活大奖（孩子攒满 "+REWARD_TREES+" 棵大树🌳 = "+REWARD_COST+"⭐ 可换一个）", (HUB.rewards||[]).join("\n"));
   if(v===null) return;
   const list=v.split("\n").map(s=>s.trim()).filter(Boolean);
   HUB.rewards=list.length?list:DEFAULT_REWARDS.slice(); saveHub();
