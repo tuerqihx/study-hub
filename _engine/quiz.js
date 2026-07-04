@@ -124,6 +124,11 @@
     for(let i=0;i<keys.length;i++){ const prevDone=(i===0)||!!STORE.done[keys[i-1]]; if(prevDone && !STORE.done[keys[i]]){ curIdx=i; break; } }
     renderContinueBar(keys, curIdx, timeUp);
 
+    // 错题答疑入口
+    { const n=reviewList().length; const rb=document.createElement("div"); rb.style.cssText="grid-column:1/-1;text-align:center;margin:0 0 8px;";
+      rb.innerHTML='<button onclick="openReview()" style="border:2px solid #ffcf87;background:#fff8ec;color:#b8600b;border-radius:14px;padding:10px 20px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;">📕 错题答疑'+(n?'（'+n+'）':'')+'</button>';
+      m.appendChild(rb); }
+
     // 没学完的关卡正常铺开；已经学过的关卡折叠进"复习"区，别把该做的新内容淹没了
     const activeIdx=[], doneIdxArr=[];
     keys.forEach((key,i)=>{ (STORE.done[key] ? doneIdxArr : activeIdx).push(i); });
@@ -211,8 +216,47 @@
     // 错过一次后，提示按钮直接升级成"详细讲讲"，别让她在原地转圈
     const hb=document.getElementById("hintBtn");
     if(hb && hintLevel<1){ hintLevel=1; hb.textContent=HINT_LABELS[1]; } }
-  function recordMiss(item){ try{ STORE.review.push({d:dkey(new Date()), m:curMod.name, q:(item.q||"").replace(/<[^>]+>/g," ").trim()});
-    if(STORE.review.length>80) STORE.review=STORE.review.slice(-80); saveStore(); }catch(e){} }
+  function recordMiss(item){ try{ STORE.review.push({
+      d:dkey(new Date()), m:curMod.name, icon:curMod.icon||"",
+      q:(item.q||"").replace(/<[^>]+>/g," ").trim(),
+      a:item.answer,                         // 正确答案
+      exp:item.exp||"",                      // 这道题的讲解（数学多为"结合现实"的详细讲解）
+      teach:curMod.teach||"",                // 这一关的基础讲解（从头讲起）
+      hint:item.hint||"" });
+    if(STORE.review.length>60) STORE.review=STORE.review.slice(-60); saveStore(); }catch(e){} }
+
+  /* ---- 错题答疑板块：把做错的题＋正确答案＋讲解收起来，随时点开复习 ---- */
+  function reviewList(){ const seen=new Set(), out=[];
+    for(let i=STORE.review.length-1;i>=0;i--){ const r=STORE.review[i]; if(!r||!r.q||seen.has(r.q)) continue; seen.add(r.q); out.push(r); }
+    return out; }
+  function openReview(){ const list=reviewList();
+    let ov=document.getElementById("reviewOverlay");
+    if(!ov){ ov=document.createElement("div"); ov.id="reviewOverlay";
+      ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;overflow-y:auto;padding:16px;"; document.body.appendChild(ov); }
+    let h='<div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;padding:18px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      + '<span style="font-size:20px;font-weight:bold;">📕 错题答疑</span>'
+      + '<button onclick="closeReview()" style="border:none;background:#eee;border-radius:10px;padding:8px 14px;font-size:15px;cursor:pointer;font-family:inherit;">✕ 关闭</button></div>';
+    if(!list.length){ h+='<div style="text-align:center;color:#999;padding:30px 0;font-size:16px;">还没有错题～<br>做错的题会自动收进这里，配上正确答案和讲解。</div>'; }
+    else { h+='<div style="color:#888;font-size:14px;margin-bottom:12px;">这里是最近做错的题（每题只留最近一次）。点开看讲解，弄懂了再回去闯关，一次做对照样得 ⭐。</div>';
+      list.forEach((r,i)=>{ const exp=r.exp||"", teach=r.teach||"", tip=r.hint||"";
+        h+='<div style="border:2px solid #ffe0b3;border-radius:14px;padding:12px 14px;margin-bottom:12px;">'
+          + '<div style="font-size:13px;color:#b8860b;margin-bottom:4px;">'+(r.icon||"")+' '+(r.m||"")+'　·　'+(r.d||"")+'</div>'
+          + '<div style="font-size:17px;font-weight:bold;margin-bottom:6px;">'+(i+1)+'. '+r.q+'</div>'
+          + '<div style="font-size:16px;color:#2a9d5c;margin-bottom:8px;">✅ 正确答案：<b>'+(r.a!==undefined&&r.a!==null?r.a:"")+'</b></div>'
+          + '<button onclick="var d=this.nextElementSibling;d.style.display=d.style.display===\'block\'?\'none\':\'block\';" style="border:2px solid #ffd34d;background:#fff8e6;color:#b8860b;border-radius:10px;padding:8px 14px;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;">💡 为什么？点我看讲解</button>'
+          + '<div style="display:none;margin-top:8px;background:#fff8e6;border-radius:12px;padding:12px 14px;font-size:16px;line-height:1.9;">'
+          +   (exp?('<div style="margin-bottom:'+((teach)?'10px':'0')+'">'+exp+'</div>'):'')
+          +   (teach?('<div style="border-top:1px dashed #ecd8a0;padding-top:8px;"><b>📖 先弄懂这一类：</b><br>'+teach+'</div>'):'')
+          +   ((!exp&&!teach)?('💡 '+ (tip||"再读读题目，想想它在问什么。")):'')
+          + '</div></div>';
+      });
+      h+='<div style="text-align:center;margin-top:6px;"><button onclick="clearReview()" style="border:2px dashed #ccc;background:none;color:#999;border-radius:10px;padding:8px 16px;font-size:14px;cursor:pointer;font-family:inherit;">🗑 清空错题本</button></div>';
+    }
+    h+='</div>'; ov.innerHTML=h; ov.style.display="block"; }
+  function closeReview(){ const ov=document.getElementById("reviewOverlay"); if(ov) ov.style.display="none"; }
+  function clearReview(){ if(confirm("确定清空错题本吗？清了就看不到之前的错题啦。")){ STORE.review=[]; saveStore(); openReview(); } }
+  window.openReview=openReview; window.closeReview=closeReview; window.clearReview=clearReview;
 
   /* ---- 不会做？分级帮助：思路 → 详细讲解 → 看答案。专治"卡在一道题上不动" ----
      第1、2级不影响得星（学方法不丢星）；第3级直接看答案，这题不给星、记进复习本 */
