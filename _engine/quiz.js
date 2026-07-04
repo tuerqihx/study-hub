@@ -26,7 +26,9 @@
   function remainSec(){ return LIMIT_MIN ? Math.max(0, LIMIT_MIN*60 - usedSec()) : Infinity; }
   let sessionStart=null;
   function tickTime(){ if(!LIMIT_MIN || !sessionStart) return; const now=Date.now();
-    const r=timeRec(); r.timeSec=(r.timeSec||0)+(now-sessionStart)/1000; sessionStart=now; saveStore(); }
+    // 每次只计入最多 180 秒：防止锁屏/挂机/走神把大段真实时间灌进用时统计
+    const d=Math.min((now-sessionStart)/1000, 180);
+    const r=timeRec(); r.timeSec=(r.timeSec||0)+d; sessionStart=now; saveStore(); }
   function ensureTimeBanner(){ if(!LIMIT_MIN) return null; let b=document.getElementById("timeBanner");
     if(!b){ const menu=document.getElementById("menu"); b=document.createElement("div"); b.id="timeBanner";
       b.style.cssText="text-align:center;font-size:15px;font-weight:bold;color:#999;margin:0 0 10px;"; menu.parentNode.insertBefore(b, menu); }

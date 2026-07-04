@@ -141,6 +141,7 @@
       <div class="ladder-btns">
         <button class="redeem-btn" id="redeemBtn" onclick="openRedeem()">🎁 兑换奖励</button>
         <span class="parent-link" onclick="setRewards()">✏️ 家长设置奖励</span>
+        <span class="parent-link" onclick="resetDefaultRewards()">🔄 恢复默认奖励</span>
       </div>
       <div id="redeemPanel" class="redeem-panel" style="display:none;"></div>
     </div>
@@ -365,7 +366,8 @@ function collectTimeBySubject(){
     if(!obj || !obj.days) continue;
     let totalSec=0, todaySec=0;
     for(const day in obj.days){
-      const t=Number(obj.days[day] && obj.days[day].timeSec)||0;
+      // 每天封顶 30 分钟：压掉历史上锁屏/挂机灌进来的异常大值（各科每天上限本就 ~12 分钟）
+      const t=Math.min(Number(obj.days[day] && obj.days[day].timeSec)||0, 30*60);
       totalSec+=t; if(day===today) todaySec+=t;
     }
     if(totalSec<=0) continue;
@@ -528,6 +530,14 @@ function setRewards(){
   const list=v.split("\n").map(s=>s.trim()).filter(Boolean);
   HUB.rewards=list.length?list:DEFAULT_REWARDS.slice(); saveHub();
   alert("已保存奖励清单 ✅（共 "+HUB.rewards.length+" 个）");
+}
+/* 奖励清单存在每台设备本地，不会跨设备同步。这个按钮把本设备的清单一键覆盖成最新的"代码默认清单"，
+   用于：电脑上改好并发布后，在平板点一下就同步成一样的。 */
+function resetDefaultRewards(){
+  if(!confirm("把这台设备的兑换大奖清单，恢复成最新的默认清单？\n（会覆盖本设备当前的奖励设置，不影响已攒的星星）")) return;
+  HUB.rewards=DEFAULT_REWARDS.slice(); saveHub();
+  alert("已恢复为最新默认清单 ✅（共 "+HUB.rewards.length+" 个）：\n\n🎁 "+HUB.rewards.join("\n🎁 "));
+  refreshReward();
 }
 
 /* ============ 电脑小达人：从基础开始的一门小课，按顺序学，记住学到第几课 ============ */
