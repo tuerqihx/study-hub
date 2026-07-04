@@ -146,6 +146,14 @@
     </div>
   </div>
 
+  <!-- 用时统计 -->
+  <div class="reward">
+    <div class="ladder">
+      <div class="title">⏱️ 各科用时排行 —— 看看桃桃在哪个板块花的时间最多</div>
+      <div id="timeStatsBody"></div>
+    </div>
+  </div>
+
   <!-- 今日任务 -->
   <div class="today">
     <div class="t-title">📅 今天做这些（攒到 <b id="goalNum">5</b> ⭐ 就达标啦！）</div>
@@ -337,6 +345,56 @@ function refreshReward(){
           + "你有 <b>"+trees+"</b> 棵，还差 <b>"+needTrees+"</b> 棵（"+(REWARD_COST-avail)+" ⭐），加油！";
   }
   document.getElementById("ladderHint").innerHTML = hint;
+  renderTimeStats();
+}
+
+/* ============ 各科用时排行：扫描 taotao_*_v1 里每天的 timeSec ============ */
+const SUBJECT_META = {
+  taotao_math_v1:    {name:"数学", icon:"➗"},
+  taotao_chinese_v1: {name:"语文", icon:"📖"},
+  taotao_science_v1: {name:"科学", icon:"🔬"},
+  taotao_logic_v1:   {name:"逻辑", icon:"🧩"},
+  taotao_english_v1: {name:"英语", icon:"🔤"},
+};
+function collectTimeBySubject(){
+  const out=[], today=dkey(new Date());
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(!/^taotao_.+_v1$/.test(key) || key===HUB_KEY) continue;
+    let obj; try{ obj=JSON.parse(localStorage.getItem(key)); }catch(e){ continue; }
+    if(!obj || !obj.days) continue;
+    let totalSec=0, todaySec=0;
+    for(const day in obj.days){
+      const t=Number(obj.days[day] && obj.days[day].timeSec)||0;
+      totalSec+=t; if(day===today) todaySec+=t;
+    }
+    if(totalSec<=0) continue;
+    const meta=SUBJECT_META[key] || {name:key.replace(/^taotao_|_v1$/g,""), icon:"📘"};
+    out.push({name:meta.name, icon:meta.icon, totalSec, todaySec});
+  }
+  out.sort((a,b)=>b.totalSec-a.totalSec);
+  return out;
+}
+function fmtDur(sec){ const m=Math.floor(sec/60); if(m>=1) return m+" 分钟"; return Math.max(1,Math.round(sec))+" 秒"; }
+function renderTimeStats(){
+  const el=document.getElementById("timeStatsBody"); if(!el) return;
+  const rows=collectTimeBySubject();
+  if(!rows.length){ el.innerHTML='<div style="color:#999;text-align:center;padding:10px;font-size:15px;">还没有用时记录～ 等桃桃玩一会儿，这里就会显示每个板块花了多少时间。</div>'; return; }
+  const max=rows[0].totalSec||1; let html="";
+  rows.forEach((r,i)=>{
+    const pct=Math.max(4,Math.round(r.totalSec/max*100));
+    const medal=["🥇","🥈","🥉"][i]||"　";
+    html+='<div style="margin:10px 0;">'
+       +  '<div style="display:flex;justify-content:space-between;align-items:center;font-size:15px;margin-bottom:4px;">'
+       +    '<span>'+medal+' '+r.icon+' <b>'+r.name+'</b></span>'
+       +    '<span style="color:#666;font-size:14px;">累计 <b>'+fmtDur(r.totalSec)+'</b>'+(r.todaySec>0?'　·　今天 '+fmtDur(r.todaySec):'')+'</span>'
+       +  '</div>'
+       +  '<div style="height:14px;background:#eef0f3;border-radius:9px;overflow:hidden;">'
+       +    '<div style="height:100%;width:'+pct+'%;border-radius:9px;background:linear-gradient(90deg,#7cc6ff,#4a90e2);transition:width .4s;"></div>'
+       +  '</div></div>';
+  });
+  html+='<div style="text-align:center;font-size:14px;color:#e8730c;margin-top:10px;">⏱️ 花时间最多的板块：'+rows[0].icon+' <b>'+rows[0].name+'</b>（累计 '+fmtDur(rows[0].totalSec)+'）</div>';
+  el.innerHTML=html;
 }
 refreshReward();
 // 从别的App回到主页时刷新（星星实时同步累积）
