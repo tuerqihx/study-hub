@@ -75,6 +75,8 @@ const STORE_KEY="taotao_logic_v1";
 const TIME_LIMIT_MIN=12; // 每天这一科的时间额度（分钟），用完锁到明天
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function sample(a,n){return shuffle(a).slice(0,n);}
 
 const MODULES = {
   /* —— 找规律：自动随机出题，永远不重复 —— */
@@ -98,83 +100,109 @@ const MODULES = {
   /* —— 谁不一样：分类归纳 —— */
   classify:{ name:"谁不一样", icon:"🧩", cls:"l2",
     tip:"💡 它们大多是'同一类'，只有一个是'外人'。把那个外人找出来，并想清楚理由。",
-    bank:[
-      {q:"哪个不是一类？", type:"choice", options:["苹果","香蕉","萝卜"], answer:"萝卜", hint:"萝卜是蔬菜，其它是水果。"},
-      {q:"哪个不是一类？", type:"choice", options:["猫","狗","桌子"], answer:"桌子", hint:"桌子不是动物。"},
-      {q:"哪个不是一类？", type:"choice", options:["红色","黄色","圆形"], answer:"圆形", hint:"圆形是形状，不是颜色。"},
-      {q:"哪个不是一类？", type:"choice", options:["春天","夏天","下雨"], answer:"下雨", hint:"下雨是天气，不是季节。"},
-      {q:"哪个不是一类？", type:"choice", options:["铅笔","尺子","苹果"], answer:"苹果", hint:"苹果不是文具。"},
-      {q:"哪个不是动物？", type:"choice", options:["老虎","大象","石头"], answer:"石头", hint:"石头没有生命。"},
-      {q:"哪个不是交通工具？", type:"choice", options:["汽车","飞机","香蕉"], answer:"香蕉", hint:"香蕉是水果。"},
-      {q:"哪个不会飞？", type:"choice", options:["小鸟","飞机","汽车"], answer:"汽车", hint:"汽车在地上跑。"},
-      {q:"哪个不是数字？", type:"choice", options:["3","7","A"], answer:"A", hint:"A 是字母。"},
-      {q:"哪个不是身体部位？", type:"choice", options:["手","脚","帽子"], answer:"帽子", hint:"帽子是戴的东西。"},
-      {q:"哪个不是双数？", type:"choice", options:["2","6","9"], answer:"9", hint:"9 是单数。"},
-      {q:"哪个不能喝？", type:"choice", options:["水","牛奶","石头"], answer:"石头", hint:"石头不能喝。"},
-      {q:"哪个不是一类？", type:"choice", options:["狮子","老虎","汽车"], answer:"汽车", hint:"狮子老虎是动物，汽车不是。"},
-      {q:"哪个不是乐器？", type:"choice", options:["钢琴","小提琴","苹果"], answer:"苹果", hint:"钢琴小提琴是乐器。"},
-      {q:"哪个不是家具？", type:"choice", options:["椅子","桌子","小狗"], answer:"小狗", hint:"椅子桌子是家具，小狗是动物。"},
-      {q:"哪个不是蔬菜？", type:"choice", options:["白菜","土豆","香蕉"], answer:"香蕉", hint:"白菜土豆是蔬菜，香蕉是水果。"},
-      {q:"哪个不是天气？", type:"choice", options:["晴天","下雨","星期一"], answer:"星期一", hint:"晴天下雨是天气，星期一是日子。"},
-      {q:"哪个不是国家？", type:"choice", options:["中国","北京","美国"], answer:"北京", hint:"中国美国是国家，北京是一座城市。"},
-      {q:"哪个不是月份？", type:"choice", options:["一月","星期五","十二月"], answer:"星期五", hint:"一月十二月是月份，星期五是星期。"},
-      {q:"哪个不是文具？", type:"choice", options:["尺子","订书机","西瓜"], answer:"西瓜", hint:"尺子订书机是文具，西瓜是水果。"},
-    ]},
+    gen(){
+      const CATS={
+        水果:["苹果","香蕉","西瓜","葡萄","桃子","梨","草莓","橘子","菠萝"],
+        蔬菜:["萝卜","白菜","土豆","黄瓜","茄子","菠菜","西红柿","豆角"],
+        动物:["老虎","狮子","大象","猴子","兔子","小猫","小狗","小鸟","熊猫"],
+        文具:["铅笔","尺子","橡皮","订书机","卷笔刀","钢笔","文具盒"],
+        交通工具:["汽车","飞机","火车","轮船","自行车","公交车","地铁"],
+        家具:["桌子","椅子","沙发","床","书柜","衣柜"],
+        乐器:["钢琴","小提琴","吉他","鼓","笛子","二胡"],
+        身体部位:["手","脚","眼睛","鼻子","耳朵","嘴巴","手指"],
+        颜色:["红色","黄色","蓝色","绿色","紫色","黑色","白色"],
+        形状:["圆形","方形","三角形","长方形","五角星"],
+      };
+      const keys=Object.keys(CATS);
+      const mainK=pick(keys);
+      let outK=pick(keys); while(outK===mainK) outK=pick(keys);
+      const two=sample(CATS[mainK],2), out=pick(CATS[outK]);
+      const opts=shuffle([two[0],two[1],out]);
+      const q=pick([
+        "哪个不是一类？",
+        "哪个和另外两个不是一伙的？",
+        "三个里面，哪个是'外人'？",
+        "哪个不是"+mainK+"？",
+      ]);
+      return {q, type:"choice", options:opts, answer:out,
+        hint:out+"是"+outK+"，另外两个（"+two.join("、")+"）是"+mainK+"。"};
+    }},
 
   /* —— 推理小侦探：排除/条件推理 —— */
   detect:{ name:"推理小侦探", icon:"🕵️", cls:"l3",
     tip:"💡 把每句话当线索，一条一条排除，剩下的就是答案。",
-    bank:[
-      {q:"小明比小红高，小红比小华高。谁<b>最高</b>？", type:"choice", options:["小明","小红","小华"], answer:"小明", hint:"小明>小红>小华。"},
-      {q:"盒子里不是红球就是蓝球。老师说'不是蓝球'。是什么球？", type:"choice", options:["红球","蓝球"], answer:"红球", hint:"排除蓝球，只剩红球。"},
-      {q:"今天不是周一就是周二。妈妈说'不是周一'。今天周几？", type:"choice", options:["周二","周一"], answer:"周二", hint:"排除周一。"},
-      {q:"排队：小猫在小狗前面，小狗在小兔前面。谁<b>第一</b>？", type:"choice", options:["小猫","小狗","小兔"], answer:"小猫", hint:"猫→狗→兔。"},
-      {q:"桌上有 3 个苹果，吃掉 1 个，又放上 2 个。现在有几个？", type:"number", answer:4, hint:"3-1+2=4。"},
-      {q:"小红跑得比小明快，小明比小刚快。谁<b>最慢</b>？", type:"choice", options:["小刚","小明","小红"], answer:"小刚", hint:"红>明>刚，最慢是小刚。"},
-      {q:"盒里有红、黄、蓝三个球，拿走红和蓝，<b>剩下</b>什么？", type:"choice", options:["黄球","红球","蓝球"], answer:"黄球", hint:"拿走两个，剩黄。"},
-      {q:"今天是星期三，那么<b>明天</b>是？", type:"choice", options:["星期四","星期二","星期五"], answer:"星期四", hint:"三的后面是四。"},
-      {q:"A 比 B 大，B 比 C 大。<b>最小</b>的是？", type:"choice", options:["C","A","B"], answer:"C", hint:"A>B>C。"},
-      {q:"乐乐不是最高，也不是最矮。三个人里乐乐排第几高？", type:"number", answer:2, hint:"不高不矮，就是中间第 2。"},
-      {q:"如果'下雨就带伞'，小明带了伞，最可能因为？", type:"choice", options:["今天下雨","今天很热"], answer:"今天下雨", hint:"带伞通常因为下雨。"},
-      {q:"一共 5 块糖，分给我和你一样多，每人几块分不完剩几块？每人？", type:"number", answer:2, hint:"5 平均分给 2 人，每人 2 块(剩1)。"},
-      {q:"小刚比小强矮，小强比小亮矮。谁<b>最高</b>？", type:"choice", options:["小亮","小强","小刚"], answer:"小亮", hint:"刚<强<亮，最高是小亮。"},
-      {q:"杯子里不是茶就是水。爸爸说'不是水'。杯子里是什么？", type:"choice", options:["茶","水"], answer:"茶", hint:"排除水，只剩茶。"},
-      {q:"今天不是晴天就是阴天。天气预报说'不是晴天'。今天是什么天？", type:"choice", options:["阴天","晴天"], answer:"阴天", hint:"排除晴天。"},
-      {q:"排队买票：小英在小方前面，小方在小刚前面。谁排在<b>最前面</b>？", type:"choice", options:["小英","小方","小刚"], answer:"小英", hint:"英→方→刚，小英最前面。"},
-      {q:"桌上有 5 支笔，拿走 2 支，又放上 3 支。现在有几支？", type:"number", answer:6, hint:"5-2+3=6。"},
-      {q:"小杰跳得比小伟远，小伟比小强远。谁跳得<b>最远</b>？", type:"choice", options:["小杰","小伟","小强"], answer:"小杰", hint:"杰>伟>强，最远是小杰。"},
-      {q:"盒子里有蓝、绿、黄三支笔，拿走蓝和黄，<b>剩下</b>什么颜色？", type:"choice", options:["绿色","蓝色","黄色"], answer:"绿色", hint:"拿走两支，剩绿色。"},
-      {q:"今天是星期五，那么<b>后天</b>是星期几？", type:"choice", options:["星期日","星期六","星期一"], answer:"星期日", hint:"五后一天是六，再一天是日。"},
-    ]},
+    gen(){
+      const NAMES=["小明","小红","小华","小刚","小强","小亮","小杰","小伟","小英","小方","小丽","乐乐","桃桃","小美"];
+      const t=rnd(1,5);
+      if(t===1){ // 比较链：A比B…，B比C…，谁最…
+        const cmp=pick([{m:"高",l:"矮"},{m:"快",l:"慢",v:"跑得"},{m:"远",l:"近",v:"跳得"},{m:"重",l:"轻"},{m:"大",l:"小",v:"年纪"}]);
+        const p=sample(NAMES,3), v=cmp.v||"";
+        const askMost=Math.random()<0.5;
+        return {q:p[0]+"比"+p[1]+v+cmp.m+"，"+p[1]+"比"+p[2]+v+cmp.m+"。谁"+(askMost?"最"+cmp.m:"最"+cmp.l)+"？",
+          type:"choice", options:shuffle([p[0],p[1],p[2]]), answer:askMost?p[0]:p[2],
+          hint:p[0]+" > "+p[1]+" > "+p[2]+"（按"+cmp.m+"），"+(askMost?"最"+cmp.m+"的是排头":"最"+cmp.l+"的是排尾")+"。"};
+      }
+      if(t===2){ // 二选一排除
+        const pair=pick([["红球","蓝球"],["茶","水"],["晴天","阴天"],["苹果","橘子"],["语文书","数学书"],["猫","狗"]]);
+        const a=pair[0], b=pair[1], noIdx=rnd(0,1), no=pair[noIdx], yes=pair[1-noIdx];
+        const cont=pick(["盒子里","杯子里","袋子里","桌上"]), who=pick(["老师","妈妈","爸爸","同学"]);
+        return {q:cont+"不是"+a+"就是"+b+"。"+who+"说『不是"+no+"』。那是什么？",
+          type:"choice", options:[a,b], answer:yes, hint:"排除"+no+"，就只剩"+yes+"了。"};
+      }
+      if(t===3){ // 数量增减
+        const obj=pick(["苹果","铅笔","糖","小球","饼干","气球","橘子"]);
+        const n=rnd(4,9), take=rnd(1,3), add=rnd(1,4);
+        return {q:"桌上有 "+n+" 个"+obj+"，"+pick(["拿走","吃掉","送人"])+" "+take+" 个，又放上 "+add+" 个。现在有几个？",
+          type:"number", answer:n-take+add, hint:n+" − "+take+" + "+add+" = "+(n-take+add)+"。"};
+      }
+      if(t===4){ // 星期几
+        const wk=["一","二","三","四","五","六","日"];
+        const today=rnd(0,6), off=pick([1,2]), idx=(today+off)%7;
+        const wrong1=(idx+1)%7, wrong2=(idx+6)%7;
+        return {q:"今天是星期"+wk[today]+"，那么"+(off===1?"明天":"后天")+"是星期几？",
+          type:"choice", options:shuffle(["星期"+wk[idx],"星期"+wk[wrong1],"星期"+wk[wrong2]]), answer:"星期"+wk[idx],
+          hint:"从星期"+wk[today]+"往后数 "+off+" 天。"};
+      }
+      // t===5 中间位置
+      const name=pick(NAMES);
+      return {q:name+pick(["不是最高，也不是最矮","个子不高也不矮","没排第一，也没排最后"])+"。三个人里，"+name+"排第几？",
+        type:"number", answer:2, hint:"不前不后，就是中间——第 2。"};
+    }},
 
   /* —— 事实还是看法：理性思维①（媒介素养的根） —— */
   fact:{ name:"事实还是看法", icon:"⚖️", cls:"l1",
     tip:"💡 事实=能查证、能证明、大家都一样；看法=每个人的喜好或想法，可以不一样。两者要分清楚。",
-    bank:[
-      {q:"『今天下雨了』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"看窗外就能查证。"},
-      {q:"『蓝色是最好看的颜色』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的颜色不一样。"},
-      {q:"『这本书有 200 页』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"数一数就知道。"},
-      {q:"『这部动画片最好看』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"是个人喜好。"},
-      {q:"『水烧到 100 度会开』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"可以做实验验证。"},
-      {q:"『数学是最难的科目』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"有人觉得难，有人觉得简单。"},
-      {q:"『我们班有 40 个同学』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"点名就能数出来。"},
-      {q:"『猫比狗可爱』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"可爱是个人感觉。"},
-      {q:"『太阳从东边升起』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"每天都能看到。"},
-      {q:"『冬天比夏天好』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的季节不同。"},
-      {q:"『辣的东西最好吃』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"口味因人而异。"},
-      {q:"『一个星期有 7 天』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"这是定好的、能查证。"},
-      {q:"『长颈鹿的脖子很长』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"用尺子能量出来，谁都一样。"},
-      {q:"『暑假比寒假好玩』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的假期不一样。"},
-      {q:"『一年有十二个月』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"日历上写得清清楚楚。"},
-      {q:"『足球是最好玩的运动』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"每个人喜欢的运动不一样。"},
-      {q:"『地球是圆的』——这是？", type:"choice", options:["事实","看法"], answer:"事实", hint:"科学已经证明了。"},
-      {q:"『穿裙子比穿裤子好看』——这是？", type:"choice", options:["事实","看法"], answer:"看法", hint:"好不好看是个人感觉。"},
-    ]},
+    gen(){
+      const FACTS=[
+        ["今天下雨了","看窗外就能查证"],["这本书有 200 页","数一数就知道"],
+        ["水烧到 100 度会开","可以做实验验证"],["我们班有 40 个同学","点名就能数出来"],
+        ["太阳从东边升起","每天都能看到，谁都一样"],["一个星期有 7 天","是定好的、能查证"],
+        ["长颈鹿的脖子很长","用尺子能量，谁都一样"],["一年有十二个月","日历上写得清清楚楚"],
+        ["地球是圆的","科学已经证明了"],["冰放在太阳下会化成水","做实验就能看到"],
+        ["蜜蜂会采蜜","观察就能知道"],["3 加 2 等于 5","算一算，谁都一样"],
+      ];
+      const OPIN=[
+        ["蓝色是最好看的颜色","每个人喜欢的颜色不一样"],["这部动画片最好看","是个人喜好"],
+        ["数学是最难的科目","有人觉得难，有人觉得简单"],["猫比狗可爱","可爱是个人感觉"],
+        ["冬天比夏天好","每个人喜欢的季节不同"],["辣的东西最好吃","口味因人而异"],
+        ["暑假比寒假好玩","每个人的想法不一样"],["足球是最好玩的运动","每个人喜欢的运动不一样"],
+        ["穿裙子比穿裤子好看","好不好看是个人感觉"],["草莓味冰淇淋最棒","是自己的偏好"],
+        ["这首歌真好听","好不好听每个人不一样"],["养猫比养狗好","是个人的选择"],
+      ];
+      const isFact=Math.random()<0.5, item=pick(isFact?FACTS:OPIN);
+      const q=pick([
+        "『"+item[0]+"』——这是？",
+        "『"+item[0]+"』——是事实还是看法？",
+        "有人说：『"+item[0]+"』。这句话是？",
+      ]);
+      return {q, type:"choice", options:["事实","看法"], answer:isFact?"事实":"看法",
+        hint:(isFact?"能查证、":"是个人想法、")+item[1]+"，所以是"+(isFact?"事实":"看法")+"。"};
+    }},
 
   /* —— 广告的套路：理性思维②（识别劝说与操纵） —— */
   ad:{ name:"广告的套路", icon:"📢", cls:"l5",
     tip:"💡 广告是想让你买东西。学会问：它有证据吗？是不是在催我、夸大、吓唬我？拿不准就问爸爸妈妈。",
-    bank:[
+    gen(){ return pick([
       {q:"广告说『喝了它就能变聪明！』，聪明的做法是？", type:"choice", options:["先怀疑：真的吗？有证据吗","马上相信，赶紧买"], answer:"先怀疑：真的吗？有证据吗", hint:"夸大的承诺要先打个问号。"},
       {q:"包装写『99% 的人都说好』，能证明它一定好吗？", type:"choice", options:["不一定，要看是谁、怎么调查的","能，这么多人呢"], answer:"不一定，要看是谁、怎么调查的", hint:"没说清楚的数字不能全信。"},
       {q:"『最后 3 分钟，不买就没了！』这种话是想让你？", type:"choice", options:["着急，来不及想就买","冷静慢慢想清楚"], answer:"着急，来不及想就买", hint:"催你着急，就是不想让你思考。"},
@@ -190,12 +218,12 @@ const MODULES = {
       {q:"广告里模特用了产品后皮肤变得完美无瑕，照片有没有可能被修过？", type:"choice", options:["有可能，广告照片常常被美化","不可能，肯定是真的"], answer:"有可能，广告照片常常被美化", hint:"广告照片常常经过修饰。"},
       {q:"游戏广告说『免费下载』，进去后却一直弹窗要充钱，这说明？", type:"choice", options:["'免费'不代表以后都不花钱，要小心","免费的东西肯定都是好的"], answer:"'免费'不代表以后都不花钱，要小心", hint:"很多'免费'游戏靠内购赚钱。"},
       {q:"广告用很多小朋友说『我喜欢』，就证明这东西一定好吗？", type:"choice", options:["不一定，别人喜欢不代表适合你","一定，那么多人喜欢"], answer:"不一定，别人喜欢不代表适合你", hint:"别人喜欢的，不一定适合自己。"},
-    ]},
+    ]); }},
 
   /* —— 怎么知道是真的：理性思维③（证据 + 独立思考，防盲从） —— */
   evidence:{ name:"怎么知道是真的", icon:"🔍", cls:"l3",
     tip:"💡 判断真假，最该看『有没有证据和道理』，而不是谁声音大、谁人多。不轻信，也不乱否定——先问'你怎么知道的？'。",
-    bank:[
+    gen(){ return pick([
       {q:"同学说『操场底下埋着宝藏』，最好怎么做？", type:"choice", options:["问他：你怎么知道的？有证据吗","马上相信跑去挖","直接骂他骗人"], answer:"问他：你怎么知道的？有证据吗", hint:"不轻信也不乱否定，先问证据。"},
       {q:"网上看到一条很吓人的消息，应该？", type:"choice", options:["先查查真假、问大人","马上转发给所有人"], answer:"先查查真假、问大人", hint:"没核实的消息别乱传。"},
       {q:"一个人说话很大声、很自信，他说的就一定对吗？", type:"choice", options:["不一定，要看有没有道理和证据","一定对，他那么自信"], answer:"不一定，要看有没有道理和证据", hint:"自信≠正确。"},
@@ -213,27 +241,54 @@ const MODULES = {
       {q:"科学结论主要是靠什么得出来的？", type:"choice", options:["反复的实验和证据","投票的人数"], answer:"反复的实验和证据", hint:"科学看证据，不看人多人少。"},
       {q:"老师讲错了一个知识点，你发现了，应该怎么做？", type:"choice", options:["礼貌地提出来，一起核实","不敢说，只能憋着"], answer:"礼貌地提出来，一起核实", hint:"礼貌提问不等于不尊重。"},
       {q:"别人说的话和你亲眼看到的不一样，该怎么办？", type:"choice", options:["再仔细核实一下，不要急着下结论","肯定相信说话的人"], answer:"再仔细核实一下，不要急着下结论", hint:"不轻信也不乱下结论，先核实。"},
-    ]},
+    ]); }},
 
   /* —— 多线索推理：挑战关，要把好几条线索连起来想 —— */
   advdetect:{ name:"多线索推理", icon:"🧠", cls:"l4", sub:"挑战 · 多条线索一起想",
     tip:"💡 这里的每道题都要用上不止一条线索，最好把线索一条条写下来，再慢慢排除、慢慢算。",
-    bank:[
-      {q:"红、黄、蓝三个球分给甲乙丙。甲不要红色，乙喜欢蓝色，丙不要蓝色也不要黄色。<br>丙拿到了什么颜色？", type:"choice", options:["红色","黄色","蓝色"], answer:"红色", hint:"丙不要蓝也不要黄，剩下的只有红色。"},
-      {q:"四个小朋友排队打饭：小杨排在小林前面，小林排在小周前面，小周排在小马前面。<br>谁排在最后面？", type:"choice", options:["小马","小杨","小周"], answer:"小马", hint:"杨→林→周→马，一个接一个排好。"},
-      {q:"小明比小红大 2 岁，小红比小华大 3 岁，小华今年 6 岁。<br>小明今年几岁？", type:"number", answer:11, hint:"先算小红：6+3=9；再算小明：9+2=11。"},
-      {q:"动物园里猫、狗、兔子一共 8 只，兔子有 2 只，猫比狗多 2 只。<br>狗有几只？", type:"number", answer:2, hint:"猫+狗=8-2=6；较小的数=(总数-相差数)÷2=(6-2)÷2=2。"},
-      {q:"小美比小刚高，小刚比小丽高，小丽比小华高。<br>谁最矮？", type:"choice", options:["小华","小美","小刚"], answer:"小华", hint:"美>刚>丽>华，最后一个最矮。"},
-      {q:"妈妈买了苹果和梨共 15 个，苹果比梨多 3 个。<br>苹果有几个？", type:"number", answer:9, hint:"较大的数=(总数+相差数)÷2=(15+3)÷2=9。"},
-      {q:"三个箱子：箱子1比箱子2少3个球，箱子2比箱子3少2个球，箱子3装了10个球。<br>箱子1装了几个？", type:"number", answer:5, hint:"先算箱子2：10-2=8；再算箱子1：8-3=5。"},
-      {q:"一支钢笔比一块橡皮贵 5 元，钢笔和橡皮一共 9 元。<br>橡皮多少元？", type:"number", answer:2, hint:"较小的数=(总数-相差数)÷2=(9-5)÷2=2。"},
-      {q:"小红、小刚、小丽按个子从矮到高排队：小红比小刚矮，小刚比小丽矮。<br>谁最高？", type:"choice", options:["小丽","小刚","小红"], answer:"小丽", hint:"红<刚<丽，最高是小丽。"},
-      {q:"三只小动物比赛跑步：兔子比乌龟快，乌龟比蜗牛快。<br>谁跑得最慢？", type:"choice", options:["蜗牛","乌龟","兔子"], answer:"蜗牛", hint:"兔>龟>蜗牛，最慢是蜗牛。"},
-      {q:"妈妈买了文具，笔记本比铅笔贵 4 元，两样一共 10 元。<br>铅笔多少钱？", type:"number", answer:3, hint:"较小的数=(总数-相差数)÷2=(10-4)÷2=3。"},
-      {q:"桃桃比乐乐多做对 3 道题，两人一共做对 17 道题。<br>桃桃做对几道？", type:"number", answer:10, hint:"较大的数=(总数+相差数)÷2=(17+3)÷2=10。"},
-      {q:"四个箱子编号1到4：箱子1比箱子2轻 2 千克，箱子2比箱子3轻 3 千克，箱子3重 10 千克。<br>箱子1重几千克？", type:"number", answer:5, hint:"先算箱子2：10-3=7；再算箱子1：7-2=5。"},
-      {q:"小明的钱比小华多，小华的钱比小丽多。<br>谁的钱最少？", type:"choice", options:["小丽","小明","小华"], answer:"小丽", hint:"明>华>丽，最少是小丽。"},
-    ]},
+    gen(){
+      const NAMES=["小杨","小林","小周","小马","小美","小刚","小丽","小华","小明","小红","乐乐","桃桃","小英","小亮"];
+      const t=rnd(1,4);
+      if(t===1){ // 和差问题
+        const cx=pick([
+          {two:["苹果","梨"],unit:"个",verb:"多",lead:"妈妈买了"},
+          {two:["笔记本","铅笔"],unit:"元",verb:"贵",lead:"文具店里，"},
+          {two:["钢笔","橡皮"],unit:"元",verb:"贵",lead:""},
+          {two:["红花","黄花"],unit:"朵",verb:"多",lead:"花园里"},
+          {two:["桃桃做对的题","乐乐做对的题"],unit:"道",verb:"多",lead:"",short:true},
+        ]);
+        const small=rnd(2,8), diff=rnd(1,6), big=small+diff, sum=small+big;
+        const askBig=Math.random()<0.5;
+        const A=cx.two[0], B=cx.two[1];
+        const q=cx.short
+          ? A.replace("做对的题","")+"比"+B.replace("做对的题","")+"多做对 "+diff+" "+cx.unit+"，两人一共做对 "+sum+" "+cx.unit+"。<br>"+A.replace("做对的题","")+"做对几"+cx.unit+"？"
+          : cx.lead+A+"和"+B+"一共 "+sum+" "+cx.unit+"，"+A+"比"+B+cx.verb+" "+diff+" "+cx.unit+"。<br>"+(askBig?A:B)+"有多少"+cx.unit+"？";
+        const ans=cx.short?big:(askBig?big:small);
+        return {q, type:"number", answer:ans,
+          hint:askBig||cx.short?("较大的数 =（总数＋相差数）÷2 =（"+sum+"＋"+diff+"）÷2 = "+big+"。")
+                               :("较小的数 =（总数－相差数）÷2 =（"+sum+"－"+diff+"）÷2 = "+small+"。")};
+      }
+      if(t===2){ // 比较链4人：谁最高/最矮
+        const cmp=pick([{m:"高",l:"矮"},{m:"重",l:"轻"},{m:"大",l:"小"}]);
+        const p=sample(NAMES,4), askMost=Math.random()<0.5;
+        return {q:p[0]+"比"+p[1]+cmp.m+"，"+p[1]+"比"+p[2]+cmp.m+"，"+p[2]+"比"+p[3]+cmp.m+"。<br>谁最"+(askMost?cmp.m:cmp.l)+"？",
+          type:"choice", options:shuffle([p[0],p[1],p[2],p[3]]), answer:askMost?p[0]:p[3],
+          hint:p[0]+" > "+p[1]+" > "+p[2]+" > "+p[3]+"（按"+cmp.m+"），"+(askMost?"排头最"+cmp.m:"排尾最"+cmp.l)+"。"};
+      }
+      if(t===3){ // 连减/连加：三个箱子
+        const v3=rnd(8,15), d2=rnd(1,4), d1=rnd(1,4);
+        const v2=v3-d2, v1=v2-d1;
+        return {q:"三个箱子：1 号比 2 号少 "+d1+" 个，2 号比 3 号少 "+d2+" 个，3 号装了 "+v3+" 个球。<br>1 号装了几个？",
+          type:"number", answer:v1,
+          hint:"先算 2 号："+v3+"－"+d2+"＝"+v2+"；再算 1 号："+v2+"－"+d1+"＝"+v1+"。"};
+      }
+      // t===4 年龄链
+      const base=rnd(5,9), d1=rnd(1,4), d2=rnd(1,4);
+      const p=sample(NAMES,3);
+      return {q:p[0]+"比"+p[1]+"大 "+d1+" 岁，"+p[1]+"比"+p[2]+"大 "+d2+" 岁，"+p[2]+"今年 "+base+" 岁。<br>"+p[0]+"今年几岁？",
+        type:"number", answer:base+d2+d1,
+        hint:"先算"+p[1]+"："+base+"＋"+d2+"＝"+(base+d2)+"；再算"+p[0]+"："+(base+d2)+"＋"+d1+"＝"+(base+d2+d1)+"。"};
+    }},
 };
 
 /* 菜单/出题/判分/动画由共用引擎处理 */
