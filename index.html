@@ -286,8 +286,9 @@ function askName(first){
   const v = prompt(tip, first ? "" : kidName());
   if(v===null) return;
   const n = v.trim().slice(0,8);
-  if(!n){ if(first) setTimeout(()=>askName(true), 300); return; }
+  if(!n) return;
   PROFILE.name = n; saveProfile(); applyName();
+  const hint=document.getElementById("nameHint"); if(hint) hint.remove();
   if(first) alert("欢迎你，" + n + "！🎉\n做题赢星星，攒星星换大奖，出发吧！");
 }
 window.askName = askName;
@@ -297,7 +298,18 @@ window.askName = askName;
   document.getElementById("datebar").textContent =
     d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日 "+WEEK[d.getDay()];
   applyName();
-  if(!(PROFILE.name||"").trim()) setTimeout(()=>askName(true), 600);
+  /* 不再自动弹 prompt 问名字：系统弹窗会把整个页面冻住（电报内置浏览器里
+     弹窗显示不出来但照样冻结，表现为"页面能看、点啥都没反应"）。
+     改成一个不挡操作的小提示条，点它才去改名字。 */
+  if(!(PROFILE.name||"").trim()){
+    const b=document.createElement("div");
+    b.id="nameHint";
+    b.style.cssText="margin:10px auto 0;max-width:430px;background:#fff7e0;border:2px dashed #f0b840;border-radius:14px;padding:10px 16px;font-size:16px;text-align:center;cursor:pointer;color:#8a5a00;";
+    b.textContent="👋 第一次来？点这里告诉学习台你的名字";
+    b.onclick=()=>askName(true);
+    const top=document.querySelector(".top");
+    top.parentNode.insertBefore(b, top.nextSibling);
+  }
 })();
 
 /* ============ 奖励汇总：扫描所有 taotao_*_v1 学习数据 ============
