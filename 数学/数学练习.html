@@ -41,6 +41,23 @@
   .done .big { font-size:64px; } .done .msg { font-size:24px; font-weight:bold; margin:10px 0; } .done .got { font-size:20px; color:#ff8c42; margin-bottom:18px; }
   .done button { background:#ff8c42; color:#fff; border:none; border-radius:16px; font-size:19px; font-weight:bold; padding:13px 26px; cursor:pointer; font-family:inherit; margin:6px; }
   .done .ghost { background:#fff; color:#ff7a33; border:2px solid #ffcf9e; }
+
+  /* ---- iPad / 手机适配：屏幕≤900px 时整体紧凑、图标缩小 ---- */
+  @media (max-width: 900px){
+    body{ padding:12px 8px 40px; }
+    h1{ font-size:22px; margin:2px 0 10px; }
+    .menu{ grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:9px; }
+    .lv{ padding:12px 6px; border-radius:15px; }
+    .lv .i{ font-size:26px; }
+    .lv .n{ font-size:14px; }
+    .lv .d{ font-size:11px; }
+    .q{ font-size:19px; min-height:44px; }
+    .opt{ font-size:16px; padding:11px; border-radius:12px; }
+    .key{ font-size:19px; padding:11px; }
+    .done .big{ font-size:44px; }
+    .done .got{ font-size:15px; }
+    #continueBtn{ font-size:16px !important; padding:11px 20px !important; }
+  }
 </style>
 </head>
 <body>

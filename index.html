@@ -115,6 +115,40 @@
     font-size:15px; padding:6px 14px; border-radius:12px; cursor:pointer; font-family:inherit;}
 
   .footer { text-align:center; margin-top:26px; color:#bbb; font-size:14px; }
+
+  /* ---- iPad / 手机适配：屏幕≤900px 时整体紧凑、图标缩小 ---- */
+  @media (max-width: 900px){
+    body{ padding:14px 10px 40px; }
+    .top h1{ font-size:26px; }
+    .hello{ font-size:16px; }
+    .datebar{ font-size:13px; }
+    .reward{ padding:12px; border-radius:18px; }
+    .stat .num{ font-size:24px; }
+    .stat .lbl{ font-size:12px; }
+    .ladder .title{ font-size:13px; }
+    .ladder-row .ce{ font-size:24px; }
+    .ladder-row .cn{ font-size:15px; }
+    .ladder-row .cl{ font-size:11px; }
+    .ladder-hint{ font-size:13px; }
+    .redeem-btn{ font-size:15px; padding:8px 16px; }
+    .parent-link{ font-size:11px; }
+    .today{ padding:12px; border-radius:18px; }
+    .today .t-title{ font-size:15px; }
+    .t-item .ti{ font-size:20px; }
+    .t-item .tn{ font-size:14px; }
+    .t-item .tg{ font-size:13px; padding:6px 12px; }
+    .t-prog{ font-size:13px; }
+    .grid-title{ font-size:13px; }
+    .grid{ grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:10px; }
+    .card{ padding:14px 8px; border-radius:18px; }
+    .card .ico{ font-size:32px; }
+    .card .name{ font-size:16px; }
+    .card .sub{ font-size:11px; }
+    .pcskill h3{ font-size:15px; }
+    .pcskill .tip{ font-size:14px !important; }
+    .reviewbook{ padding:12px 14px; }
+    .rv-title{ font-size:14px; }
+  }
 </style>
 </head>
 <body>
@@ -357,6 +391,7 @@ const SUBJECT_META = {
   taotao_science_v1: {name:"科学", icon:"🔬"},
   taotao_logic_v1:   {name:"逻辑", icon:"🧩"},
   taotao_english_v1: {name:"英语", icon:"🔤"},
+  taotao_pron_v1:    {name:"英语发音", icon:"🗣️"},
 };
 function collectTimeBySubject(){
   const out=[], today=dkey(new Date());
@@ -467,9 +502,9 @@ window.addEventListener("pageshow", function(){
 /* ============ 今日任务（按星期轮换 + ⭐目标按周递增） ============ */
 const APPS = {
   english:{n:"英语发音", i:"🗣️", h:"英语/发音练习/英语发音练习.html", sub:"跟读 10–15 分钟"},
-  math:   {n:"数学练习", i:"📐", h:"数学/数学练习.html", sub:"做今天解锁的那一关"},
-  chinese:{n:"语文阅读", i:"📖", h:"语文/语文阅读.html", sub:"读今天那一篇"},
-  science:{n:"科学闯关", i:"🔬", h:"科学/科学闯关.html", sub:"闯今天那一关"},
+  math:   {n:"数学练习", i:"📐", h:"数学/数学练习.html", sub:"闯新关；都通了就做「今天的复习关」"},
+  chinese:{n:"语文阅读", i:"📖", h:"语文/语文阅读.html", sub:"读新篇；都读完就复习「今天的复习篇」"},
+  science:{n:"科学闯关", i:"🔬", h:"科学/科学闯关.html", sub:"闯新关；都通了就做「今天的复习关」"},
   logic:  {n:"逻辑游戏", i:"🧩", h:"逻辑/逻辑闯关.html", sub:"动动脑、想一想"},
 };
 // 周一到周五各主攻一科，周六数学+科学，周日轻松
@@ -652,6 +687,7 @@ function mergeStore(L,R){
   if(R.days){ o.days=o.days||{}; for(const d in R.days) o.days[d]=mergeDayRec(o.days[d], R.days[d]); }
   if(R.mastery){ o.mastery=o.mastery||{}; for(const w in R.mastery) o.mastery[w]=mergeNum(o.mastery[w], R.mastery[w]); }
   if(R.done){ o.done=Object.assign({}, R.done, o.done||{}); }
+  if(R.last){ o.last=o.last||{}; for(const k in R.last){ if(String(R.last[k]||"")>String(o.last[k]||"")) o.last[k]=R.last[k]; } }
   if(R.review){ const seen=new Set((o.review||[]).map(x=>x.d+"|"+x.q));
     o.review=(o.review||[]).concat(R.review.filter(x=>!seen.has(x.d+"|"+x.q))).slice(-80); }
   if(R.custom && !(o.custom||"").trim()) o.custom=R.custom;   // 英语"这周的词"：本机空才接收
