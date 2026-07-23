@@ -133,7 +133,7 @@
 <body>
 <div class="wrap">
   <h1 id="appTitle">🎤 我的英语发音闯关</h1>
-  <div class="sub">先点「🔊 听一听」→ 再点「🎙️ 我来读」跟着读，看能得几颗星！</div>
+  <div class="sub">先听标准音，再开口跟读。星星是机器的“清晰度参考”，没听清不代表你读错啦！</div>
 
   <div class="toolbar">
     <button class="tool" onclick="openProgress()">📊 我的进步</button>
@@ -543,13 +543,17 @@ function listen(){
   tickTime();
   if(!SR){ showWarn("这个浏览器不支持语音识别，请用 <b>Chrome 谷歌浏览器</b> 打开本页面。"); return; }
   const rec = new SR();
-  rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=3;
+  rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=1;
   const btn=$("speakBtn"); btn.classList.add("listening"); btn.textContent="🎙️ 在听…";
   $("feedback").textContent="说出来吧！";
   rec.onresult = e=>{
-    let heard="";
-    for(let i=0;i<e.results[0].length;i++){ heard += e.results[0][i].transcript+" "; }
-    score(heard.trim());
+    const best=e.results[0] && e.results[0][0];
+    if(!best || !best.transcript){
+      $("feedback").textContent="机器这次没听清，再靠近一点试试 🙂";
+      return;
+    }
+    // 只用第一候选；旧版把多个候选拼在一起，会让评分忽高忽低。
+    score(best.transcript.trim());
   };
   rec.onerror = e=>{
     btn.classList.remove("listening"); btn.textContent="🎙️ 我来读";
