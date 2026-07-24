@@ -74,18 +74,23 @@
   function setBar(done,total){ ensureBar(); const b=document.getElementById("bar"); if(b) b.style.width=Math.round(done/total*100)+"%"; }
 
   /* ---- 出题 ---- */
-  function buildRound(mod){
-    if(mod.gen){ const out=[]; const seen=new Set(); let guard=0;
+  function extrasFor(key){ try{
+    return (typeof QUESTION_EXTRAS!=="undefined" && QUESTION_EXTRAS[key]) ? QUESTION_EXTRAS[key].slice() : [];
+  }catch(e){ return []; } }
+  function buildRound(mod,key){
+    const extras=extrasFor(key);
+    if(mod.gen){ const extraN=Math.min(2, extras.length, PR), out=shuffle(extras).slice(0,extraN);
+      const seen=new Set(out.map(it=>it.q)); let guard=0;
       while(out.length<PR && guard<80){ const it=mod.gen(); if(!seen.has(it.q)){ seen.add(it.q); out.push(it); } guard++; } return out; }
     // 固定题库：没掌握的优先出，已掌握的淡到后面（不够才补出来复习）
-    const pool = (mod.bank || mod.questions || []).slice();
+    const pool = (mod.bank || mod.questions || []).slice().concat(extras);
     const weak=[], strong=[];
     pool.forEach(it=>{ ((STORE.mastery[qkey(it)]||0) >= MASTER ? strong : weak).push(it); });
     const ordered = shuffle(weak).concat(shuffle(strong));
     return ordered.slice(0, Math.min(PR, ordered.length));
   }
 
-  let curMod=null,curKey=null,qList=[],qi=0,answered=false,typed="",firstWrong=false,combo=0,roundStars=0,roundGuessed=0,bestCombo=0;
+  let curMod=null,curKey=null,qList=[],qi=0,answered=false,typed="",selected=[],firstWrong=false,combo=0,roundStars=0,roundGuessed=0,bestCombo=0;
 
   const NUM=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
 
@@ -116,7 +121,7 @@
      第1关 = 最需要的（没掌握的题最多，其次最久没复习）；第2关 = 按日期轮换，保证每关都轮到。
      同一天怎么刷新都不变，第二天自动换。还有新关没通时只安排 1 关复习，新关优先。 */
   function playedToday(key){ const r=STORE.days[dkey(new Date())]; return !!(r&&r.mods&&r.mods[key]); }
-  function weakCount(key){ const mod=MODULES[key], pool=mod.bank||mod.questions||[]; let n=0;
+  function weakCount(key){ const mod=MODULES[key], pool=(mod.bank||mod.questions||[]).concat(extrasFor(key)); let n=0;
     pool.forEach(it=>{ if((STORE.mastery[qkey(it)]||0)<MASTER) n++; }); return n; }
   function todayPicks(keys){
     const done=keys.filter(k=>STORE.done[k]);
@@ -197,12 +202,12 @@
 
   function startMod(key){
     if(LIMIT_MIN && remainSec()<=0){ alert("今天这一科的时间用完啦，明天再来挑战！"); return; }
-    curKey=key; curMod=MODULES[key]; qList=buildRound(curMod); qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0;
+    curKey=key; curMod=MODULES[key]; qList=buildRound(curMod,key); qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0;
     sessionStart=Date.now();
     document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
     document.getElementById("card").style.display="block"; document.getElementById("tip").textContent=curMod.tip||""; showQ(); }
 
-  function showQ(){ answered=false; typed=""; firstWrong=false;
+  function showQ(){ answered=false; typed=""; selected=[]; firstWrong=false;
     const total=qList.length, item=qList[qi];
     document.getElementById("prog").textContent=(curMod.icon||"")+" "+curMod.name+"　第 "+(qi+1)+" / "+total+" 题"+(combo>=2?"　🔥连对"+combo:"");
     setBar(qi,total);
@@ -214,6 +219,23 @@
       shuffle(item.options).forEach(o=>{ html+='<button class="opt" data-v="'+String(o).replace(/"/g,'&quot;')+'">'+o+'</button>'; });
       html+='</div>'; area.innerHTML=html;
       area.querySelectorAll(".opt").forEach(btn=>{ btn.onclick=()=>pickOpt(btn, btn.getAttribute("data-v")); });
+    } else if(item.type==="multi"){
+      area.innerHTML='<div style="text-align:center;color:#777;font-size:14px;margin-bottom:8px;">☑️ 可能不止一个答案，全部选好再确定</div><div class="opts" id="multiOpts"></div>'+
+        '<button id="multiGo" style="display:block;margin:12px auto 0;border:none;border-radius:14px;padding:11px 26px;background:#1fae8c;color:#fff;font-size:17px;font-weight:bold;font-family:inherit;">确定选择</button>';
+      shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+        b.onclick=()=>toggleMulti(b,o); document.getElementById("multiOpts").appendChild(b); });
+      document.getElementById("multiGo").onclick=checkMulti;
+    } else if(item.type==="order"){
+      area.innerHTML='<div style="text-align:center;color:#777;font-size:14px;margin-bottom:8px;">🔢 按正确顺序依次点选</div>'+
+        '<div id="orderTray" style="min-height:44px;border:2px dashed #9fc7ff;border-radius:13px;padding:8px;margin-bottom:10px;text-align:left;color:#2c6cb0;"></div>'+
+        '<div class="opts" id="orderOpts"></div>'+
+        '<div style="text-align:center;margin-top:12px;"><button id="orderReset" style="border:2px solid #bbb;background:#fff;border-radius:12px;padding:9px 16px;font-size:15px;font-family:inherit;">重排</button> '+
+        '<button id="orderGo" style="border:none;background:#1fae8c;color:#fff;border-radius:12px;padding:11px 22px;font-size:16px;font-weight:bold;font-family:inherit;">确定顺序</button></div>';
+      shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+        b.onclick=()=>pickOrder(b,o); document.getElementById("orderOpts").appendChild(b); });
+      document.getElementById("orderReset").onclick=resetOrder;
+      document.getElementById("orderGo").onclick=checkOrder;
+      renderOrder();
     } else {
       area.innerHTML='<div class="answbox"><span class="answ" id="answ">_</span></div>'+
         '<div class="pad">'+[1,2,3,4,5,6,7,8,9].map(n=>'<button class="key" data-k="'+n+'">'+n+'</button>').join('')+
@@ -226,6 +248,20 @@
   }
   function press(k){ if(answered)return; if(k==="del")typed=typed.slice(0,-1); else if(typed.length<4)typed+=k;
     const a=document.getElementById("answ"); if(a) a.textContent=typed===""?"_":typed; }
+  function toggleMulti(el,val){ if(answered)return; const i=selected.indexOf(val);
+    if(i>=0){ selected.splice(i,1); el.style.boxShadow=""; el.style.background=""; }
+    else { selected.push(val); el.style.boxShadow="0 0 0 3px #56d6a0"; el.style.background="#e9fff6"; } }
+  function sameSet(a,b){ return a.length===b.length && a.every(x=>b.indexOf(x)>=0); }
+  function checkMulti(){ if(answered||!selected.length)return; const item=qList[qi], ans=Array.isArray(item.answer)?item.answer:[item.answer];
+    if(sameSet(selected,ans)) good(); else { bad(item); selected=[];
+      document.querySelectorAll("#multiOpts .opt").forEach(b=>{ b.style.boxShadow=""; b.style.background=""; }); } }
+  function renderOrder(){ const t=document.getElementById("orderTray"); if(t) t.innerHTML=selected.length
+    ? selected.map((x,i)=>'<span style="display:inline-block;background:#eaf3ff;border-radius:9px;padding:6px 9px;margin:2px;">'+(i+1)+'. '+x+'</span>').join(" ")
+    : "点下面的卡片，把步骤排到这里"; }
+  function pickOrder(el,val){ if(answered||selected.indexOf(val)>=0)return; selected.push(val); el.disabled=true; el.style.opacity=".4"; renderOrder(); }
+  function resetOrder(){ if(answered)return; selected=[]; document.querySelectorAll("#orderOpts .opt").forEach(b=>{ b.disabled=false; b.style.opacity=""; }); renderOrder(); }
+  function checkOrder(){ if(answered)return; const item=qList[qi], ans=Array.isArray(item.answer)?item.answer:[item.answer];
+    if(selected.length!==ans.length)return; if(selected.every((x,i)=>x===ans[i])) good(); else { bad(item); resetOrder(); } }
 
   const PRAISE=["太棒了！","对啦！","完全正确！","厉害！","就是这样！","你真行！"];
   function pickOpt(el,val){ if(answered)return; const item=qList[qi];

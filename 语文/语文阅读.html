@@ -133,6 +133,15 @@ function pickDaily(p){
   const out=[], rest=[];
   all.forEach(it=>{ (missed.has(strip(it.q)) && out.length<PER_READ ? out : rest).push(it); });
   const t=new Date(), dayNum=t.getFullYear()*372+t.getMonth()*31+t.getDate();
+  /* 每次阅读至少安排一道新交互题，避免三道题全是单选 */
+  if(out.length<PER_READ && !out.some(it=>it.type==="multi"||it.type==="order")){
+    const typed=rest.filter(it=>it.type==="multi"||it.type==="order");
+    if(typed.length){
+      const chosen=typed[dayNum%typed.length];
+      out.push(chosen);
+      rest.splice(rest.indexOf(chosen),1);
+    }
+  }
   const need=Math.min(PER_READ, all.length)-out.length;
   const off=rest.length?dayNum%rest.length:0;
   for(let k=0;k<need && rest.length;k++) out.push(rest[(off+k)%rest.length]);
@@ -708,7 +717,69 @@ const PASSAGES = [
     ]},
 ];
 
-let cur=null, qi=0, answered=false, firstWrong=false, combo=0, roundStars=0, roundGuessed=0, bestCombo=0;
+/* 阅读新题型：多选找证据 + 排序理清文章结构 */
+const CHINESE_EXTRAS = {
+  "荷花池":[
+    {tag:"多选·找证据",q:"哪些句子能看出荷花池既美又有生机？（可多选）",type:"multi",
+      options:["白的、粉的荷花一朵挨着一朵","绿绿的荷叶像一把把小伞","小鱼在荷叶下游来游去","池塘里什么也没有"],
+      answer:["白的、粉的荷花一朵挨着一朵","绿绿的荷叶像一把把小伞","小鱼在荷叶下游来游去"],
+      hint:"找文章中写颜色、动作和景物的句子。"},
+    {tag:"排序·观察顺序",q:"按短文描写的先后顺序排列。",type:"order",
+      options:["荷花开满池塘","荷叶像小伞","小鱼游来游去","风吹荷花轻轻点头"],
+      answer:["荷花开满池塘","荷叶像小伞","小鱼游来游去","风吹荷花轻轻点头"],
+      hint:"回到短文，从前往后找。"}
+  ],
+  "小蚂蚁搬粮食":[
+    {tag:"多选·品质",q:"哪些表现能说明小蚂蚁团结又坚持？（可多选）",type:"multi",
+      options:["搬不动也没有放弃","跑回家叫来许多伙伴","大家一起把米粒抬回洞里","把大米丢在原地"],
+      answer:["搬不动也没有放弃","跑回家叫来许多伙伴","大家一起把米粒抬回洞里"],
+      hint:"找它们遇到困难后的做法和结果。"},
+    {tag:"排序·事件",q:"按故事发生顺序排列。",type:"order",
+      options:["发现一粒大米","一只蚂蚁搬不动","叫来伙伴一起搬","把米粒抬回洞里"],
+      answer:["发现一粒大米","一只蚂蚁搬不动","叫来伙伴一起搬","把米粒抬回洞里"],
+      hint:"先发现问题，再想办法，最后成功。"}
+  ],
+  "奇妙的云":[
+    {tag:"多选·概括",q:"短文中的云像哪些东西？（可多选）",type:"multi",
+      options:["绵羊","大龙","棉花糖","小汽车"],answer:["绵羊","大龙","棉花糖"],
+      hint:"把文中三个比喻都找出来。"},
+    {tag:"排序·描写顺序",q:"按短文描写云的先后顺序排列。",type:"order",
+      options:["像一群绵羊","像一条大龙","变成棉花糖","傍晚被染成红色、金色"],
+      answer:["像一群绵羊","像一条大龙","变成棉花糖","傍晚被染成红色、金色"],
+      hint:"顺着“有时候、一会儿、傍晚”往后找。"}
+  ],
+  "下雨天":[
+    {tag:"多选·人物表现",q:"哪些内容表现了同学之间的帮助和温暖？（可多选）",type:"multi",
+      options:["小红跑来帮助小明","小红把伞分给小明一半","两个人一起回家","小红笑话没带伞的小明"],
+      answer:["小红跑来帮助小明","小红把伞分给小明一半","两个人一起回家"],
+      hint:"找小红怎样帮助忘带伞的小明。"},
+    {tag:"排序·事件",q:"按事情发生顺序排列。",type:"order",
+      options:["乌云增多，天暗下来","小明为没带伞发愁","小红把伞分给小明","两个人一起回家"],
+      answer:["乌云增多，天暗下来","小明为没带伞发愁","小红把伞分给小明","两个人一起回家"],
+      hint:"从天气变化开始，顺着文章往后找。"}
+  ],
+  "蚕宝宝":[
+    {tag:"多选·找信息",q:"短文写到蚕宝宝有哪些特点或行为？（可多选）",type:"multi",
+      options:["白白胖胖","爱吃桑叶","会吐丝结茧","爱吃青草"],
+      answer:["白白胖胖","爱吃桑叶","会吐丝结茧"],
+      hint:"答案都能在短文中直接找到。"},
+    {tag:"排序·成长过程",q:"按蚕的一生排列。",type:"order",
+      options:["卵","幼虫","茧","蛾"],answer:["卵","幼虫","茧","蛾"],
+      hint:"短文最后一句给出了完整顺序。"}
+  ],
+  "我第一次煮面":[
+    {tag:"多选·人物感受",q:"哪些内容能看出这是“我”独立完成、而且很有成就感？（可多选）",type:"multi",
+      options:["妈妈不在家","我决定自己煮面","这是我自己做的第一顿饭","我心里特别自豪","面条是妈妈提前煮好的"],
+      answer:["妈妈不在家","我决定自己煮面","这是我自己做的第一顿饭","我心里特别自豪"],
+      hint:"找“谁来做”和“做完后的感受”。"},
+    {tag:"排序·做事过程",q:"按煮面的过程排列。",type:"order",
+      options:["烧开水","放入面条并搅动","等面变软","加入盐和青菜"],
+      answer:["烧开水","放入面条并搅动","等面变软","加入盐和青菜"],
+      hint:"文中用“先、再、等”写清了顺序。"}
+  ]
+};
+
+let cur=null, qi=0, answered=false, firstWrong=false, combo=0, roundStars=0, roundGuessed=0, bestCombo=0, selected=[];
 const NUM=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
 function ensureContinueBar(){ let bar=document.getElementById("continueBar");
   if(!bar){ bar=document.createElement("div"); bar.id="continueBar"; bar.style.cssText="text-align:center;margin:0 0 16px;";
@@ -812,7 +883,7 @@ function start(idx){
   if(remainSec()<=0){ alert("今天语文的时间用完啦，明天再来挑战！"); return; }
   cur=PASSAGES[idx]; qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0; sessionStart=Date.now();
   if(cur.gen){ cur.questions=buildGenRound(cur); }   // 字词句生成题：每次进来现出一批新题
-  else { if(!cur.__all) cur.__all=cur.questions; cur.questions=pickDaily(cur); }   // 阅读题：每次 3 道，按日轮换、错题必出
+  else { if(!cur.__all) cur.__all=(cur.questions||[]).concat(CHINESE_EXTRAS[cur.title]||[]); cur.questions=pickDaily(cur); }   // 阅读题：每次 3 道，按日轮换、错题必出
   document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
   document.getElementById("card").style.display="block";
   document.getElementById("ptitle").textContent=cur.title;
@@ -820,7 +891,7 @@ function start(idx){
   const pic=document.getElementById("ppic");
   if(cur.img){ pic.src=cur.img; pic.style.display="block"; } else { pic.style.display="none"; pic.removeAttribute("src"); }
   showQ(); }
-function showQ(){ answered=false; firstWrong=false;
+function showQ(){ answered=false; firstWrong=false; selected=[];
   const total=cur.questions.length; const item=cur.questions[qi];
   document.getElementById("prog").textContent="📖 "+cur.title+"　第 "+(qi+1)+" / "+total+" 题"+(combo>=2?"　🔥连对"+combo:"");
   setBar(qi,total);
@@ -829,8 +900,34 @@ function showQ(){ answered=false; firstWrong=false;
   document.getElementById("fb").textContent=""; document.getElementById("fb").className="feedback";
   document.getElementById("nextBtn").style.display="none";
   const area=document.getElementById("answerArea"); area.innerHTML="";
+  if(item.type==="multi"){
+    const note=document.createElement("div"); note.style.cssText="text-align:center;color:#7c5cff;font-weight:bold;margin:0 0 10px;"; note.textContent="可选择多个答案，选好后点确认";
+    area.appendChild(note);
+    const wrap=document.createElement("div"); wrap.id="multiOpts"; area.appendChild(wrap);
+    shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+      b.onclick=()=>{ if(answered)return; const i=selected.indexOf(o); if(i>=0){selected.splice(i,1);b.style.outline="";b.style.background="";}else{selected.push(o);b.style.outline="4px solid #9b8cff";b.style.background="#f1edff";} }; wrap.appendChild(b); });
+    const ok=document.createElement("button"); ok.className="ghost"; ok.style.cssText="display:block;margin:14px auto 0;"; ok.textContent="确认答案"; ok.onclick=checkMulti; area.appendChild(ok); return;
+  }
+  if(item.type==="order"){
+    const note=document.createElement("div"); note.style.cssText="text-align:center;color:#7c5cff;font-weight:bold;margin:0 0 10px;"; note.textContent="按正确顺序依次点击";
+    area.appendChild(note);
+    const tray=document.createElement("div"); tray.id="orderTray"; tray.style.cssText="min-height:44px;padding:8px;border:2px dashed #c9b8ff;border-radius:12px;margin-bottom:10px;text-align:center;color:#888;"; area.appendChild(tray);
+    const wrap=document.createElement("div"); wrap.id="orderOpts"; area.appendChild(wrap);
+    shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o; b.dataset.value=o; b.onclick=()=>pickOrder(b,o); wrap.appendChild(b); });
+    const reset=document.createElement("button"); reset.className="ghost"; reset.style.margin="12px 6px 0"; reset.textContent="重排"; reset.onclick=resetOrder; area.appendChild(reset);
+    const ok=document.createElement("button"); ok.className="ghost"; ok.style.margin="12px 6px 0"; ok.textContent="确认顺序"; ok.onclick=checkOrder; area.appendChild(ok); renderOrder(); return;
+  }
   shuffle(item.options).forEach(o=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=o; b.onclick=()=>pick(b,o); area.appendChild(b); });
 }
+function sameSet(a,b){ return a.length===b.length && a.every(v=>b.indexOf(v)>=0); }
+function checkMulti(){ if(answered)return; const item=cur.questions[qi]; if(!selected.length){document.getElementById("fb").textContent="先选择答案哦";return;}
+  if(sameSet(selected,item.answer)){ document.querySelectorAll("#multiOpts .opt").forEach(b=>{if(item.answer.indexOf(b.textContent)>=0)b.classList.add("right");}); good(); }
+  else { document.querySelectorAll("#multiOpts .opt").forEach(b=>{b.classList.remove("wrong");if(selected.indexOf(b.textContent)>=0)b.classList.add("wrong");b.style.outline="";b.style.background="";}); bad(item); selected=[]; } }
+function renderOrder(){ const tray=document.getElementById("orderTray"); if(tray) tray.textContent=selected.length?selected.map((v,i)=>(i+1)+"."+v).join("　"):"答案顺序会显示在这里"; }
+function pickOrder(btn,val){ if(answered||btn.disabled)return; selected.push(val); btn.disabled=true; btn.style.opacity=".38"; renderOrder(); }
+function resetOrder(){ if(answered)return; selected=[]; document.querySelectorAll("#orderOpts .opt").forEach(b=>{b.disabled=false;b.style.opacity="";}); renderOrder(); }
+function checkOrder(){ if(answered)return; const item=cur.questions[qi]; if(selected.length<item.answer.length){document.getElementById("fb").textContent="还没有排完哦";return;}
+  if(selected.every((v,i)=>v===item.answer[i])) good(); else {bad(item);resetOrder();} }
 function pick(el,val){ if(answered)return; const item=cur.questions[qi];
   if(val===item.answer){ el.classList.add("right"); good(); }
   else { el.classList.add("wrong"); el.textContent="✗ "+el.textContent; el.onclick=null; bad(item); } }
