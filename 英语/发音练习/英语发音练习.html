@@ -132,7 +132,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1 id="appTitle">🎤 我的英语发音闯关</h1>
+  <h1 id="appTitle">🎤 英语声音与拼写实验室</h1>
   <div class="sub">先听标准音，再开口跟读。星星是机器的“清晰度参考”，没听清不代表你读错啦！</div>
 
   <div class="toolbar">
@@ -146,6 +146,7 @@
     <div class="zh-tip" id="zh"></div>
     <div class="target" id="target"></div>
     <div class="sound-tip" id="soundtip"></div>
+    <div id="answerArea"></div>
     <div class="stars" id="stars"></div>
     <div class="feedback" id="feedback"></div>
     <div class="heard" id="heard"></div>
@@ -219,6 +220,7 @@
 <div class="toast" id="toast"></div>
 <div class="celebrate" id="celebrate">🎉</div>
 
+<script src="../../_engine/paper.js"></script>
 <script>
 /* ---------- 练习内容：针对中式发音的薄弱点 ---------- */
 const LEVELS = [
@@ -465,6 +467,8 @@ function load(){
   $("zh").textContent = it.zh ? ("意思：" + it.zh) : "（老师布置的词）";
   $("target").innerHTML = renderTarget(it.t);
   $("soundtip").textContent = "💡 " + (it.tip || "先点🔊听一听，再跟读～注意结尾辅音收干净");
+  if(window.TaoPaper) window.TaoPaper.mount({id:"english-"+plainText(it.t),q:"先描一遍或把音节分开写："+plainText(it.t)},
+    {open:false});
   $("stars").textContent = "";
   $("feedback").textContent = "";
   $("heard").textContent = "";

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃的语文阅读 📖</title>
+<title>桃桃阅读与创作室 📖</title>
 <style>
   * { box-sizing:border-box; }
   .noselect { -webkit-user-select:none; user-select:none; }
@@ -68,7 +68,7 @@
     <button class="back" onclick="goHome()">🏡 回学习台</button>
     <span class="star-now" id="starNow">今天 ⭐ 0</span>
   </div>
-  <h1>📖 桃桃的语文阅读</h1>
+  <h1>📖 桃桃阅读与创作室</h1>
   <div class="menu" id="menu"></div>
 
   <div class="card" id="card">
@@ -91,6 +91,7 @@
     <button class="ghost" onclick="goHome()">回学习台</button>
   </div>
 </div>
+<script src="../_engine/paper.js"></script>
 <script>
 const STORE_KEY="taotao_chinese_v1";
 function loadStore(){ try{return JSON.parse(localStorage.getItem(STORE_KEY))||{days:{},review:[]};}catch(e){return {days:{},review:[]};} }
@@ -779,6 +780,17 @@ const CHINESE_EXTRAS = {
   ]
 };
 
+function chineseCreative(p){
+  const title=p.title||p.name||"这篇内容";
+  return choose([
+    {tag:"圈画·证据",kind:"圈画证据",type:"open",paperOpen:true,q:`请回到《<b>${title}</b>》，圈出最能支持你理解的一处词句，再写：这处文字让我知道了什么？`,hint:"不要只抄句子，要说清楚它能证明什么。"},
+    {tag:"画图·结构",kind:"文章地图",type:"open",paperOpen:true,q:`请把《<b>${title}</b>》画成一张“文章地图”：人物或事物、发生的事、变化和结果之间用箭头连接。`,hint:"画完后用一句话说出文章最重要的关系。"},
+    {tag:"开放·追问",kind:"提出问题",type:"open",q:`读完《<b>${title}</b>》，请提出一个文章没有直接写出、需要根据线索推想的问题，并写下你的猜测。`,hint:"好问题常从“为什么、如果、后来会怎样”开始。"},
+    {tag:"改写·换角度",kind:"换角度",type:"open",paperOpen:true,q:`如果《<b>${title}</b>》由另一个人物或事物来讲，会多看到什么、少知道什么？请写两三句新的开头。`,hint:"换叙述者以后，只能写它看见、听见或想到的内容。"},
+    {tag:"判断·找边界",kind:"不是唯一",type:"open",q:`给《<b>${title}</b>》换一个新标题，并说明它比原标题更强调哪一部分。两种标题都可以合理吗？`,hint:"标题不同，抓住的重点也可以不同；用文章证据说明即可。"}
+  ]);
+}
+
 let cur=null, qi=0, answered=false, firstWrong=false, combo=0, roundStars=0, roundGuessed=0, bestCombo=0, selected=[];
 const NUM=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
 function ensureContinueBar(){ let bar=document.getElementById("continueBar");
@@ -882,8 +894,9 @@ function backToMenu(){ tickTime(); sessionStart=null; document.getElementById("d
 function start(idx){
   if(remainSec()<=0){ alert("今天语文的时间用完啦，明天再来挑战！"); return; }
   cur=PASSAGES[idx]; qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0; sessionStart=Date.now();
-  if(cur.gen){ cur.questions=buildGenRound(cur); }   // 字词句生成题：每次进来现出一批新题
-  else { if(!cur.__all) cur.__all=(cur.questions||[]).concat(CHINESE_EXTRAS[cur.title]||[]); cur.questions=pickDaily(cur); }   // 阅读题：每次 3 道，按日轮换、错题必出
+  if(cur.gen){ cur.questions=buildGenRound(cur); cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
+  else { if(!cur.__all) cur.__all=(cur.questions||[]).concat(CHINESE_EXTRAS[cur.title]||[]); cur.questions=pickDaily(cur);
+    cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
   document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
   document.getElementById("card").style.display="block";
   document.getElementById("ptitle").textContent=cur.title;
@@ -900,6 +913,14 @@ function showQ(){ answered=false; firstWrong=false; selected=[];
   document.getElementById("fb").textContent=""; document.getElementById("fb").className="feedback";
   document.getElementById("nextBtn").style.display="none";
   const area=document.getElementById("answerArea"); area.innerHTML="";
+  if(window.TaoPaper) window.TaoPaper.mount(item,{open:!!item.paperOpen});
+  if(item.type==="open"){
+    area.innerHTML='<div style="background:#f5f0ff;border:2px solid #d9ccef;border-radius:14px;padding:11px;">'+
+      '<div style="font-size:14px;color:#6e5a84;margin-bottom:7px;">这题没有唯一标准说法。请用文章证据支持自己的想法。</div>'+
+      '<textarea id="openAnswer" rows="3" placeholder="我认为……，因为文中……" style="width:100%;resize:vertical;border:2px solid #c9b8e8;border-radius:11px;padding:10px;font:17px/1.6 inherit;user-select:text;-webkit-user-select:text;"></textarea>'+
+      '<button id="openGo" style="display:block;margin:9px auto 0;border:0;border-radius:12px;background:#7c5cff;color:#fff;padding:10px 22px;font:700 16px/1 inherit;">提交我的理解</button></div>';
+    document.getElementById("openGo").onclick=checkOpen; return;
+  }
   if(item.type==="multi"){
     const note=document.createElement("div"); note.style.cssText="text-align:center;color:#7c5cff;font-weight:bold;margin:0 0 10px;"; note.textContent="可选择多个答案，选好后点确认";
     area.appendChild(note);
@@ -931,14 +952,17 @@ function checkOrder(){ if(answered)return; const item=cur.questions[qi]; if(sele
 function pick(el,val){ if(answered)return; const item=cur.questions[qi];
   if(val===item.answer){ el.classList.add("right"); good(); }
   else { el.classList.add("wrong"); el.textContent="✗ "+el.textContent; el.onclick=null; bad(item); } }
+function checkOpen(){ if(answered)return; const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
+  const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<6){fb.className="feedback no";fb.textContent="再多写一点：你的依据是什么？也可以先在思考纸上圈画。";return;}
+  cur.questions[qi].childAnswer=v; good("thought"); }
 const PRAISE=["读得真仔细！","答对啦！","你真会读！","厉害！","就是这样！"];
-function good(){ answered=true; const fb=document.getElementById("fb");
+function good(mode){ answered=true; const fb=document.getElementById("fb");
   const item=cur.questions[qi]; const k=(item.q||"").replace(/<[^>]+>/g,"").trim();
   const r=todayRec(); if(!r.awarded) r.awarded={};
   if(!firstWrong){
     if(r.awarded[k]){ saveStore(); sndRight(); fb.className="feedback ok"; fb.textContent="✅ 对啦！这题今天已经拿过 ⭐ 了——读没读过的篇目才加星哦"; }
     else { r.awarded[k]=true; r.stars++; r.correct++; saveStore(); showStarNow(); floatPlus(); roundStars++; combo++; if(combo>bestCombo)bestCombo=combo; sndRight();
-      let msg=PRAISE[Math.floor(Math.random()*PRAISE.length)]+" ⭐"; if(combo>=3){ msg="🔥 连对 "+combo+" 个！ "+msg; sndCombo(); burst(["🔥","⭐","🌟"]); }
+      let msg=mode==="thought"?"💡 你用自己的话提出了理解，还愿意找依据！ ⭐":PRAISE[Math.floor(Math.random()*PRAISE.length)]+" ⭐"; if(combo>=3){ msg="🔥 连对 "+combo+" 个！ "+msg; sndCombo(); burst(["🔥","⭐","🌟"]); }
       fb.className="feedback ok"; fb.textContent=msg; }
   } else { r.guessed=(r.guessed||0)+1; saveStore(); roundGuessed++; combo=0;
     fb.className="feedback ok"; fb.textContent="答对了！这题先记下来，下次争取一次就对 ✊（这题不加星）"; }

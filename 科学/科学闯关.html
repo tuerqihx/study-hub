@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃的科学闯关 🔬</title>
+<title>桃桃科学实验室 🔬</title>
 <style>
   * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
   html,body { margin:0; padding:0; }
@@ -69,7 +69,7 @@
     <button class="back" onclick="goHome()">🏡 回学习台</button>
     <span class="star-now" id="starNow">今天 ⭐ 0</span>
   </div>
-  <h1>🔬 桃桃的科学闯关</h1>
+  <h1>🔬 桃桃科学实验室</h1>
   <div class="menu" id="menu"></div>
   <div class="card" id="card">
     <div class="progress" id="prog"></div>
@@ -499,8 +499,21 @@ const QUESTION_EXTRAS = {
   ]
 };
 
+const QUESTION_CREATIVES = {};
+Object.keys(MODULES).forEach(key=>{
+  const n=MODULES[key].name;
+  QUESTION_CREATIVES[key]=[
+    {kind:"先做预测",type:"open",paperOpen:true,q:`关于“<b>${n}</b>”，请先画出或写下你的预测，再说明：做什么观察能检查这个预测？`,hint:"预测可以错；关键是想出怎样用现象或数据来检验。"},
+    {kind:"公平实验",type:"open",q:`请为“<b>${n}</b>”设计一次公平实验：只改变什么？哪些条件必须保持一样？准备记录什么？`,hint:"一次只改变一个条件，结果才容易解释。"},
+    {kind:"观察还是解释",type:"open",q:`写一条关于“<b>${n}</b>”的直接观察，再写一条根据观察作出的解释。它们有什么不同？`,hint:"“我看见/测到……”是观察；“可能因为……”是解释。"},
+    {kind:"寻找反证",type:"open",paperOpen:true,q:`有人对“<b>${n}</b>”下了一个结论。请画出或写出：出现什么结果时，说明这个结论可能不对？`,hint:"科学不只找支持自己的证据，也主动寻找可能推翻猜想的结果。"},
+    {kind:"数据记录",type:"open",paperOpen:true,q:`如果连续观察“<b>${n}</b>”三天，你会怎样画记录表？至少写出时间、观察项目和单位。`,hint:"记录要让第二个人也能看懂并重复。"}
+  ];
+});
+
 /* 菜单/出题/判分/动画由共用引擎处理 */
 </script>
+<script src="../_engine/paper.js"></script>
 <script src="../_engine/quiz.js"></script>
 </body>
 </html>

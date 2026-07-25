@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃的逻辑闯关 🧩</title>
+<title>桃桃逻辑调查室 🧩</title>
 <style>
   * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
   html,body { margin:0; padding:0; }
@@ -68,7 +68,7 @@
     <button class="back" onclick="goHome()">🏡 回学习台</button>
     <span class="star-now" id="starNow">今天 ⭐ 0</span>
   </div>
-  <h1>🧩 桃桃的逻辑闯关</h1>
+  <h1>🧩 桃桃逻辑调查室</h1>
   <div class="menu" id="menu"></div>
   <div class="card" id="card">
     <div class="progress" id="prog"></div>
@@ -358,8 +358,21 @@ const QUESTION_EXTRAS = {
   ]
 };
 
+const QUESTION_CREATIVES = {};
+Object.keys(MODULES).forEach(key=>{
+  const n=MODULES[key].name;
+  QUESTION_CREATIVES[key]=[
+    {kind:"证据板",type:"open",paperOpen:true,q:`请为“<b>${n}</b>”画一张证据板：把你知道的、猜测的和还不知道的分开放，再写出目前能下什么结论。`,hint:"“还不能确定”也是可靠结论，但要说明缺什么证据。"},
+    {kind:"反例挑战",type:"open",q:`给“<b>${n}</b>”想一个反例：什么情况能证明一个听起来很有道理的说法其实不总是成立？`,hint:"只要找到一个不符合的情况，“永远、一定、全部”就可能站不住。"},
+    {kind:"改变主意",type:"open",q:`先写下你对“<b>${n}</b>”的第一猜测，再写：看到什么新证据时，你愿意改变主意？`,hint:"会根据证据改主意，是思考变强，不是输了。"},
+    {kind:"自己设谜",type:"open",paperOpen:true,q:`请设计一个“<b>${n}</b>”小谜题，至少留下两条有用线索和一条无用线索。你能保证只有一个答案吗？`,hint:"设计完后自己反过来解一次，检查会不会有两个答案。"},
+    {kind:"多种可能",type:"open",paperOpen:true,q:`这次不要只找一个答案：请画出“<b>${n}</b>”中至少两种可能，并说明还需要什么条件才能选出其中一种。`,hint:"把每一种可能分别画出来，比在脑子里硬想更清楚。"}
+  ];
+});
+
 /* 菜单/出题/判分/动画由共用引擎处理 */
 </script>
+<script src="../_engine/paper.js"></script>
 <script src="../_engine/quiz.js"></script>
 </body>
 </html>

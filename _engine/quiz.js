@@ -12,8 +12,11 @@
   function loadStore(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{days:{},review:[]}; }catch(e){ return {days:{},review:[]}; } }
   function saveStore(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(STORE)); }catch(e){} }
   const STORE = loadStore(); if(!STORE.review) STORE.review=[]; if(!STORE.mastery) STORE.mastery={}; if(!STORE.done) STORE.done={}; if(!STORE.last) STORE.last={};
+  if(!STORE.recent) STORE.recent={};
   const MASTER = 2;  // 一道题"第一次就答对" 2 次 → 算掌握，之后淡出，把没掌握的顶上来多练
   function qkey(it){ return (it.q||"").replace(/<[^>]+>/g,"").trim(); }
+  // 孩子感到“重复”往往不是文字相同，而是只换了数字。把数字、标点和空格归一化，识别同一种题目骨架。
+  function qshape(it){ return ((it.kind||"")+"|"+(it.type||"choice")+"|"+qkey(it).replace(/\d+(?:\.\d+)?/g,"#").replace(/\s+/g,"")).slice(0,180); }
   function dkey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function todayRec(){ const k=dkey(new Date()); if(!STORE.days[k]) STORE.days[k]={stars:0,correct:0,guessed:0}; return STORE.days[k]; }
   function showStarNow(){ const el=document.getElementById("starNow"); if(el) el.textContent="今天 ⭐ "+todayRec().stars; }
@@ -75,19 +78,33 @@
 
   /* ---- 出题 ---- */
   function extrasFor(key){ try{
-    return (typeof QUESTION_EXTRAS!=="undefined" && QUESTION_EXTRAS[key]) ? QUESTION_EXTRAS[key].slice() : [];
+    const a=(typeof QUESTION_EXTRAS!=="undefined" && QUESTION_EXTRAS[key]) ? QUESTION_EXTRAS[key].slice() : [];
+    const b=(typeof QUESTION_CREATIVES!=="undefined" && QUESTION_CREATIVES[key]) ? QUESTION_CREATIVES[key].slice() : [];
+    return a.concat(b);
   }catch(e){ return []; } }
+  function rememberRound(key,list){ const old=STORE.recent[key]||[];
+    list.forEach(it=>{ const s=qshape(it),i=old.indexOf(s);if(i>=0)old.splice(i,1);old.push(s); });
+    STORE.recent[key]=old.slice(-36); saveStore(); }
   function buildRound(mod,key){
     const extras=extrasFor(key);
-    if(mod.gen){ const extraN=Math.min(2, extras.length, PR), out=shuffle(extras).slice(0,extraN);
-      const seen=new Set(out.map(it=>it.q)); let guard=0;
-      while(out.length<PR && guard<80){ const it=mod.gen(); if(!seen.has(it.q)){ seen.add(it.q); out.push(it); } guard++; } return out; }
+    const recent=new Set(STORE.recent[key]||[]);
+    if(mod.gen){ const creative=extras.filter(it=>it.type==="open"||it.type==="order"||it.type==="multi");
+      const ordinary=extras.filter(it=>creative.indexOf(it)<0);
+      const out=[]; if(creative.length){ const cf=shuffle(creative.filter(it=>!recent.has(qshape(it))));
+        out.push((cf[0]||shuffle(creative)[0])); }
+      shuffle(ordinary).forEach(it=>{if(out.length<Math.min(2,PR)&&!recent.has(qshape(it)))out.push(it);});
+      const seen=new Set(out.map(it=>qkey(it))), deferred=[]; let guard=0;
+      while(out.length<PR && guard<180){ const it=mod.gen(),s=qshape(it);
+        if(!seen.has(qkey(it))){seen.add(qkey(it));if(!recent.has(s))out.push(it);else deferred.push(it);} guard++; }
+      while(out.length<PR&&deferred.length)out.push(deferred.shift());
+      rememberRound(key,out); return shuffle(out); }
     // 固定题库：没掌握的优先出，已掌握的淡到后面（不够才补出来复习）
     const pool = (mod.bank || mod.questions || []).slice().concat(extras);
     const weak=[], strong=[];
     pool.forEach(it=>{ ((STORE.mastery[qkey(it)]||0) >= MASTER ? strong : weak).push(it); });
     const ordered = shuffle(weak).concat(shuffle(strong));
-    return ordered.slice(0, Math.min(PR, ordered.length));
+    const fresh=ordered.filter(it=>!recent.has(qshape(it))), old=ordered.filter(it=>recent.has(qshape(it)));
+    const out=fresh.concat(old).slice(0,Math.min(PR,ordered.length)); rememberRound(key,out); return out;
   }
 
   let curMod=null,curKey=null,qList=[],qi=0,answered=false,typed="",selected=[],firstWrong=false,combo=0,roundStars=0,roundGuessed=0,bestCombo=0;
@@ -236,6 +253,12 @@
       document.getElementById("orderReset").onclick=resetOrder;
       document.getElementById("orderGo").onclick=checkOrder;
       renderOrder();
+    } else if(item.type==="open"){
+      area.innerHTML='<div style="background:#f5f0ff;border:2px solid #d9ccef;border-radius:14px;padding:11px;">'+
+        '<div style="font-size:14px;color:#6e5a84;margin-bottom:7px;">这里不只有一个标准说法。先自己想，再写下理由、例子或新问题。</div>'+
+        '<textarea id="openAnswer" rows="3" placeholder="我认为……，因为……" style="width:100%;resize:vertical;border:2px solid #c9b8e8;border-radius:11px;padding:10px;font:17px/1.6 inherit;user-select:text;-webkit-user-select:text;"></textarea>'+
+        '<button id="openGo" style="display:block;margin:9px auto 0;border:0;border-radius:12px;background:#7c5cff;color:#fff;padding:10px 22px;font:700 16px/1 inherit;">提交我的想法</button></div>';
+      document.getElementById("openGo").onclick=checkOpen;
     } else {
       area.innerHTML='<div class="answbox"><span class="answ" id="answ">_</span></div>'+
         '<div class="pad">'+[1,2,3,4,5,6,7,8,9].map(n=>'<button class="key" data-k="'+n+'">'+n+'</button>').join('')+
@@ -244,6 +267,7 @@
       area.querySelectorAll(".key").forEach(btn=>{ const k=btn.getAttribute("data-k");
         btn.onclick=()=>{ if(k==="go") checkNum(); else press(k); }; });
     }
+    if(window.TaoPaper) window.TaoPaper.mount(item,{open:!!item.paperOpen});
     resetHint();
   }
   function press(k){ if(answered)return; if(k==="del")typed=typed.slice(0,-1); else if(typed.length<4)typed+=k;
@@ -270,8 +294,11 @@
   function checkNum(){ if(answered)return; const item=qList[qi]; if(typed==="")return;
     if(Number(typed)===Number(item.answer)){ good(); }
     else { bad(item); typed=""; const a=document.getElementById("answ"); if(a)a.textContent="_"; } }
+  function checkOpen(){ if(answered)return; const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
+    const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<5){fb.className="feedback no";fb.textContent="再多写一点：你为什么这样想？也可以画完以后用一句话说明。";return;}
+    qList[qi].childAnswer=v; good("thought"); }
 
-  function good(){ answered=true; clearTimeout(stuckTimer);
+  function good(mode){ answered=true; clearTimeout(stuckTimer);
     const hb=document.getElementById("hintBtn"); if(hb) hb.style.display="none";
     const fb=document.getElementById("fb");
     const k=qkey(qList[qi]); const r=todayRec(); if(!r.awarded) r.awarded={};
@@ -283,7 +310,7 @@
       } else { // 今天第一次做对这道题 → 给星
         r.awarded[k]=true; r.stars++; r.correct++; saveStore(); showStarNow(); floatPlus(); roundStars++;
         combo++; if(combo>bestCombo) bestCombo=combo; sndRight();
-        let msg=PRAISE[Math.floor(Math.random()*PRAISE.length)]+" ⭐";
+        let msg=mode==="thought" ? "💡 你提出了自己的想法！先有理由，再看别人的办法。 ⭐" : PRAISE[Math.floor(Math.random()*PRAISE.length)]+" ⭐";
         if(combo>=3){ msg="🔥 连对 "+combo+" 个！ "+msg; sndCombo(); burst(["🔥","⭐","🌟"]); }
         fb.className="feedback ok"; fb.textContent=msg;
       }

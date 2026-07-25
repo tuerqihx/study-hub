@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>桃桃的数学闯关 📐</title>
+<title>桃桃数学思维调查局 🔎</title>
 <style>
   * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
   html,body { margin:0; padding:0; }
@@ -42,33 +42,6 @@
   .done button { background:#ff8c42; color:#fff; border:none; border-radius:16px; font-size:19px; font-weight:bold; padding:13px 26px; cursor:pointer; font-family:inherit; margin:6px; }
   .done .ghost { background:#fff; color:#ff7a33; border:2px solid #ffcf9e; }
 
-  /* ===== 月光调查档案：Apple Pencil 原生圈画区 ===== */
-  .case-file { margin:0 0 18px; border-radius:24px; overflow:hidden; border:3px solid #9c7bea;
-    background:linear-gradient(145deg,#251b4b,#40256d); color:#fff; box-shadow:0 10px 28px rgba(64,37,109,.25); }
-  .case-head { padding:17px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; }
-  .case-title { font-size:21px; font-weight:800; } .case-title small { display:block; color:#dacfff; font-size:12px; margin-top:4px; font-weight:500; }
-  .case-seal { flex:0 0 auto; border:1px solid #baa6ff; border-radius:999px; padding:6px 10px; color:#efeaff; font-size:12px; }
-  .case-body { background:#fffdfa; color:#343044; padding:16px; border-radius:21px 21px 0 0; }
-  .case-story { line-height:1.7; font-size:15px; background:#f4efff; border-left:5px solid #9c7bea; border-radius:12px; padding:10px 12px; margin-bottom:12px; }
-  .evidence-board { position:relative; width:100%; aspect-ratio:16/11; min-height:360px; overflow:hidden;
-    border:2px solid #b9a5df; border-radius:17px; background:#eff8ff; }
-  .evidence-scene { position:absolute; inset:0; width:100%; height:100%; }
-  #caseCanvas { position:absolute; inset:0; width:100%; height:100%; cursor:crosshair; z-index:2; }
-  .penbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:11px 0; }
-  .penbtn { border:2px solid #ddd3f5; background:#fff; color:#55436d; border-radius:12px; padding:9px 12px;
-    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; }
-  .penbtn.active { background:#e9ddff; border-color:#8d67df; box-shadow:0 0 0 2px #cbb8f5; }
-  .penhint { flex:1 1 220px; color:#766d82; font-size:13px; line-height:1.45; }
-  .case-task { font-size:16px; line-height:1.65; margin:8px 0; font-weight:700; color:#4c3c64; }
-  .route-answers { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
-  .route-btn { border:2px solid #d9ccf4; background:#f8f5ff; color:#47385d; border-radius:13px; padding:12px 6px;
-    font:700 16px/1.3 inherit; cursor:pointer; }
-  .route-btn.selected { border-color:#7b56d5; background:#e8ddff; box-shadow:0 0 0 2px #c6b4ee; }
-  .case-submit { display:block; width:min(320px,100%); margin:13px auto 0; border:0; border-radius:15px; padding:13px;
-    background:linear-gradient(135deg,#6e4bc4,#9b69e4); color:#fff; font:800 17px/1 inherit; cursor:pointer; }
-  .case-feedback { min-height:28px; margin-top:10px; text-align:center; font-size:15px; font-weight:700; line-height:1.55; }
-  .case-badges { display:none; margin-top:10px; text-align:center; color:#62469e; font-weight:800; }
-
   /* ---- iPad / 手机适配：屏幕≤900px 时整体紧凑、图标缩小 ---- */
   @media (max-width: 900px){
     body{ padding:12px 8px 40px; }
@@ -84,9 +57,6 @@
     .done .big{ font-size:44px; }
     .done .got{ font-size:15px; }
     #continueBtn{ font-size:16px !important; padding:11px 20px !important; }
-    .case-head{ padding:13px 14px; } .case-title{ font-size:17px; }
-    .case-body{ padding:11px; } .evidence-board{ min-height:330px; aspect-ratio:4/5; }
-    .route-btn{ font-size:14px; padding:10px 4px; }
   }
 </style>
 </head>
@@ -96,68 +66,7 @@
     <button class="back" onclick="goHome()">🏡 回学习台</button>
     <span class="star-now" id="starNow">今天 ⭐ 0</span>
   </div>
-  <h1>📐 桃桃的数学闯关</h1>
-  <section class="case-file" id="moonCase">
-    <div class="case-head" id="caseToggle" aria-expanded="true">
-      <div class="case-title">🌙 月光调查档案 · 001
-        <small>昨夜来信：纸鹤的伤口修好了，可风路事故还没有查清</small>
-      </div>
-      <div class="case-seal" id="caseSeal">🔓 等天亮</div>
-    </div>
-    <div class="case-body" id="caseBody">
-      <div class="case-story">桃桃调查员，银杏树梢留下了三条回校路线。请拿起 Apple Pencil，像在纸上一样圈出危险线索、划掉无关证词，再画出你认为安全的路线。不必一次猜对。</div>
-      <div class="evidence-board" id="evidenceBoard">
-        <svg class="evidence-scene" viewBox="0 0 800 550" role="img" aria-label="纸鹤从起点飞回夜校的三条候选路线和四张证据卡">
-          <defs>
-            <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#dff0ff"/><stop offset="1" stop-color="#fff5d9"/></linearGradient>
-            <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#7b73a8"/></marker>
-          </defs>
-          <rect width="800" height="550" fill="url(#sky)"/>
-          <circle cx="720" cy="64" r="36" fill="#ffe78a"/><text x="720" y="70" text-anchor="middle" font-size="18">夜校</text>
-          <text x="74" y="500" text-anchor="middle" font-size="22">🕊️ 起点</text>
-          <path d="M90 460 C145 360 195 245 690 95" fill="none" stroke="#e8aa7c" stroke-width="18" opacity=".5"/>
-          <path d="M90 460 C270 420 410 320 690 95" fill="none" stroke="#87b7e8" stroke-width="18" opacity=".5"/>
-          <path d="M90 460 C250 500 600 420 690 95" fill="none" stroke="#83cf9a" stroke-width="18" opacity=".55"/>
-          <text x="185" y="310" font-size="26" font-weight="bold" fill="#b76332">A</text>
-          <text x="390" y="330" font-size="26" font-weight="bold" fill="#376fa7">B</text>
-          <text x="480" y="458" font-size="26" font-weight="bold" fill="#267c47">C</text>
-          <path d="M182 278 l92 -58 M190 233 l72 48" stroke="#7a492c" stroke-width="16" stroke-linecap="round"/>
-          <text x="245" y="205" font-size="17" fill="#7a492c">折断的树枝</text>
-          <g stroke="#6c6791" stroke-width="8" marker-end="url(#arr)">
-            <path d="M330 305 l90 -45"/><path d="M370 350 l95 -48"/><path d="M440 286 l86 -41"/>
-          </g>
-          <text x="430" y="232" font-size="17" fill="#534d78">强逆风</text>
-          <g font-size="16" fill="#443856">
-            <rect x="20" y="18" width="228" height="62" rx="12" fill="#fff" stroke="#c9b6e8" stroke-width="2"/>
-            <text x="34" y="43">证据① A路树枝刚折断</text><text x="34" y="65" fill="#8a789a">翅膀可能再次被划伤</text>
-            <rect x="270" y="18" width="228" height="62" rx="12" fill="#fff" stroke="#c9b6e8" stroke-width="2"/>
-            <text x="284" y="43">证据② B路正吹强逆风</text><text x="284" y="65" fill="#8a789a">纸鹤会很难保持平稳</text>
-            <rect x="520" y="122" width="258" height="62" rx="12" fill="#fff" stroke="#c9b6e8" stroke-width="2"/>
-            <text x="534" y="147">证据③ C路远一点但风很小</text><text x="534" y="169" fill="#8a789a">路程长，不等于不安全</text>
-            <rect x="20" y="95" width="228" height="52" rx="12" fill="#fff" stroke="#c9b6e8" stroke-width="2"/>
-            <text x="34" y="126">证词④ 湖边开了3朵蘑菇</text>
-          </g>
-        </svg>
-        <canvas id="caseCanvas"></canvas>
-      </div>
-      <div class="penbar">
-        <button class="penbtn active" data-tool="pen">✏️ 圈画笔</button>
-        <button class="penbtn" data-tool="eraser">🧽 橡皮</button>
-        <button class="penbtn" id="caseUndo">↶ 撤销</button>
-        <button class="penbtn" id="caseClear">清空</button>
-        <div class="penhint">Apple Pencil 可直接书写；手指仍用来滚动页面。电脑上也可以用鼠标先试玩。</div>
-      </div>
-      <div class="case-task">🔎 最终判断：纸鹤应该走哪条路线？先留下调查笔迹，再提交结论。</div>
-      <div class="route-answers">
-        <button class="route-btn" data-route="A">A · 近路</button>
-        <button class="route-btn" data-route="B">B · 中路</button>
-        <button class="route-btn" data-route="C">C · 绕行路</button>
-      </div>
-      <button class="case-submit" id="caseSubmit">提交调查报告</button>
-      <div class="case-feedback" id="caseFeedback" aria-live="polite"></div>
-      <div class="case-badges" id="caseBadges">🔍 关键线索　🎨 图画证据　⭐ 新案件完成</div>
-    </div>
-  </section>
+  <h1>🔎 桃桃数学思维调查局</h1>
   <div class="menu" id="menu"></div>
   <div class="card" id="card">
     <div class="progress" id="prog"></div>
@@ -620,110 +529,27 @@ const QUESTION_EXTRAS = {
   ]
 };
 
+/* 每个关卡都混入开放调查任务：不是换数字，而是换思考动作。 */
+const QUESTION_CREATIVES = {};
+Object.keys(MODULES).forEach(key=>{
+  const m=MODULES[key];
+  QUESTION_CREATIVES[key]=[
+    {kind:"画出关系",type:"open",paperOpen:true,q:`不用急着计算：请画一幅图，说明“<b>${m.name}</b>”里各个数量或部分是什么关系，再用一句话解释你的图。`,
+      hint:"可以画圈、线段、方格、箭头或自己发明的符号。"},
+    {kind:"自己出题",type:"open",paperOpen:true,q:`你来当出题人：编一道和“<b>${m.name}</b>”有关、但答案不能一眼看出的题，并写出别人解题时必须注意的线索。`,
+      hint:"先想答案，再倒着设计条件；别忘了检查条件够不够。"},
+    {kind:"找反例",type:"open",q:`有人说：“做<b>${m.name}</b>的题，只要看到数字就全部用上。”请举一个例子证明这句话不一定对。`,
+      hint:"可以放进一个没用的数字，或者让题目缺少一个关键条件。"},
+    {kind:"一题多路",type:"open",paperOpen:true,q:`请给“<b>${m.name}</b>”想两种不同的解决办法：可以是算式、画图、倒推、列表或估计。哪一种更容易检查？为什么？`,
+      hint:"两种方法不必一样快，能互相验证更重要。"},
+    {kind:"荒唐答案",type:"open",q:`请编一个和“<b>${m.name}</b>”有关的荒唐答案，再写一句话说明它为什么不符合现实。`,
+      hint:"先看单位和数量级，例如长度、人数、钱数是否可能。"}
+  ];
+});
+
 /* 关卡菜单、出题、判分、动画等全部由共用引擎处理 */
 </script>
+<script src="../_engine/paper.js"></script>
 <script src="../_engine/quiz.js"></script>
-<script>
-/* ===== 月光调查档案 001：Apple Pencil / 鼠标圈画 ===== */
-(function(){
-  "use strict";
-  const CASE_KEY="taotao_moon_case_wind_v1";
-  const DRAW_KEY=CASE_KEY+"_drawing";
-  const canvas=document.getElementById("caseCanvas");
-  const board=document.getElementById("evidenceBoard");
-  const ctx=canvas.getContext("2d");
-  let strokes=[], active=null, tool="pen", chosen="", drawing=false;
-
-  function readDrawing(){
-    try{ const v=JSON.parse(localStorage.getItem(DRAW_KEY)); if(Array.isArray(v)) strokes=v; }catch(e){}
-  }
-  function saveDrawing(){ try{ localStorage.setItem(DRAW_KEY,JSON.stringify(strokes.slice(-80))); }catch(e){} }
-  function sizeCanvas(){
-    const r=board.getBoundingClientRect(), d=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=Math.round(r.width*d); canvas.height=Math.round(r.height*d);
-    ctx.setTransform(d,0,0,d,0,0); redraw();
-  }
-  function drawStroke(s){
-    if(!s||s.points.length<2) return;
-    const w=board.clientWidth, h=board.clientHeight;
-    ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round";
-    ctx.globalCompositeOperation=s.tool==="eraser" ? "destination-out" : "source-over";
-    ctx.strokeStyle=s.color||"#d72f64"; ctx.lineWidth=s.tool==="eraser" ? 22 : 4.5;
-    ctx.beginPath();
-    s.points.forEach((p,i)=>{ const x=p.x*w,y=p.y*h; if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); });
-    ctx.stroke(); ctx.restore();
-  }
-  function redraw(){ ctx.clearRect(0,0,board.clientWidth,board.clientHeight); strokes.forEach(drawStroke); }
-  function point(e){
-    const r=canvas.getBoundingClientRect();
-    return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
-  }
-  function canDraw(e){ return e.pointerType==="pen" || e.pointerType==="mouse"; }
-  canvas.addEventListener("pointerdown",e=>{
-    if(!canDraw(e)) return; e.preventDefault(); canvas.setPointerCapture(e.pointerId);
-    drawing=true; active={tool:tool,color:"#d72f64",points:[point(e)]}; strokes.push(active); drawStroke(active);
-  });
-  canvas.addEventListener("pointermove",e=>{
-    if(!drawing||!active||!canDraw(e)) return; e.preventDefault();
-    const events=e.getCoalescedEvents?e.getCoalescedEvents():[e];
-    events.forEach(ev=>active.points.push(point(ev))); redraw();
-  });
-  function endDraw(e){ if(!drawing)return; if(canDraw(e)) e.preventDefault(); drawing=false; active=null; saveDrawing(); }
-  canvas.addEventListener("pointerup",endDraw); canvas.addEventListener("pointercancel",endDraw);
-
-  document.querySelectorAll("[data-tool]").forEach(b=>b.addEventListener("click",()=>{
-    tool=b.dataset.tool; document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("active",x===b));
-  }));
-  document.getElementById("caseUndo").addEventListener("click",()=>{ strokes.pop(); saveDrawing(); redraw(); });
-  document.getElementById("caseClear").addEventListener("click",()=>{ strokes=[]; saveDrawing(); redraw(); });
-  document.querySelectorAll("[data-route]").forEach(b=>b.addEventListener("click",()=>{
-    chosen=b.dataset.route; document.querySelectorAll("[data-route]").forEach(x=>x.classList.toggle("selected",x===b));
-  }));
-  document.getElementById("caseToggle").addEventListener("click",()=>{
-    const body=document.getElementById("caseBody"), open=body.style.display!=="none";
-    body.style.display=open?"none":"block"; document.getElementById("caseToggle").setAttribute("aria-expanded",String(!open));
-    if(!open) requestAnimationFrame(sizeCanvas);
-  });
-  function dateKey(){
-    const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-  }
-  function awardFirstCompletion(){
-    let gotStar=false;
-    try{
-      const store=JSON.parse(localStorage.getItem(STORE_KEY))||{days:{}};
-      if(!store.days) store.days={}; const k=dateKey();
-      if(!store.days[k]) store.days[k]={stars:0,correct:0,guessed:0};
-      const r=store.days[k]; if(!r.awarded) r.awarded={};
-      if(!r.awarded[CASE_KEY]){ r.awarded[CASE_KEY]=true; r.stars=(r.stars||0)+1; r.correct=(r.correct||0)+1; gotStar=true; }
-      localStorage.setItem(STORE_KEY,JSON.stringify(store));
-      const star=document.getElementById("starNow"); if(star) star.textContent="今天 ⭐ "+(r.stars||0);
-      localStorage.setItem(CASE_KEY,JSON.stringify({completed:true,route:"C",at:new Date().toISOString()}));
-    }catch(e){}
-    return gotStar;
-  }
-  function hasRealStroke(){ return strokes.some(s=>s.points&&s.points.length>=4); }
-  document.getElementById("caseSubmit").addEventListener("click",()=>{
-    const fb=document.getElementById("caseFeedback");
-    if(!hasRealStroke()){ fb.style.color="#c06a27"; fb.textContent="✏️ 调查员还没留下笔迹：先圈一条线索或画一段路线，再提交。"; return; }
-    if(!chosen){ fb.style.color="#c06a27"; fb.textContent="🔎 圈画完成后，还要选出你的最终路线。"; return; }
-    if(chosen==="A"){ fb.style.color="#c34f58"; fb.textContent="A 路虽然近，却正好穿过折断的树枝。把它当成危险证据，再换条路看看。"; return; }
-    if(chosen==="B"){ fb.style.color="#c34f58"; fb.textContent="B 路没有树枝，可强逆风会让受伤后刚修好的纸鹤摇晃。还有一条更稳的路。"; return; }
-    const got=awardFirstCompletion();
-    fb.style.color="#247b4c";
-    fb.textContent=got ? "✅ 案件破解！你没有只找最近的路，而是比较了树枝、风和安全。获得 1 颗 ⭐。"
-                       : "✅ 案件已经破解。再看一次笔迹，你仍然可以尝试画出另一种解释。";
-    document.getElementById("caseBadges").style.display="block";
-    document.getElementById("caseSeal").textContent="✅ 已破解";
-  });
-  function restoreDone(){
-    try{ const d=JSON.parse(localStorage.getItem(CASE_KEY)); if(d&&d.completed){
-      document.getElementById("caseSeal").textContent="✅ 已破解";
-      document.getElementById("caseBadges").style.display="block";
-    }}catch(e){}
-  }
-  readDrawing(); restoreDone(); requestAnimationFrame(sizeCanvas);
-  window.addEventListener("resize",sizeCanvas);
-})();
-</script>
 </body>
 </html>
