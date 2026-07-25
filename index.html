@@ -89,15 +89,17 @@
     color:#666; font-size:12px; padding:2px 8px; border-radius:10px; font-weight:bold;
   }
 
-  /* 家长看板：错题本 */
+  /* 孩子的错题卡片 */
   .reviewbook { margin-top:24px; background:#fff; border-radius:20px; padding:16px 20px;
     border:3px dashed #ddd; box-shadow:0 4px 14px rgba(0,0,0,.06); }
   .rv-title { font-size:16px; font-weight:bold; color:#888; margin-bottom:10px; }
   .rv-list { display:flex; flex-direction:column; gap:6px; }
-  .rv-item { display:flex; align-items:baseline; gap:8px; background:#fafafa; border-radius:10px; padding:8px 10px; font-size:14px; }
+  .rv-item { display:block; background:#fffaf0; border:2px solid #ffe0b3; border-radius:14px; padding:11px 13px; font-size:14px; cursor:pointer; }
   .rv-item .rv-subj { flex:0 0 auto; font-weight:bold; color:#666; }
   .rv-item .rv-q { flex:1; color:#444; }
   .rv-item .rv-d { flex:0 0 auto; color:#bbb; font-size:12px; }
+  .rv-detail { display:none; margin-top:9px; padding:10px 12px; background:#fff; border-radius:10px; line-height:1.75; color:#666; }
+  .rv-item.open .rv-detail { display:block; }
   .rv-empty { color:#bbb; font-size:15px; text-align:center; padding:6px; }
   .rv-locked { text-align:center; padding:10px; }
   .rv-unlock-btn { background:#f4f4f4; border:2px dashed #ccc; color:#999; font-size:15px; font-weight:bold;
@@ -222,13 +224,10 @@
     </button>
   </div>
 
-  <!-- 家长看板：错题本（密码可见） -->
+  <!-- 孩子的错题卡片：直接点开看题目、答案和讲解 -->
   <div class="reviewbook">
-    <div class="rv-title">👀 家长看板 · 最近错题</div>
-    <div id="rvLocked" class="rv-locked">
-      <button class="rv-unlock-btn" onclick="unlockReview()">🔒 输入密码查看</button>
-    </div>
-    <div class="rv-list" id="reviewList" style="display:none;"></div>
+    <div class="rv-title">📕 我的错题卡 · 点开看看答案</div>
+    <div class="rv-list" id="reviewList"></div>
   </div>
 
   <!-- 电脑小达人 -->
@@ -517,7 +516,7 @@ function collectReview(){
     let obj; try { obj = JSON.parse(localStorage.getItem(key)); } catch(e){ continue; }
     if(!obj || !Array.isArray(obj.review)) continue;
     const subj = SUBJ_LABEL[key.replace(/^taotao_/,"").replace(/_v1$/,"")] || key;
-    obj.review.forEach(r => items.push({ subj, m:r.m, q:r.q, d:r.d }));
+    obj.review.forEach(r => items.push({ subj, m:r.m, q:r.q, d:r.d, a:r.a, exp:r.exp, teach:r.teach, hint:r.hint }));
   }
   items.sort((a,b) => (b.d||"").localeCompare(a.d||""));
   return items;
@@ -526,9 +525,17 @@ function refreshReviewBook(){
   const items = collectReview().slice(0, 20);
   const box = document.getElementById("reviewList");
   if(!items.length){ box.innerHTML = '<div class="rv-empty">还没有错题记录，太棒啦！</div>'; return; }
-  box.innerHTML = items.map(it =>
-    '<div class="rv-item"><span class="rv-subj">'+esc(it.subj)+'</span><span class="rv-q">'+esc(it.q)+'</span><span class="rv-d">'+esc(it.d)+'</span></div>'
-  ).join("");
+  box.innerHTML = items.map(it => {
+    const ans=Array.isArray(it.a)?it.a.join("、"):(it.a===undefined||it.a===null||it.a===""?"这道旧错题还没有保存答案，回到对应练习再挑战一次吧。":String(it.a));
+    const why=it.exp||it.teach||it.hint||"重新读一遍题目，先说清楚“已知什么、要找什么”，再动手。";
+    return '<div class="rv-item" onclick="this.classList.toggle(\'open\')">'
+      +'<div><span class="rv-subj">'+esc(it.subj)+(it.m?" · "+esc(it.m):"")+'</span>'
+      +'<span class="rv-d" style="float:right;">'+esc(it.d)+'</span></div>'
+      +'<div class="rv-q" style="font-size:16px;font-weight:bold;margin-top:6px;">'+esc(it.q)+'</div>'
+      +'<div style="font-size:13px;color:#b8860b;margin-top:5px;">👆 点开看答案和讲解</div>'
+      +'<div class="rv-detail"><div style="color:#2a9d5c;">✅ 正确答案：<b>'+esc(ans)+'</b></div>'
+      +'<div style="margin-top:6px;">💡 '+esc(why)+'</div></div></div>';
+  }).join("");
 }
 /* 错题本密码：每家自己设，只存校验值不存明文——翻源代码也看不到数字。
    第一次点"查看"时由家长设置；忘了密码：家长在浏览器控制台清掉 profile_v1 里的 rvHash 重设 */
@@ -560,12 +567,8 @@ function unlockReview(){
   }
 }
 window.unlockReview = unlockReview;
-// 每次回到主页都重新锁上，需要再次输入密码
-window.addEventListener("pageshow", function(){
-  document.getElementById("rvLocked").style.display = "";
-  document.getElementById("reviewList").style.display = "none";
-  document.getElementById("reviewList").innerHTML = "";
-});
+refreshReviewBook();
+window.addEventListener("pageshow", refreshReviewBook);
 
 /* ============ 今日任务（按星期轮换 + ⭐目标按周递增） ============ */
 const APPS = {
