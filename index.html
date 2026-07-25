@@ -169,9 +169,9 @@
       <div class="stat"><div class="num" id="dayCount">0</div><div class="lbl">📅 学习天数</div></div>
     </div>
     <div class="ladder">
-      <div class="title">🎁 我的奖励册 —— 5⭐换1🌸，5🌸换1🍎，5🍎换1🌳，攒5棵🌳换生活大奖！</div>
+      <div class="title">🎁 我的奖励册</div>
       <div class="ladder-row" id="ladderRow"></div>
-      <div class="ladder-hint" id="ladderHint"></div>
+      <div class="ladder-hint" id="ladderHint" style="display:none;"></div>
       <div id="goalBox"></div>
       <div class="ladder-btns">
         <button class="redeem-btn" id="redeemBtn" onclick="openRedeem()">🎁 选想要的奖励</button>
@@ -320,15 +320,19 @@ window.askName = askName;
 /* ============ 奖励汇总：扫描所有 taotao_*_v1 学习数据 ============
    约定：每个学习App把数据存成  localStorage["taotao_<科目>_v1"] = {days:{ "2026-07-06":{stars:N}, ... }}
    主页自动把所有App的星星按天合并 —— 以后新做的App只要照这个格式存，就会自动出现在这里。 */
-/* 奖励阶梯统一用直观的五进制：
-   5⭐=1🌸，5🌸=1🍎，5🍎=1🌳，所以 1🌳=125⭐。
-   历史星星和以后新赚的星星使用同一套规则，全部连续累计，不再区分新老星星。 */
-const PER = 5;                       // 星→花、花→果、果→树都是 5 进
-const FRUIT_PER_TREE = PER;          // 5 个🍎换 1 棵🌳（1🌳=125⭐）
+/* 按桃桃过去约 220⭐/天的真实速度校准：
+   一周约 1540⭐，目标一周约长 5 棵树，所以每棵约需 308⭐。
+   取便于理解和连续换算的 300⭐：5⭐=1🌸，5🌸=1🍎，12🍎=1🌳。
+   历史星星和以后新赚的星星使用同一套规则，全部连续累计。 */
+const PER = 5;                       // 5 星→1花，5花→1果
+const FRUIT_PER_TREE = 12;           // 12 个🍎换 1 棵🌳（1🌳=300⭐）
 const REWARD_TREES = 5;              // 攒够 5 棵🌳才能兑换 1 个生活奖励
 const FRUIT_COST = PER*PER;          // 25 ⭐ = 1 个🍎
-const TREE_COST = FRUIT_PER_TREE*FRUIT_COST;   // 125 ⭐ = 1 棵🌳
-const REWARD_COST = REWARD_TREES*TREE_COST;    // 625 ⭐ = 1 个生活大奖
+const TREE_COST = FRUIT_PER_TREE*FRUIT_COST;   // 300 ⭐ = 1 棵🌳
+const REWARD_COST = REWARD_TREES*TREE_COST;    // 1500 ⭐ = 1 个生活大奖
+const LEGACY_REWARD_COST = 500;        // 2026-07-16（含）以前：旧规则每次兑换实际扣 500⭐
+const HIGH_PRICE_REWARD_COST = 3750;   // 2026-07-17 至 2026-07-24：高门槛规则
+const NEW_RULE_START = "2026-07-25";   // 从这天起按当前 1500⭐ 兑换，并把成本写进记录
 /* 主页自己的小账本：已兑换花掉的星星 + 奖励清单 */
 const HUB_KEY = "taotao_hub_v1";
 /* 生活大奖（现在稀有又值钱，做成更有吸引力的大目标；家长可用「✏️家长设置奖励」改） */
@@ -336,9 +340,48 @@ const DEFAULT_REWARDS = ["去一次游乐园／海洋馆","去郑州周边玩一
 function loadHub(){ try{ return JSON.parse(localStorage.getItem(HUB_KEY))||{spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; }catch(e){ return {spent:0,log:[],rewards:DEFAULT_REWARDS.slice()}; } }
 function saveHub(){ try{ localStorage.setItem(HUB_KEY,JSON.stringify(HUB)); }catch(e){} }
 let HUB = loadHub(); if(!HUB.rewards||!HUB.rewards.length) HUB.rewards=DEFAULT_REWARDS.slice();
-/* 已花星星不再存死数，一律从兑换记录派生：每次兑换=1条log=当前价。
-   规则调整后旧兑换记录也按统一五进制换算，星星搬家合并后各设备保持一致。 */
-HUB.spent = (HUB.log||[]).length * REWARD_COST;
+/* 旧版兑换记录没有唯一编号。星星搬家时，两台设备保存的同一笔记录可能因字段略有
+   不同而被重复合并。旧记录只能可靠地用“日期+奖品”识别；新版记录一律使用 id。 */
+function redeemKey(rec){
+  if(rec && rec.id) return "id:"+String(rec.id);
+  return "old:"+String((rec&&rec.d)||"")+"|"+String((rec&&rec.reward)||"").trim();
+}
+function normalizeRedeemLog(log){
+  const out=[], seen=new Set();
+  (Array.isArray(log)?log:[]).forEach(function(rec){
+    if(!rec || typeof rec!=="object") return;
+    const key=redeemKey(rec);
+    if(seen.has(key)) return;
+    seen.add(key); out.push(rec);
+  });
+  return out;
+}
+const rawRedeemCount = Array.isArray(HUB.log) ? HUB.log.length : 0;
+HUB.log = normalizeRedeemLog(HUB.log);
+if(HUB.log.length!==rawRedeemCount) saveHub();
+/* 已兑换奖励必须扣除，但不能用今天的价格重算旧账：
+   - 新记录直接保存 cost，今后规则再变也不会改写历史；
+   - 没有 cost 的旧记录按兑换日期匹配当时的真实规则。 */
+function rawRedeemCost(rec){
+  const saved = Number(rec && rec.cost);
+  if(saved>0) return saved;
+  const day = String((rec && rec.d)||"");
+  if(day && day <= "2026-07-16") return LEGACY_REWARD_COST;
+  if(day && day < NEW_RULE_START) return HIGH_PRICE_REWARD_COST;
+  return REWARD_COST;
+}
+/* 把不同时期的星星统一折成当前价值，保证改规则时已经长出的树不会缩水：
+   旧制 100⭐/树 → 当前 300⭐/树，乘3；高门槛期 750⭐/树 → 当前，乘0.4。 */
+function valueFactor(day){
+  day=String(day||"");
+  if(day && day <= "2026-07-16") return 3;
+  if(day && day < NEW_RULE_START) return 0.4;
+  return 1;
+}
+function redeemCost(rec){ return Math.round(rawRedeemCost(rec)*valueFactor(rec&&rec.d)); }
+function spentFromLog(){ return (HUB.log||[]).reduce((sum,rec)=>sum+redeemCost(rec),0); }
+HUB.spent = spentFromLog();
+saveHub();
 function dkey(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
 
 function collectDays(){
@@ -361,9 +404,9 @@ function collectDays(){
 function refreshReward(){
   const days = collectDays();
   const allDates = Object.keys(days).sort();
-  let total = 0, todayCount=0;
+  let total = 0, walletEarned = 0, todayCount=0;
   const today = dkey(new Date());
-  allDates.forEach(d=>{ total += days[d]; });
+  allDates.forEach(d=>{ total += days[d]; walletEarned += Math.round(days[d]*valueFactor(d)); });
   todayCount = days[today] || 0;
 
   // 连续打卡：从今天(或昨天)往前数有活动的天
@@ -379,7 +422,7 @@ function refreshReward(){
   document.getElementById("dayCount").textContent = allDates.filter(d=>days[d]>0).length;
 
   // 可用星星 = 累计获得 − 已兑换花掉；再换算成 树/果/花/星（五进制阶梯）
-  const avail = Math.max(0, total - (HUB.spent||0));
+  const avail = Math.max(0, walletEarned - (HUB.spent||0));
   window.__earnedTotal = total; window.__avail = avail;
   const trees = Math.floor(avail / TREE_COST);
   let r = avail % TREE_COST;
@@ -392,7 +435,9 @@ function refreshReward(){
   document.getElementById("ladderRow").innerHTML =
     cell("🌳",trees,"大树",trees>0)+cell("🍎",fruits,"果子")+cell("🌸",flowers,"小花")+cell("⭐",starsLeft,"星星");
 
-  let hint = "🌱 所有星星都会一直累计：5⭐开1朵花，5朵花结1个果，5个果长1棵大树。<br>";
+  let hint = "📒 原始累计 <b>"+total+"</b>⭐；按各阶段规则保值折算为 <b>"+walletEarned+"</b>枚当前⭐"
+           + " − 已兑换折算 <b>"+(HUB.spent||0)+"</b>⭐ = 现在可用 <b>"+avail+"</b>⭐。<br>";
+  hint += "🌱 按桃桃过去每天约220⭐的速度：5⭐开1朵花，5朵花结1个果，12个果长1棵大树，一周大约能长5棵！<br>";
   hint += "再得 <b>"+(PER-starsLeft)+"</b> 颗 ⭐ 就能多开 1 朵 🌸！";
   if(trees>=REWARD_TREES){
     hint += "<br>🎉 你有 <b>"+trees+"</b> 棵大树 🌳，够 "+REWARD_TREES+" 棵啦，可以兑换生活大奖！";
@@ -590,7 +635,8 @@ function doRedeemGoal(){
   const rw=HUB.goalReward; if(!rw) return;
   if((window.__trees||0)<REWARD_TREES){ alert("大树还不够 "+REWARD_TREES+" 棵哦，再攒攒～"); return; }
   if(!confirm("确定要用 "+REWARD_COST+" ⭐（"+REWARD_TREES+" 棵🌳）兑换：\n\n🎁 "+rw+"\n\n兑换后星星会扣掉哦。")) return;
-  HUB.spent=(HUB.spent||0)+REWARD_COST; HUB.log.push({d:dkey(new Date()),reward:rw});
+  HUB.log.push({id:"r"+Date.now()+"-"+Math.random().toString(36).slice(2,8),d:dkey(new Date()),reward:rw,cost:REWARD_COST});
+  HUB.spent=spentFromLog();
   HUB.goalReward=null; saveHub(); refreshReward();
   alert("🎉 兑换成功！\n拿着这个去找爸爸妈妈领奖：\n\n🎁 "+rw+"\n\n（用掉了 "+REWARD_TREES+" 棵大树 🌳）");
 }
@@ -612,15 +658,20 @@ function renderGoal(){
   html+='<div style="margin-top:8px;"><span class="parent-link" style="font-size:13px;" onclick="clearGoal()">换个目标</span></div></div>';
   box.innerHTML=html;
 }
-/* 撤销上次兑换：把最近一次兑换退回来（退还 REWARD_COST 星星、删掉那条记录）。防误点。 */
+/* 撤销上次兑换：按那笔记录的真实成本退还星星并删掉记录。防误点。 */
 function undoLastRedeem(){
   if(!HUB.log || !HUB.log.length){ alert("没有可撤销的兑换记录～"); return; }
+  const p=prompt("这是家长操作，请输入家长密码：");
+  if(p===null) return;
+  if(!rvCheck(p.trim())){ alert("密码不对，不能撤销兑换。"); return; }
+  if(!PROFILE.rvHash){ PROFILE.rvHash=rvHashOf(p.trim()); saveProfile(); }
   const last=HUB.log[HUB.log.length-1];
-  if(!confirm("撤销最近一次兑换？\n\n🎁 "+(last.reward||"(未知奖励)")+"（"+(last.d||"")+"）\n\n会退还 "+REWARD_COST+" ⭐，并删掉这条记录。")) return;
+  const refund=redeemCost(last);
+  if(!confirm("撤销最近一次兑换？\n\n🎁 "+(last.reward||"(未知奖励)")+"（"+(last.d||"")+"）\n\n会退还 "+refund+" ⭐，并删掉这条记录。")) return;
   HUB.log.pop();
-  HUB.spent=Math.max(0,(HUB.spent||0)-REWARD_COST);
+  HUB.spent=spentFromLog();
   saveHub();
-  alert("已撤销 ✅ 退回了 "+REWARD_COST+" ⭐，星星恢复到兑换前。");
+  alert("已撤销 ✅ 退回了 "+refund+" ⭐，星星恢复到兑换前。");
   refreshReward();
 }
 
@@ -719,8 +770,10 @@ function mergeStore(L,R){
     o.review=(o.review||[]).concat(R.review.filter(x=>!seen.has(x.d+"|"+x.q))).slice(-80); }
   if(R.custom && !(o.custom||"").trim()) o.custom=R.custom;   // 英语"这周的词"：本机空才接收
   if(typeof R.spent!=="undefined") o.spent=mergeNum(o.spent, R.spent);
-  if(R.log){ const seen=new Set((o.log||[]).map(x=>JSON.stringify(x)));
-    o.log=(o.log||[]).concat(R.log.filter(x=>!seen.has(JSON.stringify(x)))); }
+  if(R.log){
+    const combined=(o.log||[]).concat(R.log||[]);
+    o.log=normalizeRedeemLog(combined);
+  }
   if(R.rewards && (!o.rewards || R.rewards.length>o.rewards.length)) o.rewards=R.rewards;
   return o;
 }
