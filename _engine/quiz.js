@@ -85,30 +85,32 @@
     const b=(typeof QUESTION_CREATIVES!=="undefined" && QUESTION_CREATIVES[key]) ? QUESTION_CREATIVES[key].slice() : [];
     return a.concat(b);
   }catch(e){ return []; } }
-  function rememberRound(key,list){ const old=STORE.recent[key]||[];
+  function rememberRound(key,list){ if(PREVIEW)return; const old=STORE.recent[key]||[];
     list.forEach(it=>{ const s=qshape(it),i=old.indexOf(s);if(i>=0)old.splice(i,1);old.push(s); });
     STORE.recent[key]=old.slice(-36); saveStore(); }
   function buildRound(mod,key){
+    const RN=PREVIEW?12:PR;
     const extras=extrasFor(key);
     const recent=new Set(STORE.recent[key]||[]);
     if(mod.gen){ const creative=extras.filter(it=>it.type==="open"||it.type==="order"||it.type==="multi");
       const ordinary=extras.filter(it=>creative.indexOf(it)<0);
       const out=[]; if(creative.length){ const cf=shuffle(creative.filter(it=>!recent.has(qshape(it))));
         out.push((cf[0]||shuffle(creative)[0])); }
-      shuffle(ordinary).forEach(it=>{if(out.length<Math.min(2,PR)&&!recent.has(qshape(it)))out.push(it);});
+      shuffle(ordinary).forEach(it=>{if(out.length<Math.min(4,RN)&&!recent.has(qshape(it)))out.push(it);});
       const seen=new Set(out.map(it=>qkey(it))), deferred=[]; let guard=0;
-      while(out.length<PR && guard<180){ const it=mod.gen(),s=qshape(it);
+      while(out.length<RN && guard<300){ const it=mod.gen(),s=qshape(it);
         if(!seen.has(qkey(it))){seen.add(qkey(it));if(!recent.has(s))out.push(it);else deferred.push(it);} guard++; }
-      while(out.length<PR&&deferred.length)out.push(deferred.shift());
+      while(out.length<RN&&deferred.length)out.push(deferred.shift());
       rememberRound(key,out); return shuffle(out); }
     // 固定题库：没掌握的优先出，已掌握的淡到后面（不够才补出来复习）
     const pool = (mod.bank || mod.questions || []).slice().concat(extras);
-    if(mod.ordered){ const out=pool.slice(0,Math.min(PR,pool.length)); rememberRound(key,out); return out; }
+    if(PREVIEW){rememberRound(key,pool);return mod.ordered?pool:pool.slice();}
+    if(mod.ordered){ const out=pool.slice(0,Math.min(RN,pool.length)); rememberRound(key,out); return out; }
     const weak=[], strong=[];
     pool.forEach(it=>{ ((STORE.mastery[qkey(it)]||0) >= MASTER ? strong : weak).push(it); });
     const ordered = shuffle(weak).concat(shuffle(strong));
     const fresh=ordered.filter(it=>!recent.has(qshape(it))), old=ordered.filter(it=>recent.has(qshape(it)));
-    const out=fresh.concat(old).slice(0,Math.min(PR,ordered.length)); rememberRound(key,out); return out;
+    const out=fresh.concat(old).slice(0,Math.min(RN,ordered.length)); rememberRound(key,out); return out;
   }
 
   let curMod=null,curKey=null,qList=[],qi=0,answered=false,typed="",selected=[],firstWrong=false,combo=0,roundStars=0,roundGuessed=0,bestCombo=0;
@@ -466,7 +468,7 @@
   window.nextQ=nextQ;
   window.restart=function(){ if(curKey) startMod(curKey); };
   window.backToMenu=backToMenu;
-  window.goHome=function(){ tickTime(); location.href="../index.html"; };
+  window.goHome=function(){ tickTime(); location.href="../index.html"+(PREVIEW?"?preview=1":""); };
 
   renderMenu();
 })();

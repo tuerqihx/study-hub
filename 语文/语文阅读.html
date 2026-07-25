@@ -94,6 +94,7 @@
 <script src="../_engine/paper.js"></script>
 <script>
 const STORE_KEY="taotao_chinese_v1";
+const PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
 function loadStore(){ try{return JSON.parse(localStorage.getItem(STORE_KEY))||{days:{},review:[]};}catch(e){return {days:{},review:[]};} }
 function saveStore(){ try{localStorage.setItem(STORE_KEY,JSON.stringify(STORE));}catch(e){} }
 let STORE=loadStore(); if(!STORE.review)STORE.review=[]; if(!STORE.done)STORE.done={}; if(!STORE.last)STORE.last={};
@@ -108,21 +109,22 @@ function timeRec(){ const r=todayRec(); if(!r.timeSec) r.timeSec=0; return r; }
 function usedSec(){ return timeRec().timeSec; }
 function remainSec(){ return Math.max(0, TIME_LIMIT_MIN*60 - usedSec()); }
 let sessionStart=null;
-function tickTime(){ if(!sessionStart) return; const now=Date.now(); const r=timeRec(); r.timeSec=(r.timeSec||0)+(now-sessionStart)/1000; sessionStart=now; saveStore(); }
+function tickTime(){ if(PREVIEW||!sessionStart) return; const now=Date.now(); const r=timeRec(); r.timeSec=(r.timeSec||0)+(now-sessionStart)/1000; sessionStart=now; saveStore(); }
 function renderTimeBanner(){ let b=document.getElementById("timeBanner");
   if(!b){ const menu=document.getElementById("menu"); b=document.createElement("div"); b.id="timeBanner";
     b.style.cssText="text-align:center;font-size:15px;font-weight:bold;color:#999;margin:0 0 10px;"; menu.parentNode.insertBefore(b, menu); }
   const r=Math.ceil(remainSec()/60);
+  if(PREVIEW){b.textContent="👨‍👧 家长预览模式：全部篇目可查看，不计星、不记错题、不耗时";b.style.color="#7c5cff";return;}
   b.textContent = r>0 ? ("⏳ 今天语文还能玩 "+r+" 分钟") : "⏰ 今天语文的时间用完啦，明天再来玩～"; }
 
-function goHome(){ tickTime(); location.href="../index.html"; }
+function goHome(){ tickTime(); location.href="../index.html"+(PREVIEW?"?preview=1":""); }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1));}
 function choose(a){ return a[Math.floor(Math.random()*a.length)]; }
 function sampleN(a,n){ return shuffle(a).slice(0,n); }
 /* 字词句生成题：每关现出 5 道不重复的新题（buildGenRound 在 start() 里被调用） */
-function buildGenRound(mod){ const out=[], seen=new Set(); let guard=0;
-  while(out.length<5 && guard<120){ const it=mod.gen(); const k=(it.q||"")+"|"+it.answer; if(!seen.has(k)){ seen.add(k); out.push(it); } guard++; }
+function buildGenRound(mod,wanted){ const out=[], seen=new Set(),limit=wanted||5; let guard=0;
+  while(out.length<limit && guard<240){ const it=mod.gen(); const k=(it.q||"")+"|"+it.answer; if(!seen.has(k)){ seen.add(k); out.push(it); } guard++; }
   return out; }
 /* 阅读题按日轮换：每次读一篇只出 3 道——答错过的题必出（错题不换），
    其余按日期轮着换，今天和明天读同一篇，出的题不一样，不会总碰到见过的题 */
@@ -839,10 +841,11 @@ function todayPicks(){
 
 function makeCard(idx,curIdx,timeUp,isPick){ const p=PASSAGES[idx]; const b=document.createElement("button");
   const prevDone=(idx===0)||!!STORE.done[PASSAGES[idx-1].title];
-  const done=!!STORE.done[p.title], locked=timeUp||!prevDone, isCur=(idx===curIdx)&&!timeUp;
+  const done=!!STORE.done[p.title], locked=!PREVIEW&&(timeUp||!prevDone), isCur=(idx===curIdx)&&!timeUp;
   const num=NUM[idx]||((idx+1)+".");
   const reviewedToday = isPick && playedToday(p.title);
-  let stt = timeUp?'⏰ 今天时间用完啦'
+  let stt = PREVIEW?'👀 家长查看全部题目'
+          : timeUp?'⏰ 今天时间用完啦'
           : isPick?(reviewedToday?'🎉 今天复习完啦':'📅 今天复习这一篇')
           : done?'✓ 读过啦（可复习）':locked?'🔒 先读上一篇':isCur?'👉 现在读这个':(p.sub||'读短文 · 答题');
   b.className="lv "+p.cls;
@@ -858,6 +861,7 @@ function makeCard(idx,curIdx,timeUp,isPick){ const p=PASSAGES[idx]; const b=docu
 function renderMenu(){ const m=document.getElementById("menu"); m.innerHTML="";
   renderTimeBanner();
   const timeUp = remainSec()<=0;
+  if(PREVIEW){PASSAGES.forEach((p,idx)=>m.appendChild(makeCard(idx,-1,false,false)));return;}
   let curIdx=-1;
   for(let i=0;i<PASSAGES.length;i++){ const prevDone=(i===0)||!!STORE.done[PASSAGES[i-1].title]; if(prevDone && !STORE.done[PASSAGES[i].title]){ curIdx=i; break; } }
   const picks=todayPicks();
@@ -892,11 +896,13 @@ function renderMenu(){ const m=document.getElementById("menu"); m.innerHTML="";
 renderMenu();
 function backToMenu(){ tickTime(); sessionStart=null; document.getElementById("done").style.display="none"; document.getElementById("card").style.display="none"; document.getElementById("menu").style.display=""; renderMenu(); }
 function start(idx){
-  if(remainSec()<=0){ alert("今天语文的时间用完啦，明天再来挑战！"); return; }
-  cur=PASSAGES[idx]; qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0; sessionStart=Date.now();
-  if(cur.gen){ cur.questions=buildGenRound(cur); cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
-  else { if(!cur.__all) cur.__all=(cur.questions||[]).concat(CHINESE_EXTRAS[cur.title]||[]); cur.questions=pickDaily(cur);
-    cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
+  if(!PREVIEW&&remainSec()<=0){ alert("今天语文的时间用完啦，明天再来挑战！"); return; }
+  cur=PASSAGES[idx]; qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0; sessionStart=PREVIEW?null:Date.now();
+  if(cur.gen){ cur.questions=buildGenRound(cur,PREVIEW?12:5);
+    if(PREVIEW)cur.questions.push(chineseCreative(cur));else cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
+  else { if(!cur.__all) cur.__all=(cur.questions||[]).concat(CHINESE_EXTRAS[cur.title]||[]);
+    cur.questions=PREVIEW?cur.__all.slice():pickDaily(cur);
+    if(PREVIEW)cur.questions.push(chineseCreative(cur));else cur.questions.splice(rnd(0,cur.questions.length-1),1,chineseCreative(cur)); }
   document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
   document.getElementById("card").style.display="block";
   document.getElementById("ptitle").textContent=cur.title;
@@ -959,6 +965,7 @@ const PRAISE=["读得真仔细！","答对啦！","你真会读！","厉害！",
 function good(mode){ answered=true; const fb=document.getElementById("fb");
   const item=cur.questions[qi]; const k=(item.q||"").replace(/<[^>]+>/g,"").trim();
   const r=todayRec(); if(!r.awarded) r.awarded={};
+  if(PREVIEW){sndRight();fb.className="feedback ok";fb.textContent=mode==="thought"?"👀 已查看开放题提交方式（预览不保存）":"👀 答案正确（预览不计星、不改进度）";setBar(qi+1,cur.questions.length);document.getElementById("nextBtn").style.display="block";return;}
   if(!firstWrong){
     if(r.awarded[k]){ saveStore(); sndRight(); fb.className="feedback ok"; fb.textContent="✅ 对啦！这题今天已经拿过 ⭐ 了——读没读过的篇目才加星哦"; }
     else { r.awarded[k]=true; r.stars++; r.correct++; saveStore(); showStarNow(); floatPlus(); roundStars++; combo++; if(combo>bestCombo)bestCombo=combo; sndRight();
@@ -969,21 +976,22 @@ function good(mode){ answered=true; const fb=document.getElementById("fb");
   setBar(qi+1,cur.questions.length);
   document.getElementById("nextBtn").style.display="block";
 }
-function bad(item){ if(!firstWrong){ firstWrong=true; recordMiss(item); } combo=0; sndWrong();
+function bad(item){ if(PREVIEW){sndWrong();const fb=document.getElementById("fb");fb.className="feedback no";fb.textContent="👀 这个选项不符合设定答案（预览不记录错题）";return;}
+  if(!firstWrong){ firstWrong=true; recordMiss(item); } combo=0; sndWrong();
   const fb=document.getElementById("fb"); fb.className="feedback no"; fb.textContent="✗ 再读读短文～ 提示："+(item.hint||"答案就在文章里哦"); }
 function recordMiss(item){ try{ STORE.review.push({d:dkey(new Date()),m:cur.title,q:(item.q||"").replace(/<[^>]+>/g," ").trim()}); if(STORE.review.length>80)STORE.review=STORE.review.slice(-80); saveStore(); }catch(e){} }
 function nextQ(){ qi++; tickTime();
   // 时间额度只卡"要不要开始读下一篇"，正在读的这一篇不会中途被打断
   if(qi>=cur.questions.length){ finish(); } else { showQ(); } }
 function finish(){ document.getElementById("card").style.display="none";
-  if(cur){ STORE.done[cur.title]=true;                  // 读完这篇 → 解锁下一篇
+  if(cur&&!PREVIEW){ STORE.done[cur.title]=true;                  // 读完这篇 → 解锁下一篇
     STORE.last[cur.title]=dkey(new Date());             // 记录"最近一次读"→ 复习轮换按它挑最久没读的
     const r=todayRec(); if(!r.mods) r.mods={}; r.mods[cur.title]=true;   // 今天读过 → 复习篇打勾
     saveStore(); }
   const d=document.getElementById("done"); d.style.display="block";
   if(!document.getElementById("toMenuBtn")){ const bt=document.createElement("button"); bt.id="toMenuBtn"; bt.className="ghost"; bt.textContent="📋 选别的篇目"; bt.onclick=backToMenu; d.appendChild(bt); }
   const perfect=(roundStars===cur.questions.length);
-  document.getElementById("doneMsg").textContent= perfect ? "🏆 《"+cur.title+"》全部一次答对！" : "《"+cur.title+"》读完啦！";
+  document.getElementById("doneMsg").textContent= PREVIEW?"👀 《"+cur.title+"》预览完毕，没有改变桃桃记录":perfect ? "🏆 《"+cur.title+"》全部一次答对！" : "《"+cur.title+"》读完啦！";
   document.getElementById("doneGot").innerHTML="这一篇：一次答对 <b>"+roundStars+"</b> 题（得 "+roundStars+" ⭐）"+(roundGuessed?("，试出来 "+roundGuessed+" 题（不加星）"):"")+(bestCombo>=3?("<br>最高连对 🔥"+bestCombo):"")+"<br>今天一共 ⭐ "+todayRec().stars+" 颗（每5颗⭐换1朵🌸！）";
   sndFinish(); burst(perfect?["🏆","🎉","⭐","🌟","✨"]:null);
 }

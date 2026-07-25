@@ -161,6 +161,10 @@
     <h1>🏡 我的学习台</h1>
     <div class="datebar" id="datebar"></div>
   </div>
+  <div id="previewBanner" style="margin:0 0 14px;text-align:center;">
+    <button onclick="toggleAllPreview()" id="allPreviewBtn" style="border:2px solid #9b7ae0;background:#f4efff;color:#63459c;border-radius:14px;padding:10px 18px;font:700 15px/1.2 inherit;cursor:pointer;">👨‍👧 家长全科预览</button>
+    <div id="previewNote" style="display:none;margin-top:7px;color:#6d5792;font-size:13px;">预览不计星、不记错题、不耗时、不改变桃桃进度。现在可进入任意科目查看全部内容。</div>
+  </div>
 
   <!-- 奖励面板 -->
   <div class="reward">
@@ -264,7 +268,10 @@
 
 <script>
 /* ============ 跳转 / 提示 ============ */
-function go(path){ location.href = path; }
+const GLOBAL_PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
+function go(pagePath){ location.href = pagePath+(GLOBAL_PREVIEW?(pagePath.includes("?")?"&":"?")+"preview=1":""); }
+function toggleAllPreview(){ const u=new URL(location.href);if(GLOBAL_PREVIEW)u.searchParams.delete("preview");else u.searchParams.set("preview","1");location.href=u.toString(); }
+if(GLOBAL_PREVIEW){ document.getElementById("allPreviewBtn").textContent="退出家长全科预览";document.getElementById("previewNote").style.display="block"; }
 function soon(name){ alert("「"+name+"」马上就来啦！\n再等爸爸做好哦 😊"); }
 
 /* ============ 日期问候 ============ */

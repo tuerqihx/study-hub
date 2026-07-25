@@ -138,6 +138,7 @@
   <div class="toolbar">
     <button class="tool" onclick="openProgress()">📊 我的进步</button>
     <button class="tool" onclick="openCustom()">✏️ 这周的词</button>
+    <button class="tool" id="englishPreviewHome" style="display:none" onclick="location.href='../../index.html?preview=1'">👨‍👧 全科预览中 · 回首页</button>
   </div>
 
   <div class="levels" id="levels"></div>
@@ -356,6 +357,7 @@ const LEVELS = [
 ];
 
 /* ---------- 本地存档：打卡进度 + 自定义内容 ---------- */
+const PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
 const STORE_KEY = "taotao_pron_v1";
 function loadStore(){
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {days:{},custom:""}; }
@@ -370,6 +372,7 @@ if(!STORE.review) STORE.review = [];     // 难点词记录：连着2次没读�
    每次操作(听/读/换词)时把距上次操作的时间记进今天，单段最多计2分钟——防挂机灌水 */
 let lastAct=null;
 function tickTime(){
+  if(PREVIEW)return;
   const now=Date.now();
   if(lastAct){ const d=Math.min((now-lastAct)/1000, 120);
     const r=todayRec(); r.timeSec=(r.timeSec||0)+d; saveStore(); }
@@ -431,7 +434,7 @@ let WORK=[];
 function buildWork(){
   const items = (ALL[li] && ALL[li].items) ? ALL[li].items.slice() : [];
   items.sort((a,b)=> mOf(a)-mOf(b));      // 没掌握的(掌握度低)排前面，优先练
-  WORK = items.slice(0, Math.min(WORK_SET, items.length));
+  WORK = PREVIEW?items:items.slice(0, Math.min(WORK_SET, items.length));
   if(ii >= WORK.length) ii = 0;
 }
 function masteredCount(){ return (ALL[li]&&ALL[li].items)? ALL[li].items.filter(it=>mOf(it)>=MASTER_HITS).length : 0; }
@@ -463,6 +466,7 @@ function load(){
   $("levels").innerHTML = ALL.map((l,i)=>
     `<button class="lvl-btn ${i===li?'active':''}" onclick="setLevel(${i})">${l.name}</button>`).join("");
   if(!WORK.length) buildWork();
+  if(PREVIEW)$("englishPreviewHome").style.display="";
   const it = curItem();
   $("zh").textContent = it.zh ? ("意思：" + it.zh) : "（老师布置的词）";
   $("target").innerHTML = renderTarget(it.t);
@@ -620,6 +624,7 @@ function score(heard){
   else if(pct>=55){ s=2; msg="很棒！已经很接近了 💪"; }
   else if(pct>=25){ s=1; msg="不错的开始！听一遍标准音再读 👂"; }
   else { s=0; msg="再试一次，先点🔊听一听，慢慢学 🙂"; }
+  if(PREVIEW){$("stars").textContent="👀";$("feedback").textContent=msg+"（家长预览不计星、不改进度）";return;}
 
   // 同一个词连着 2 次没读准 → 别让她干着急，老师出场拆开教
   const key = norm(plainText(it0.t));
