@@ -64,6 +64,7 @@
 <div class="wrap">
   <div class="bar">
     <button class="back" onclick="goHome()">🏡 回学习台</button>
+    <button class="back" id="previewBtn" onclick="toggleParentPreview()">👨‍👧 家长预览</button>
     <span class="star-now" id="starNow">今天 ⭐ 0</span>
   </div>
   <h1>🔎 桃桃数学思维调查局</h1>
@@ -96,6 +97,9 @@ function sampleN(a,n){ return shuffle(a).slice(0,n); }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 // 给数字题配 3~4 个迷惑选项（其实数字题用键盘，这里仅备用）
 function nearOptions(ans){ const set=new Set([ans]); while(set.size<3){ set.add(ans+rnd(-3,3)); } return shuffle([...set].filter(x=>x>=0)); }
+function toggleParentPreview(){ const u=new URL(location.href);
+  if(u.searchParams.get("preview")==="1")u.searchParams.delete("preview");else u.searchParams.set("preview","1");location.href=u.toString(); }
+if(new URLSearchParams(location.search).get("preview")==="1")document.getElementById("previewBtn").textContent="退出家长预览";
 
 const PER_ROUND=5; // 每关出几题（短，护眼；题库远大于此，所以每次抽到的都不同）
 
@@ -103,6 +107,30 @@ const PER_ROUND=5; // 每关出几题（短，护眼；题库远大于此，所�
    每个模块要么有 gen()（每次自动随机出新题，永远不重复），要么有 bank（固定题库，随机抽几道）。
    gen 返回 {q, type:'number'|'choice', options?, answer, hint} */
 const MODULES = {
+  windcase: { name:"风路事故档案", icon:"🕊️", cls:"l7", grade:"第001案",
+    noExtras:true, ordered:true,
+    availableAt:"2026-07-26T09:00:00+08:00",
+    tip:"🔎 昨夜纸鹤留下的正式档案。先圈证据、画路线，再作判断；“近”不一定等于“安全”。",
+    teach:"调查员先把信息分成三类：能帮助回答问题的证据、与问题无关的信息、还缺少的信息。路线选择也没有脱离目标的“最好”——这次目标是让刚修好的纸鹤安全回校。",
+    bank:[
+      {id:"wind-evidence",kind:"圈证据",type:"multi",paperOpen:true,
+        q:`<div style="text-align:left;background:#eef7ff;border:2px solid #b9a9e8;border-radius:15px;padding:13px;line-height:1.8">
+          <b>风路现场图</b><br>🟠 A路最近，但一根刚折断的树枝横在路中。<br>
+          🔵 B路没有树枝，正迎着七级强风。<br>🟢 C路远一些，风很小，沿途没有断枝。<br>
+          🍄 湖边还开了3朵月光蘑菇。</div><br>哪些是判断纸鹤安全路线时真正有用的证据？（可多选）`,
+        options:["A路有折断的树枝","B路有七级强风","C路风小且没有断枝","湖边有3朵蘑菇"],
+        answer:["A路有折断的树枝","B路有七级强风","C路风小且没有断枝"],
+        hint:"题目问的是安全路线；想想每条信息会不会影响纸鹤飞行。"},
+      {id:"wind-draw",kind:"画路线",type:"open",paperOpen:true,
+        q:"请在思考纸上画出起点、A/B/C三条路和夜校，用圈或叉标出危险处，再用一句话说明你选择路线时最看重的目标。",
+        hint:"这次不是找最短路线，而是给刚修复的纸鹤找更安全的路线。"},
+      {id:"wind-decision",kind:"提交判断",type:"choice",paperOpen:true,
+        q:"综合全部证据，刚修好的纸鹤最适合先走哪条路？",
+        options:["A路：最近","B路：没有树枝","C路：风小且没有断枝"],
+        answer:"C路：风小且没有断枝",
+        hint:"同时比较树枝、风力和纸鹤刚修好的翅膀，不要只看路程。",
+        exp:"A路近但有断枝，B路无断枝却有七级强风；C路虽然远一点，却避开了两个危险。目标不同，路线选择也会不同。"}
+    ]},
   /* —— 二/三年级：加减竖式（含进位退位） —— */
   addsub: { name:"加减闯关", icon:"➕", cls:"l1", grade:"二·三年级",
     tip:"💡 在纸上列竖式，从个位开始算；满十要进一，不够减要向前一位借十。",

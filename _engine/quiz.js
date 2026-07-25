@@ -7,6 +7,7 @@
 (function(){
   "use strict";
   const PR = (typeof PER_ROUND!=="undefined") ? PER_ROUND : 5;
+  const PREVIEW = new URLSearchParams(location.search).get("preview")==="1";
 
   /* ---- 存储 ---- */
   function loadStore(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{days:{},review:[]}; }catch(e){ return {days:{},review:[]}; } }
@@ -37,6 +38,7 @@
       b.style.cssText="text-align:center;font-size:15px;font-weight:bold;color:#999;margin:0 0 10px;"; menu.parentNode.insertBefore(b, menu); }
     return b; }
   function renderTimeBanner(){ if(!LIMIT_MIN) return; const b=ensureTimeBanner();
+    if(PREVIEW){ b.textContent="👨‍👧 家长预览模式：全部关卡可查看，不计星、不改变桃桃的解锁进度"; b.style.color="#7c5cff"; return; }
     const r=Math.ceil(remainSec()/60);
     b.textContent = r>0 ? ("⏳ 今天这一科还能玩 "+r+" 分钟") : "⏰ 今天这一科的时间用完啦，明天再来玩～"; }
 
@@ -78,6 +80,7 @@
 
   /* ---- 出题 ---- */
   function extrasFor(key){ try{
+    if(MODULES[key]&&MODULES[key].noExtras) return [];
     const a=(typeof QUESTION_EXTRAS!=="undefined" && QUESTION_EXTRAS[key]) ? QUESTION_EXTRAS[key].slice() : [];
     const b=(typeof QUESTION_CREATIVES!=="undefined" && QUESTION_CREATIVES[key]) ? QUESTION_CREATIVES[key].slice() : [];
     return a.concat(b);
@@ -100,6 +103,7 @@
       rememberRound(key,out); return shuffle(out); }
     // 固定题库：没掌握的优先出，已掌握的淡到后面（不够才补出来复习）
     const pool = (mod.bank || mod.questions || []).slice().concat(extras);
+    if(mod.ordered){ const out=pool.slice(0,Math.min(PR,pool.length)); rememberRound(key,out); return out; }
     const weak=[], strong=[];
     pool.forEach(it=>{ ((STORE.mastery[qkey(it)]||0) >= MASTER ? strong : weak).push(it); });
     const ordered = shuffle(weak).concat(shuffle(strong));
@@ -157,17 +161,20 @@
   }
 
   function makeCard(key,i,keys,curIdx,timeUp,isPick){ const mod=MODULES[key]; const b=document.createElement("button");
-    const prevDone=(i===0)||!!STORE.done[keys[i-1]];
-    const done=!!STORE.done[key], locked=timeUp||!prevDone, isCur=(i===curIdx)&&!timeUp;
+    const prevDone=(i===0)||keys.slice(0,i).every(k=>!!STORE.done[k]);
+    const available=!mod.availableAt || Date.now()>=new Date(mod.availableAt).getTime();
+    const done=!!STORE.done[key], locked=!PREVIEW&&(timeUp||!prevDone||!available), isCur=(i===curIdx)&&!timeUp&&available;
     const num=NUM[i]||((i+1)+".");
     const reviewedToday = isPick && playedToday(key);
-    let st = timeUp ? '⏰ 今天时间用完啦'
+    let st = PREVIEW ? '👀 家长查看题型'
+           : !available ? '🕘 7月26日上午9点开启'
+           : timeUp ? '⏰ 今天时间用完啦'
            : isPick ? (reviewedToday ? '🎉 今天复习完啦' : '📅 今天复习这一关')
            : done ? '✓ 学过啦（可复习）' : locked ? '🔒 先过上一关' : isCur ? '👉 现在学这个' : (mod.grade||mod.sub||'去闯关');
     b.className="lv "+(mod.cls||"");
     b.innerHTML='<span class="i">'+mod.icon+'</span><span class="n">'+num+' '+mod.name+'</span><span class="d">'+st+'</span>';
     if(locked){ b.style.opacity="0.45"; b.style.filter="grayscale(0.6)";
-      b.onclick=()=>alert(timeUp?"今天这一科的时间用完啦，明天再来挑战！":"先把前面的关卡过了，再来这一关哦 😊"); }
+      b.onclick=()=>alert(!available?"这宗档案要到明天上午9点才会打开。":timeUp?"今天这一科的时间用完啦，明天再来挑战！":"先完成前面的调查，再来这一关哦 😊"); }
     else { b.onclick=()=>startMod(key); }
     if(isCur) b.style.boxShadow="0 0 0 4px #ffd34d, 0 8px 20px rgba(0,0,0,.18)";
     else if(isPick && !reviewedToday && !timeUp) b.style.boxShadow="0 0 0 4px #9fd0ff, 0 8px 20px rgba(0,0,0,.14)";
@@ -178,9 +185,16 @@
     renderTimeBanner();
     const timeUp = LIMIT_MIN && remainSec()<=0;
     const keys=Object.keys(MODULES);
+    if(PREVIEW){
+      renderContinueBar(keys,-1,false,[]);
+      keys.forEach((key,i)=>m.appendChild(makeCard(key,i,keys,-1,false,false)));
+      return;
+    }
     // 找出"现在该学的那一关"：前一关已通关、自己还没通关的第一个
     let curIdx=-1;
-    for(let i=0;i<keys.length;i++){ const prevDone=(i===0)||!!STORE.done[keys[i-1]]; if(prevDone && !STORE.done[keys[i]]){ curIdx=i; break; } }
+    for(let i=0;i<keys.length;i++){ const prevDone=(i===0)||keys.slice(0,i).every(k=>!!STORE.done[k]);
+      const available=!MODULES[keys[i]].availableAt||Date.now()>=new Date(MODULES[keys[i]].availableAt).getTime();
+      if(prevDone && available && !STORE.done[keys[i]]){ curIdx=i; break; } }
     const picks=todayPicks(keys);
     renderContinueBar(keys, curIdx, timeUp, picks);
 
@@ -218,9 +232,10 @@
   }
 
   function startMod(key){
-    if(LIMIT_MIN && remainSec()<=0){ alert("今天这一科的时间用完啦，明天再来挑战！"); return; }
+    if(!PREVIEW&&MODULES[key].availableAt&&Date.now()<new Date(MODULES[key].availableAt).getTime()){alert("这宗档案要到明天上午9点才会打开。");return;}
+    if(!PREVIEW&&LIMIT_MIN && remainSec()<=0){ alert("今天这一科的时间用完啦，明天再来挑战！"); return; }
     curKey=key; curMod=MODULES[key]; qList=buildRound(curMod,key); qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0;
-    sessionStart=Date.now();
+    sessionStart=PREVIEW?null:Date.now();
     document.getElementById("menu").style.display="none"; document.getElementById("done").style.display="none";
     document.getElementById("card").style.display="block"; document.getElementById("tip").textContent=curMod.tip||""; showQ(); }
 
@@ -302,6 +317,8 @@
     const hb=document.getElementById("hintBtn"); if(hb) hb.style.display="none";
     const fb=document.getElementById("fb");
     const k=qkey(qList[qi]); const r=todayRec(); if(!r.awarded) r.awarded={};
+    if(PREVIEW){ sndRight(); fb.className="feedback ok"; fb.textContent=mode==="thought"?"👀 已查看开放题的提交方式（预览不保存）":"👀 答案正确（家长预览不计星、不改进度）";
+      setBar(qi+1,qList.length); document.getElementById("nextBtn").style.display="block"; return; }
     if(!firstWrong){
       STORE.mastery[k]=(STORE.mastery[k]||0)+1;       // 学会进度照常累积
       if(r.awarded[k]){ // 这道题今天已经拿过星了 → 不再给星（防止重复刷奖励）
@@ -321,7 +338,8 @@
     setBar(qi+1,qList.length);
     document.getElementById("nextBtn").style.display="block";
   }
-  function bad(item){ if(!firstWrong){ firstWrong=true; STORE.mastery[qkey(item)]=0; recordMiss(item); } combo=0; sndWrong();
+  function bad(item){ if(PREVIEW){ sndWrong(); const pf=document.getElementById("fb");pf.className="feedback no";pf.textContent="👀 这个选项不符合设定答案（预览不记录错题）";return; }
+    if(!firstWrong){ firstWrong=true; STORE.mastery[qkey(item)]=0; recordMiss(item); } combo=0; sndWrong();
     const fb=document.getElementById("fb"); fb.className="feedback no";
     fb.textContent="✗ 不对哦，再想想～ 提示："+(item.hint||"慢慢来，你可以的");
     // 错过一次后，提示按钮直接升级成"详细讲讲"，别让她在原地转圈
@@ -424,13 +442,13 @@
     // 时间额度只卡"要不要开始下一关"，正在做的这一关(已固定题量)不会中途被打断
     if(qi>=qList.length) finish(); else showQ(); }
   function finish(){ document.getElementById("card").style.display="none";
-    if(curKey){ STORE.done[curKey]=true;                  // 完成这一关 → 解锁下一关
+    if(curKey&&!PREVIEW){ STORE.done[curKey]=true;                  // 完成这一关 → 解锁下一关
       STORE.last[curKey]=dkey(new Date());                // 记录"最近一次玩"→ 复习轮换按它挑最久没玩的
       const r=todayRec(); if(!r.mods) r.mods={}; r.mods[curKey]=true;   // 今天玩过 → 复习关打勾
       saveStore(); }
     const d=document.getElementById("done"); d.style.display="block";
     const perfect=(roundStars===qList.length);
-    document.getElementById("doneMsg").textContent = perfect ? "🏆 完美通关！全部一次答对！" : "「"+curMod.name+"」闯关完成！";
+    document.getElementById("doneMsg").textContent = PREVIEW ? "👀 这一关预览完毕，没有改变桃桃的记录" : perfect ? "🏆 完美通关！全部一次答对！" : "「"+curMod.name+"」闯关完成！";
     document.getElementById("doneGot").innerHTML = "这一关：一次答对 <b>"+roundStars+"</b> 题（得 "+roundStars+" ⭐）"+
       (roundGuessed?("，试出来 "+roundGuessed+" 题（不加星）"):"")+(bestCombo>=3?("<br>最高连对 🔥"+bestCombo):"")+
       "<br>今天一共 ⭐ "+todayRec().stars+" 颗（每 5 颗 ⭐ 在学习台换 1 朵 🌸！）";
