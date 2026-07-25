@@ -329,6 +329,10 @@ const REWARD_TREES = 5;              // 攒够 5 棵🌳才能兑换 1 个生活
 const FRUIT_COST = PER*PER;          // 25 ⭐ = 1 个🍎
 const TREE_COST = FRUIT_PER_TREE*FRUIT_COST;   // 300 ⭐ = 1 棵🌳
 const REWARD_COST = REWARD_TREES*TREE_COST;    // 1500 ⭐ = 1 个生活大奖
+/* 2026-07-25 家长与桃桃共同核账：7月16日升级时实际有18棵，之后线下兑换3棵
+   未在平板扣减，因此结清余额为15棵。旧星星与旧兑换到此封账，今后只累计新流水。 */
+const BALANCE_CUTOFF = "2026-07-25";
+const BALANCE_BASE = 15*TREE_COST;              // 4500 当前⭐ = 15棵树
 const LEGACY_REWARD_COST = 500;        // 2026-07-16（含）以前：旧规则每次兑换实际扣 500⭐
 const HIGH_PRICE_REWARD_COST = 3750;   // 2026-07-17 至 2026-07-24：高门槛规则
 const NEW_RULE_START = "2026-07-25";   // 从这天起按当前 1500⭐ 兑换，并把成本写进记录
@@ -421,7 +425,16 @@ function refreshReward(){
   document.getElementById("dayCount").textContent = allDates.filter(d=>days[d]>0).length;
 
   // 可用星星 = 累计获得 − 已兑换花掉；再换算成 树/果/花/星（五进制阶梯）
-  const avail = Math.max(0, walletEarned - (HUB.spent||0));
+  /* 结清日前的旧流水不再重复计算；结清日当天已有星星为0。
+     新版兑换都有唯一id，所以结清日之后发生的真实兑换可准确扣除。 */
+  let afterEarned=0;
+  allDates.forEach(d=>{ if(d>BALANCE_CUTOFF) afterEarned+=days[d]; });
+  const cutoffEarned=Math.max(0,Number(days[BALANCE_CUTOFF])||0);
+  const afterSpent=(HUB.log||[]).reduce((sum,rec)=>{
+    const d=String((rec&&rec.d)||"");
+    return sum + ((d>BALANCE_CUTOFF || (d===BALANCE_CUTOFF && rec&&rec.id)) ? redeemCost(rec) : 0);
+  },0);
+  const avail = Math.max(0, BALANCE_BASE + cutoffEarned + afterEarned - afterSpent);
   window.__earnedTotal = total; window.__avail = avail;
   const trees = Math.floor(avail / TREE_COST);
   let r = avail % TREE_COST;
@@ -663,15 +676,20 @@ function renderGoal(){
 }
 /* 撤销上次兑换：按那笔记录的真实成本退还星星并删掉记录。防误点。 */
 function undoLastRedeem(){
-  if(!HUB.log || !HUB.log.length){ alert("没有可撤销的兑换记录～"); return; }
+  let undoIndex=-1;
+  for(let i=(HUB.log||[]).length-1;i>=0;i--){
+    const rec=HUB.log[i], d=String((rec&&rec.d)||"");
+    if(d>BALANCE_CUTOFF || (d===BALANCE_CUTOFF && rec&&rec.id)){ undoIndex=i; break; }
+  }
+  if(undoIndex<0){ alert("核账结清后还没有新的兑换记录～"); return; }
   const p=prompt("这是家长操作，请输入家长密码：");
   if(p===null) return;
   if(!rvCheck(p.trim())){ alert("密码不对，不能撤销兑换。"); return; }
   if(!PROFILE.rvHash){ PROFILE.rvHash=rvHashOf(p.trim()); saveProfile(); }
-  const last=HUB.log[HUB.log.length-1];
+  const last=HUB.log[undoIndex];
   const refund=redeemCost(last);
   if(!confirm("撤销最近一次兑换？\n\n🎁 "+(last.reward||"(未知奖励)")+"（"+(last.d||"")+"）\n\n会退还 "+refund+" ⭐，并删掉这条记录。")) return;
-  HUB.log.pop();
+  HUB.log.splice(undoIndex,1);
   HUB.spent=spentFromLog();
   saveHub();
   alert("已撤销 ✅ 退回了 "+refund+" ⭐，星星恢复到兑换前。");
