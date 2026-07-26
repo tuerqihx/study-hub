@@ -129,7 +129,7 @@
     // 固定题库：没掌握的优先出，已掌握的淡到后面（不够才补出来复习）
     const pool = (mod.bank || mod.questions || []).slice().concat(extras);
     if(PREVIEW){rememberRound(key,pool);return mod.ordered?pool:pool.slice();}
-    if(mod.ordered){ const out=pool.slice(0,Math.min(RN,pool.length)); rememberRound(key,out); return out; }
+    if(mod.ordered&&!STORE.done[key]){ const out=pool.slice(0,Math.min(RN,pool.length)); rememberRound(key,out); return out; }
     const weak=[], strong=[];
     pool.forEach(it=>{ ((STORE.mastery[qkey(it)]||0) >= MASTER ? strong : weak).push(it); });
     const ordered = shuffle(weak).concat(shuffle(strong));
@@ -171,9 +171,9 @@
   function weakCount(key){ const mod=MODULES[key], pool=(mod.bank||mod.questions||[]).concat(extrasFor(key)); let n=0;
     pool.forEach(it=>{ if((STORE.mastery[qkey(it)]||0)<MASTER) n++; }); return n; }
   function todayPicks(keys){
-    const done=keys.filter(k=>STORE.done[k]);
+    const done=keys.filter(k=>STORE.done[k]&&!MODULES[k].storyCase);
     if(!done.length) return [];
-    const hasNew=keys.some(k=>!STORE.done[k]);
+    const hasNew=keys.some(k=>!STORE.done[k]&&!MODULES[k].storyCase);
     const need=done.slice().sort((a,b)=> weakCount(b)-weakCount(a)
       || String(STORE.last[a]||"").localeCompare(String(STORE.last[b]||""))
       || done.indexOf(a)-done.indexOf(b));
@@ -187,20 +187,24 @@
   }
 
   function makeCard(key,i,keys,curIdx,timeUp,isPick){ const mod=MODULES[key]; const b=document.createElement("button");
-    const prevDone=(i===0)||keys.slice(0,i).every(k=>!!STORE.done[k]);
+    const prior=keys.slice(0,i).filter(k=>!!MODULES[k].storyCase===!!mod.storyCase);
+    const prevDone=prior.every(k=>!!STORE.done[k]);
     const available=!mod.availableAt || Date.now()>=new Date(mod.availableAt).getTime();
     const done=!!STORE.done[key], locked=!PREVIEW&&(timeUp||!prevDone||!available), isCur=(i===curIdx)&&!timeUp&&available;
-    const num=NUM[i]||((i+1)+".");
+    const normalIndex=keys.slice(0,i+1).filter(k=>!MODULES[k].storyCase).length-1;
+    const num=mod.storyCase?"":(NUM[normalIndex]||((normalIndex+1)+"."));
     const reviewedToday = isPick && playedToday(key);
+    const ad=mod.availableAt?new Date(mod.availableAt):null;
+    const availableLabel=ad?((ad.getMonth()+1)+"月"+ad.getDate()+"日上午9点开启"):"";
     let st = PREVIEW ? '👀 家长查看题型'
-           : !available ? '🕘 7月26日上午9点开启'
+           : !available ? '🕘 '+availableLabel
            : timeUp ? '⏰ 今天时间用完啦'
            : isPick ? (reviewedToday ? '🎉 今天复习完啦' : '📅 今天复习这一关')
            : done ? '✓ 学过啦（可复习）' : locked ? '🔒 先过上一关' : isCur ? '👉 现在学这个' : (mod.grade||mod.sub||'去闯关');
     b.className="lv "+(mod.cls||"");
     b.innerHTML='<span class="i">'+mod.icon+'</span><span class="n">'+num+' '+mod.name+'</span><span class="d">'+st+'</span>';
     if(locked){ b.style.opacity="0.45"; b.style.filter="grayscale(0.6)";
-      b.onclick=()=>alert(!available?"这宗档案要到明天上午9点才会打开。":timeUp?"今天这一科的时间用完啦，明天再来挑战！":"先完成前面的调查，再来这一关哦 😊"); }
+      b.onclick=()=>alert(!available?"这宗档案要到"+availableLabel+"。":timeUp?"今天这一科的时间用完啦，明天再来挑战！":"先完成前面的调查，再来这一关哦 😊"); }
     else { b.onclick=()=>startMod(key); }
     if(isCur) b.style.boxShadow="0 0 0 4px #ffd34d, 0 8px 20px rgba(0,0,0,.18)";
     else if(isPick && !reviewedToday && !timeUp) b.style.boxShadow="0 0 0 4px #9fd0ff, 0 8px 20px rgba(0,0,0,.14)";
@@ -218,7 +222,8 @@
     }
     // 找出"现在该学的那一关"：前一关已通关、自己还没通关的第一个
     let curIdx=-1;
-    for(let i=0;i<keys.length;i++){ const prevDone=(i===0)||keys.slice(0,i).every(k=>!!STORE.done[k]);
+    for(let i=0;i<keys.length;i++){ const prior=keys.slice(0,i).filter(k=>!!MODULES[k].storyCase===!!MODULES[keys[i]].storyCase);
+      const prevDone=prior.every(k=>!!STORE.done[k]);
       const available=!MODULES[keys[i]].availableAt||Date.now()>=new Date(MODULES[keys[i]].availableAt).getTime();
       if(prevDone && available && !STORE.done[keys[i]]){ curIdx=i; break; } }
     const picks=todayPicks(keys);
@@ -258,7 +263,8 @@
   }
 
   function startMod(key){
-    if(!PREVIEW&&MODULES[key].availableAt&&Date.now()<new Date(MODULES[key].availableAt).getTime()){alert("这宗档案要到明天上午9点才会打开。");return;}
+    if(!PREVIEW&&MODULES[key].availableAt&&Date.now()<new Date(MODULES[key].availableAt).getTime()){
+      const d=new Date(MODULES[key].availableAt);alert("这宗档案要到"+(d.getMonth()+1)+"月"+d.getDate()+"日上午9点才会打开。");return;}
     if(!PREVIEW&&LIMIT_MIN && remainSec()<=0){ alert("今天这一科的时间用完啦，明天再来挑战！"); return; }
     curKey=key; curMod=MODULES[key]; qList=buildRound(curMod,key); qi=0; combo=0; roundStars=0; roundGuessed=0; bestCombo=0;
     sessionStart=PREVIEW?null:Date.now();
