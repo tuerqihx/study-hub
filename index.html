@@ -93,6 +93,12 @@
   .reviewbook { margin-top:24px; background:#fff; border-radius:20px; padding:16px 20px;
     border:3px dashed #ddd; box-shadow:0 4px 14px rgba(0,0,0,.06); }
   .rv-title { font-size:16px; font-weight:bold; color:#888; margin-bottom:10px; }
+  .book-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;background:transparent;padding:0;
+    color:#777;font:700 16px/1.4 inherit;text-align:left;cursor:pointer}
+  .book-head .book-arrow{font-size:18px;transition:transform .2s}
+  .book-body{display:none;margin-top:12px}
+  .reviewbook.book-open .book-body{display:block}
+  .reviewbook.book-open .book-arrow{transform:rotate(90deg)}
   .rv-list { display:flex; flex-direction:column; gap:6px; }
   .rv-item { display:block; background:#fffaf0; border:2px solid #ffe0b3; border-radius:14px; padding:11px 13px; font-size:14px; cursor:pointer; }
   .rv-item .rv-subj { flex:0 0 auto; font-weight:bold; color:#666; }
@@ -235,23 +241,33 @@
   </div>
 
   <!-- 孩子的错题卡片：直接点开看题目、答案和讲解 -->
-  <div class="reviewbook">
-    <div class="rv-title">📕 我的错题卡 · 点开看看答案</div>
-    <div class="rv-list" id="reviewList"></div>
+  <div class="reviewbook" id="reviewBook">
+    <button type="button" class="book-head" onclick="toggleBook('reviewBook')" aria-expanded="false">
+      <span>📕 我的错题卡</span><span class="book-arrow">›</span>
+    </button>
+    <div class="book-body">
+      <div style="font-size:13px;color:#999;margin-bottom:9px;">点击题目查看答案和讲解</div>
+      <div class="rv-list" id="reviewList"></div>
+    </div>
   </div>
 
-  <div class="reviewbook" style="border-color:#d7c2f2;">
-    <div class="rv-title">📔 桃桃的想法本 · 我是这样想的</div>
-    <div class="thought-filters" id="thoughtFilters">
-      <button class="thought-filter on" data-thought-scope="today">今天</button>
-      <button class="thought-filter" data-thought-scope="all">全部</button>
-      <button class="thought-filter on" data-thought-subject="all">全科</button>
-      <button class="thought-filter" data-thought-subject="数学">数学</button>
-      <button class="thought-filter" data-thought-subject="语文">语文</button>
-      <button class="thought-filter" data-thought-subject="科学">科学</button>
-      <button class="thought-filter" data-thought-subject="逻辑">逻辑</button>
+  <div class="reviewbook" id="thoughtBook" style="border-color:#d7c2f2;">
+    <button type="button" class="book-head" onclick="toggleBook('thoughtBook')" aria-expanded="false">
+      <span>📔 桃桃的想法本</span><span class="book-arrow">›</span>
+    </button>
+    <div class="book-body">
+      <div style="font-size:13px;color:#876ca9;">先看她怎么想，再聊聊有没有别的办法</div>
+      <div class="thought-filters" id="thoughtFilters">
+        <button class="thought-filter on" data-thought-scope="today">今天</button>
+        <button class="thought-filter" data-thought-scope="all">全部</button>
+        <button class="thought-filter on" data-thought-subject="all">全科</button>
+        <button class="thought-filter" data-thought-subject="数学">数学</button>
+        <button class="thought-filter" data-thought-subject="语文">语文</button>
+        <button class="thought-filter" data-thought-subject="科学">科学</button>
+        <button class="thought-filter" data-thought-subject="逻辑">逻辑</button>
+      </div>
+      <div class="rv-list" id="thoughtList"></div>
     </div>
-    <div class="rv-list" id="thoughtList"></div>
   </div>
 
   <!-- 电脑小达人 -->
@@ -288,6 +304,11 @@
 
 <script>
 /* ============ 跳转 / 提示 ============ */
+function toggleBook(id){
+  const book=document.getElementById(id);if(!book)return;
+  const open=book.classList.toggle("book-open");
+  const head=book.querySelector(".book-head");if(head)head.setAttribute("aria-expanded",open?"true":"false");
+}
 const GLOBAL_PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
 function go(pagePath){ location.href = pagePath+(GLOBAL_PREVIEW?(pagePath.includes("?")?"&":"?")+"preview=1":""); }
 function toggleAllPreview(){ const u=new URL(location.href);if(GLOBAL_PREVIEW)u.searchParams.delete("preview");else u.searchParams.set("preview","1");location.href=u.toString(); }
