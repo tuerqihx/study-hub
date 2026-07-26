@@ -966,8 +966,24 @@ function pick(el,val){ if(answered)return; const item=cur.questions[qi];
 function checkOpen(){ const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
   const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<6){fb.className="feedback no";fb.textContent="再多写一点：你的依据是什么？也可以先在思考纸上圈画。";return;}
   cur.questions[qi].childAnswer=v;
+  saveThought(cur.questions[qi],v);
   if(answered){fb.className="feedback ok";fb.textContent="✏️ 修改已经保存，不会重复加星。";document.getElementById("openGo").textContent="保存修改";return;}
   good("thought");document.getElementById("openGo").textContent="保存修改"; }
+function saveThought(item,answer){
+  if(PREVIEW)return;
+  try{
+    const key="tao_thought_journal_v1";let book=JSON.parse(localStorage.getItem(key))||{items:[]};
+    if(!Array.isArray(book.items))book.items=[];
+    const question=(item.q||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+    const id=dkey(new Date())+"|"+STORE_KEY+"|"+question,old=book.items.find(x=>x.id===id),now=new Date().toISOString();
+    const drawing=window.TaoPaper&&window.TaoPaper.snapshot?window.TaoPaper.snapshot():"";
+    if(old){if(old.answer!==answer)old.revisions=(old.revisions||0)+1;old.answer=answer;old.updatedAt=now;if(drawing)old.drawing=drawing;}
+    else book.items.push({id,d:dkey(new Date()),subject:"语文",module:cur.title||"",icon:"📖",question,answer,
+      revisions:0,createdAt:now,updatedAt:now,drawing});
+    book.items.sort((a,b)=>(a.updatedAt||"").localeCompare(b.updatedAt||""));book.items=book.items.slice(-120);
+    localStorage.setItem(key,JSON.stringify(book));
+  }catch(e){}
+}
 const PRAISE=["读得真仔细！","答对啦！","你真会读！","厉害！","就是这样！"];
 function good(mode){ answered=true; const fb=document.getElementById("fb");
   const item=cur.questions[qi]; const k=(item.q||"").replace(/<[^>]+>/g,"").trim();

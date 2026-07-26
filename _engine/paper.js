@@ -87,6 +87,19 @@
     requestAnimationFrame(resize);
   }
   function hasInk(){return strokes.some(s=>s.points&&s.points.length>3&&s.tool!=="eraser");}
+  function snapshot(){
+    if(!hasInk())return "";
+    try{
+      const out=document.createElement("canvas");out.width=320;out.height=112;const oc=out.getContext("2d");
+      oc.fillStyle="#fff";oc.fillRect(0,0,out.width,out.height);oc.strokeStyle="#e4edf7";oc.lineWidth=1;
+      for(let x=0;x<out.width;x+=16){oc.beginPath();oc.moveTo(x,0);oc.lineTo(x,out.height);oc.stroke();}
+      for(let y=0;y<out.height;y+=16){oc.beginPath();oc.moveTo(0,y);oc.lineTo(out.width,y);oc.stroke();}
+      strokes.forEach(s=>{if(!s.points||s.points.length<2)return;oc.save();oc.lineCap="round";oc.lineJoin="round";
+        oc.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over";oc.strokeStyle=s.color||"#d72f64";
+        oc.lineWidth=s.tool==="eraser"?11:2.6;oc.beginPath();s.points.forEach((p,i)=>{const x=p.x*out.width,y=p.y*out.height;i?oc.lineTo(x,y):oc.moveTo(x,y);});oc.stroke();oc.restore();});
+      return out.toDataURL("image/png");
+    }catch(e){return "";}
+  }
   window.addEventListener("resize",()=>{if(host&&host.classList.contains("open"))resize();});
-  window.TaoPaper={mount,hasInk,unlock:()=>setPageLock(false)};
+  window.TaoPaper={mount,hasInk,snapshot,unlock:()=>setPageLock(false)};
 })();

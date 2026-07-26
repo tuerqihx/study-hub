@@ -20,6 +20,30 @@
   function qshape(it){ return ((it.kind||"")+"|"+(it.type||"choice")+"|"+qkey(it).replace(/\d+(?:\.\d+)?/g,"#").replace(/\s+/g,"")).slice(0,180); }
   function dkey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function todayRec(){ const k=dkey(new Date()); if(!STORE.days[k]) STORE.days[k]={stars:0,correct:0,guessed:0}; return STORE.days[k]; }
+  const THOUGHT_KEY="tao_thought_journal_v1";
+  function subjectName(){
+    return ({taotao_math_v1:"数学",taotao_logic_v1:"逻辑",taotao_science_v1:"科学"})[STORE_KEY]||"学习";
+  }
+  function saveThought(item,answer){
+    if(PREVIEW)return;
+    try{
+      let book=JSON.parse(localStorage.getItem(THOUGHT_KEY))||{items:[]};
+      if(!Array.isArray(book.items))book.items=[];
+      const question=qkey(item), id=dkey(new Date())+"|"+STORE_KEY+"|"+question;
+      const old=book.items.find(x=>x.id===id), now=new Date().toISOString();
+      const drawing=window.TaoPaper&&window.TaoPaper.snapshot?window.TaoPaper.snapshot():"";
+      if(old){
+        if(old.answer!==answer)old.revisions=(old.revisions||0)+1;
+        old.answer=answer;old.updatedAt=now;if(drawing)old.drawing=drawing;
+      }else{
+        book.items.push({id,d:dkey(new Date()),subject:subjectName(),module:(curMod&&curMod.name)||"",
+          icon:(curMod&&curMod.icon)||"",question,answer,revisions:0,createdAt:now,updatedAt:now,drawing});
+      }
+      book.items.sort((a,b)=>(a.updatedAt||"").localeCompare(b.updatedAt||""));
+      book.items=book.items.slice(-120);
+      localStorage.setItem(THOUGHT_KEY,JSON.stringify(book));
+    }catch(e){}
+  }
   function showStarNow(){ const el=document.getElementById("starNow"); if(el) el.textContent="今天 ⭐ "+todayRec().stars; }
   showStarNow();
 
@@ -318,6 +342,7 @@
   function checkOpen(){ const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
     const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<5){fb.className="feedback no";fb.textContent="再多写一点：你为什么这样想？也可以画完以后用一句话说明。";return;}
     qList[qi].childAnswer=v;
+    saveThought(qList[qi],v);
     if(answered){fb.className="feedback ok";fb.textContent="✏️ 修改已经保存，不会重复加星。";document.getElementById("openGo").textContent="保存修改";return;}
     good("thought");document.getElementById("openGo").textContent="保存修改"; }
 

@@ -105,6 +105,12 @@
   .rv-unlock-btn { background:#f4f4f4; border:2px dashed #ccc; color:#999; font-size:15px; font-weight:bold;
     padding:10px 20px; border-radius:12px; cursor:pointer; font-family:inherit; }
   .rv-unlock-btn:active { transform:scale(.97); }
+  .thought-filters{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px}
+  .thought-filter{border:2px solid #d8c9f0;background:#fff;color:#70549c;border-radius:11px;padding:6px 10px;font:700 13px/1 inherit;cursor:pointer}
+  .thought-filter.on{background:#7655ad;color:#fff;border-color:#7655ad}
+  .thought-card{background:#fbf8ff;border-color:#ddcef4}
+  .thought-answer{white-space:pre-wrap;color:#49385f;font-size:16px;line-height:1.75}
+  .thought-drawing{display:block;width:min(100%,320px);margin-top:9px;border:1px solid #dce6f2;border-radius:9px;background:#fff}
 
   /* 电脑小达人 */
   .pcskill {
@@ -232,6 +238,20 @@
   <div class="reviewbook">
     <div class="rv-title">📕 我的错题卡 · 点开看看答案</div>
     <div class="rv-list" id="reviewList"></div>
+  </div>
+
+  <div class="reviewbook" style="border-color:#d7c2f2;">
+    <div class="rv-title">📔 桃桃的想法本 · 我是这样想的</div>
+    <div class="thought-filters" id="thoughtFilters">
+      <button class="thought-filter on" data-thought-scope="today">今天</button>
+      <button class="thought-filter" data-thought-scope="all">全部</button>
+      <button class="thought-filter on" data-thought-subject="all">全科</button>
+      <button class="thought-filter" data-thought-subject="数学">数学</button>
+      <button class="thought-filter" data-thought-subject="语文">语文</button>
+      <button class="thought-filter" data-thought-subject="科学">科学</button>
+      <button class="thought-filter" data-thought-subject="逻辑">逻辑</button>
+    </div>
+    <div class="rv-list" id="thoughtList"></div>
   </div>
 
   <!-- 电脑小达人 -->
@@ -589,6 +609,38 @@ function unlockReview(){
 window.unlockReview = unlockReview;
 refreshReviewBook();
 window.addEventListener("pageshow", refreshReviewBook);
+
+/* ============ 桃桃的想法本：开放题文字、修改次数和思考纸 ============ */
+const THOUGHT_KEY="tao_thought_journal_v1";
+let thoughtScope="today",thoughtSubject="all";
+function localDay(){
+  const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function collectThoughts(){
+  try{const b=JSON.parse(localStorage.getItem(THOUGHT_KEY));return b&&Array.isArray(b.items)?b.items:[];}catch(e){return [];}
+}
+function refreshThoughtBook(){
+  const box=document.getElementById("thoughtList");if(!box)return;
+  const items=collectThoughts().filter(x=>(thoughtScope==="all"||x.d===localDay())&&(thoughtSubject==="all"||x.subject===thoughtSubject))
+    .sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  if(!items.length){box.innerHTML='<div class="rv-empty">'+(thoughtScope==="today"?"今天还没有写下想法，完成一道开放题后会自动出现在这里。":"想法本还是空的，去各科写下第一个发现吧！")+'</div>';return;}
+  box.innerHTML=items.map(it=>'<div class="rv-item thought-card" onclick="this.classList.toggle(\'open\')">'
+    +'<div><span class="rv-subj">'+esc((it.icon||"💡")+" "+it.subject+(it.module?" · "+it.module:""))+'</span>'
+    +'<span class="rv-d" style="float:right;">'+esc(it.d)+'</span></div>'
+    +'<div class="rv-q" style="font-size:15px;font-weight:bold;margin-top:7px;">'+esc(it.question)+'</div>'
+    +'<div style="font-size:13px;color:#8064a8;margin-top:5px;">👆 点开看桃桃的答案'+(it.revisions?" · 修改过 "+it.revisions+" 次":"")+'</div>'
+    +'<div class="rv-detail"><div class="thought-answer">'+esc(it.answer)+'</div>'
+    +(it.drawing?'<img class="thought-drawing" src="'+esc(it.drawing)+'" alt="桃桃的思考纸">':"")
+    +'</div></div>').join("");
+}
+document.querySelectorAll("[data-thought-scope]").forEach(b=>b.onclick=()=>{
+  thoughtScope=b.dataset.thoughtScope;document.querySelectorAll("[data-thought-scope]").forEach(x=>x.classList.toggle("on",x===b));refreshThoughtBook();
+});
+document.querySelectorAll("[data-thought-subject]").forEach(b=>b.onclick=()=>{
+  thoughtSubject=b.dataset.thoughtSubject;document.querySelectorAll("[data-thought-subject]").forEach(x=>x.classList.toggle("on",x===b));refreshThoughtBook();
+});
+refreshThoughtBook();
+window.addEventListener("pageshow",refreshThoughtBook);
 
 /* ============ 今日任务（按星期轮换 + ⭐目标按周递增） ============ */
 const APPS = {
