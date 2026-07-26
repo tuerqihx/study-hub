@@ -274,8 +274,12 @@
       area.innerHTML='<div style="background:#f5f0ff;border:2px solid #d9ccef;border-radius:14px;padding:11px;">'+
         '<div style="font-size:14px;color:#6e5a84;margin-bottom:7px;">这里不只有一个标准说法。先自己想，再写下理由、例子或新问题。</div>'+
         '<textarea id="openAnswer" rows="3" placeholder="我认为……，因为……" style="width:100%;resize:vertical;border:2px solid #c9b8e8;border-radius:11px;padding:10px;font:17px/1.6 inherit;user-select:text;-webkit-user-select:text;"></textarea>'+
-        '<button id="openGo" style="display:block;margin:9px auto 0;border:0;border-radius:12px;background:#7c5cff;color:#fff;padding:10px 22px;font:700 16px/1 inherit;">提交我的想法</button></div>';
+        '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:9px;">'+
+        '<button id="openClear" style="border:2px solid #c9b8e8;border-radius:12px;background:#fff;color:#6e5a84;padding:9px 17px;font:700 15px/1 inherit;">清空文字</button>'+
+        '<button id="openGo" style="border:0;border-radius:12px;background:#7c5cff;color:#fff;padding:10px 22px;font:700 16px/1 inherit;">提交我的想法</button></div></div>';
       document.getElementById("openGo").onclick=checkOpen;
+      document.getElementById("openClear").onclick=()=>{document.getElementById("openAnswer").value="";document.getElementById("openAnswer").focus();
+        document.getElementById("openGo").textContent=answered?"保存修改":"提交我的想法";};
     } else {
       area.innerHTML='<div class="answbox"><span class="answ" id="answ">_</span></div>'+
         '<div class="pad">'+[1,2,3,4,5,6,7,8,9].map(n=>'<button class="key" data-k="'+n+'">'+n+'</button>').join('')+
@@ -311,9 +315,11 @@
   function checkNum(){ if(answered)return; const item=qList[qi]; if(typed==="")return;
     if(Number(typed)===Number(item.answer)){ good(); }
     else { bad(item); typed=""; const a=document.getElementById("answ"); if(a)a.textContent="_"; } }
-  function checkOpen(){ if(answered)return; const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
+  function checkOpen(){ const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
     const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<5){fb.className="feedback no";fb.textContent="再多写一点：你为什么这样想？也可以画完以后用一句话说明。";return;}
-    qList[qi].childAnswer=v; good("thought"); }
+    qList[qi].childAnswer=v;
+    if(answered){fb.className="feedback ok";fb.textContent="✏️ 修改已经保存，不会重复加星。";document.getElementById("openGo").textContent="保存修改";return;}
+    good("thought");document.getElementById("openGo").textContent="保存修改"; }
 
   function good(mode){ answered=true; clearTimeout(stuckTimer);
     const hb=document.getElementById("hintBtn"); if(hb) hb.style.display="none";
