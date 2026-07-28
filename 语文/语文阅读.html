@@ -92,6 +92,7 @@
   </div>
 </div>
 <script src="../_engine/paper.js"></script>
+<script src="../_engine/coach.js"></script>
 <script>
 const STORE_KEY="taotao_chinese_v1";
 const PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
@@ -921,15 +922,7 @@ function showQ(){ answered=false; firstWrong=false; selected=[];
   const area=document.getElementById("answerArea"); area.innerHTML="";
   if(window.TaoPaper) window.TaoPaper.mount(item,{open:!!item.paperOpen});
   if(item.type==="open"){
-    area.innerHTML='<div style="background:#f5f0ff;border:2px solid #d9ccef;border-radius:14px;padding:11px;">'+
-      '<div style="font-size:14px;color:#6e5a84;margin-bottom:7px;">这题没有唯一标准说法。请用文章证据支持自己的想法。</div>'+
-      '<textarea id="openAnswer" rows="3" placeholder="我认为……，因为文中……" style="width:100%;resize:vertical;border:2px solid #c9b8e8;border-radius:11px;padding:10px;font:17px/1.6 inherit;user-select:text;-webkit-user-select:text;"></textarea>'+
-      '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:9px;">'+
-      '<button id="openClear" style="border:2px solid #c9b8e8;border-radius:12px;background:#fff;color:#6e5a84;padding:9px 17px;font:700 15px/1 inherit;">清空文字</button>'+
-      '<button id="openGo" style="border:0;border-radius:12px;background:#7c5cff;color:#fff;padding:10px 22px;font:700 16px/1 inherit;">提交我的理解</button></div></div>';
-    document.getElementById("openGo").onclick=checkOpen;
-    document.getElementById("openClear").onclick=()=>{document.getElementById("openAnswer").value="";document.getElementById("openAnswer").focus();
-      document.getElementById("openGo").textContent=answered?"保存修改":"提交我的理解";};
+    window.TaoCoach.mountOpen({root:area,evidence:"文章中的一句证据、一个细节或换一种说法",onSubmit:checkOpen});
     return;
   }
   if(item.type==="multi"){
@@ -963,8 +956,8 @@ function checkOrder(){ if(answered)return; const item=cur.questions[qi]; if(sele
 function pick(el,val){ if(answered)return; const item=cur.questions[qi];
   if(val===item.answer){ el.classList.add("right"); good(); }
   else { el.classList.add("wrong"); el.textContent="✗ "+el.textContent; el.onclick=null; bad(item); } }
-function checkOpen(){ const el=document.getElementById("openAnswer"),v=(el&&el.value||"").trim();
-  const fb=document.getElementById("fb"); if(v.replace(/\s/g,"").length<6){fb.className="feedback no";fb.textContent="再多写一点：你的依据是什么？也可以先在思考纸上圈画。";return;}
+function checkOpen(){ const result=window.TaoCoach.validateOpen(),v=result.value;
+  const fb=document.getElementById("fb"); if(!result.ok){fb.className="feedback no";fb.textContent=result.msg;return;}
   cur.questions[qi].childAnswer=v;
   saveThought(cur.questions[qi],v);
   if(answered){fb.className="feedback ok";fb.textContent="✏️ 修改已经保存，不会重复加星。";document.getElementById("openGo").textContent="保存修改";return;}
